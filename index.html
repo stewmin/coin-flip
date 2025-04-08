@@ -225,18 +225,89 @@
       }
     }
 
-    function mintCoin() {
-      const userName = prompt("Enter your name (optional):");
-      if (userName && !isClean(userName)) return alert("Inappropriate name.");
-      const userKey = "user_" + Math.random().toString(36).substr(2, 9);
-      const now = Date.now();
+   <script>
+function mintCoin() {
+  const userName = prompt("Enter your name (optional):");
+  if (userName && !isClean(userName)) return alert("Inappropriate name.");
+  const userKey = "user_" + Math.random().toString(36).substr(2, 9);
+  const now = Date.now();
 
-      cooldownRef.child(userKey).once("value").then(snap => {
-        const last = snap.val() || 0;
-        if (now - last < COOLDOWN_MS) {
-          alert("Please wait before minting again.");
-          return;
-        }
+  cooldownRef.child(userKey).once("value").then(snap => {
+    const last = snap.val() || 0;
+    if (now - last < COOLDOWN_MS) {
+      alert("Please wait before minting again.");
+      return;
+    }
+
+    bankRef.set(currentBank - COIN_PRICE);
+    const serial = mintedCount + 1;
+    mintedRef.set(serial);
+    cooldownRef.child(userKey).set(now);
+
+    const rarity = getRarity();
+    const canvas = document.getElementById("mintCanvas");
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    const rarityImgMap = {
+      "Gold": "stewmin_coin.png",
+      "Platinum": "stewmin_coin_platinum.png",
+      "Iridium": "stewmin_coin_iridium.png",
+      "Rhodium": "stewmin_coin_rhodium.png"
+    };
+
+    img.onload = () => {
+      // background frame
+      ctx.fillStyle = "#111";
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      // coin image
+      ctx.drawImage(img, 256, 100, 512, 512);
+
+      // rarity overlay glow
+      if (rarity.color) {
+        ctx.fillStyle = rarity.color;
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(256, 100, 512, 512);
+        ctx.globalAlpha = 1;
+      }
+
+      // stylized text
+      ctx.fillStyle = "gold";
+      ctx.font = "bold 48px Orbitron";
+      ctx.textAlign = "center";
+      ctx.fillText("STEWMIN MINT", 512, 680);
+
+      ctx.font = "28px Orbitron";
+      ctx.fillText(`Serial #${serial}`, 512, 740);
+      ctx.fillText(`Rarity: ${rarity.name}`, 512, 790);
+
+      ctx.font = "24px Orbitron";
+      ctx.fillStyle = "#ccc";
+      ctx.fillText(new Date().toLocaleDateString(), 512, 840);
+
+      // download
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Stewmin_Coin_${serial}.png`;
+      a.click();
+
+      // store in registry
+      registryRef.child("coin_" + serial).set({
+        serial: serial,
+        date: new Date().toISOString(),
+        name: userName || "Anonymous",
+        rarity: rarity.name
+      });
+    };
+
+    img.src = rarityImgMap[rarity.name];
+  });
+}
+</script>
 
         // Deduct $1000, increment count
         bankRef.set(currentBank - COIN_PRICE);
