@@ -309,54 +309,6 @@ function mintCoin() {
 }
 </script>
 
-        // Deduct $1000, increment count
-        bankRef.set(currentBank - COIN_PRICE);
-        const serial = mintedCount + 1;
-        mintedRef.set(serial);
-        cooldownRef.child(userKey).set(now);
-
-        const rarity = getRarity();
-        const canvas = document.getElementById("mintCanvas");
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.onload = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          if (rarity.color) {
-            ctx.globalCompositeOperation = "source-atop";
-            ctx.fillStyle = rarity.color;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = "source-over";
-          }
-
-          ctx.fillStyle = "rgba(255, 215, 0, 1)";
-          ctx.font = "20px Orbitron";
-          ctx.fillText("Minted from stewmin.github.io", 20, 450);
-          ctx.fillText(new Date().toLocaleDateString(), 20, 475);
-          ctx.fillText("Serial #" + serial, 20, 500);
-          ctx.fillText(rarity.name, 20, 525);
-
-          const url = canvas.toDataURL("image/png");
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `Stewmin_Coin_${serial}.png`;
-          a.click();
-
-          registryRef.child("coin_" + serial).set({
-            serial: serial,
-            date: new Date().toISOString(),
-            name: userName || "Anonymous",
-            rarity: rarity.name
-          });
-        };
-       const rarityImgMap = {
-  "Gold": "stewmin_coin.png",
-  "Platinum": "stewmin_coin_platinum.png",
-  "Iridium": "stewmin_coin_iridium.png",
-  "Rhodium": "stewmin_coin_rhodium.png"
-};
-img.src = rarityImgMap[rarity.name];
       });
     }
 
