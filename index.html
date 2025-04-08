@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,10 +35,12 @@
     #coin {
       width: 200px;
       height: 200px;
-      border-radius: 50%;
       transition: transform 0.4s ease-in-out;
       margin-bottom: 30px;
       box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+      border-radius: 50%;
+      border: 4px solid gold;
+      object-fit: cover;
     }
 
     .flip {
@@ -71,8 +74,7 @@
   <h1>Flip the Coin</h1>
   <div id="bank">Coin Bank: $0.00</div>
 
-  <!-- Coin Image -->
-  <img id="coin" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Denarius_Julius_Caesar_Imitatio.jpg/200px-Denarius_Julius_Caesar_Imitatio.jpg" alt="Coin">
+  <img id="coin" src="https://i.imgur.com/SUJ2RAh.png" alt="Coin">
 
   <button onclick="flipCoin()">Flip Coin</button>
   <div id="resultText"></div>
@@ -100,8 +102,8 @@
     const resultText = document.getElementById('resultText');
     const bankDisplay = document.getElementById('bank');
 
-    const HEADS_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Denarius_Julius_Caesar_Imitatio.jpg/200px-Denarius_Julius_Caesar_Imitatio.jpg';
-    const TAILS_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Denarius_Eagle_CAESAR.jpg/200px-Denarius_Eagle_CAESAR.jpg';
+    const HEADS_URL = 'https://i.imgur.com/SUJ2RAh.png';
+    const TAILS_URL = 'https://i.imgur.com/yMQwNLO.png';
 
     // Show live bank value
     bankRef.on('value', (snapshot) => {
@@ -115,19 +117,19 @@
       void coin.offsetWidth;
       coin.classList.add('flip');
 
-      // Wait for flip to finish
+      // After spin ends, determine result
       setTimeout(() => {
         const isHeads = Math.random() < 0.5;
         const result = isHeads ? 'Heads' : 'Tails';
         resultText.textContent = `Result: ${result}`;
         coin.src = isHeads ? HEADS_URL : TAILS_URL;
 
-        // Add 25 cents
+        // Add 25 cents to bank
         bankRef.once('value').then(snapshot => {
           const current = snapshot.val() || 0;
           bankRef.set(current + 25);
         });
-      }, 400); // match animation time
+      }, 400);
     }
   </script>
 </body>
