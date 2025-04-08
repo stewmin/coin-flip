@@ -1,0 +1,274 @@
+<!-- FULL final working script with Firebase, flip logic, rarity showcase, mintCoin, registry, watermarking, etc. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stewmin Coin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #1e1e1e, #3a321e);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    h1, h2 { color: gold; }
+    #coin, #mint-coin {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: 4px solid gold;
+      object-fit: cover;
+    }
+    #mint-coin {
+      animation: rotateY 6s linear infinite;
+      opacity: 0.5;
+    }
+    #mint-coin.unlocked {
+      opacity: 1;
+      cursor: pointer;
+      box-shadow: 0 0 20px gold;
+    }
+    @keyframes rotateY {
+      0% { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-size: 1.2em;
+      background-color: gold;
+      color: black;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    table {
+      margin: 20px auto;
+      width: 90%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #888;
+    }
+    th {
+      background-color: #444;
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stewmin Coin</h1>
+  <div id="bank">Coin Bank: $0.00</div>
+  <div id="mint-count">🪙 Coins Minted: 0</div>
+
+  <h2>🪙 Possible Stewmin Coin Variants</h2>
+  <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+    <div style="text-align:center;">
+      <img src="stewmin_coin.png" width="64" height="64" style="border-radius:50%;object-fit:cover;"><br>
+      <span style="color:gold;">Gold — 85%</span>
+    </div>
+    <div style="text-align:center;">
+      <img src="stewmin_coin_platinum.png" width="64" height="64" style="border-radius:50%;object-fit:cover;"><br>
+      <span style="color:#b5e2fa;">Platinum — 10%</span>
+    </div>
+    <div style="text-align:center;">
+      <img src="stewmin_coin_iridium.png" width="64" height="64" style="border-radius:50%;object-fit:cover;"><br>
+      <span style="color:#c0c0ff;">Iridium — 4%</span>
+    </div>
+    <div style="text-align:center;">
+      <img src="stewmin_coin_rhodium.png" width="64" height="64" style="border-radius:50%;object-fit:cover;"><br>
+      <span style="color:#e6e8fa;">Rhodium — 1%</span>
+    </div>
+  </div>
+
+  <img id="coin" src="roman_coin_heads.png" />
+  <button onclick="flipCoin()">Flip Coin</button>
+  <div id="resultText"></div>
+
+  <div style="margin-top: 40px;">
+    <img id="mint-coin" src="stewmin_coin.png" />
+    <div id="mint-price">$100 Stewmin Coin</div>
+  </div>
+
+  <canvas id="mintCanvas" width="1024" height="1024" style="display:none;"></canvas>
+
+  <h2>🧾 Mint Registry</h2>
+  <button onclick="downloadRegistry()">💾 Download Registry (CSV)</button>
+  <table>
+    <thead><tr><th>#</th><th>Name</th><th>Rarity</th><th>Date</th></tr></thead>
+    <tbody id="mintTableBody"></tbody>
+  </table>
+
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
+      authDomain: "coin-flip-4a693.firebaseapp.com",
+      databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
+      projectId: "coin-flip-4a693",
+      storageBucket: "coin-flip-4a693.appspot.com",
+      messagingSenderId: "572907715515",
+      appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database();
+    const bankRef = db.ref("coinBank");
+    const mintedRef = db.ref("mintedCount");
+    const registryRef = db.ref("mintRegistry");
+    const cooldownRef = db.ref("cooldowns");
+
+    const COIN_PRICE = 10000;
+    const COOLDOWN_MS = 60000;
+    let currentBank = 0;
+    let mintedCount = 0;
+
+    const bannedWords = ["fuck", "shit", "bitch", "ass", "dick"];
+    function isClean(name) {
+      return !bannedWords.some(w => (name || "").toLowerCase().includes(w));
+    }
+
+    const bankDisplay = document.getElementById("bank");
+    const mintCountDisplay = document.getElementById("mint-count");
+    const mintImg = document.getElementById("mint-coin");
+
+    bankRef.on("value", snap => {
+      currentBank = snap.val() || 0;
+      bankDisplay.textContent = `Coin Bank: $${(currentBank / 100).toFixed(2)}`;
+      mintImg.classList.toggle("unlocked", currentBank >= COIN_PRICE);
+      mintImg.onclick = currentBank >= COIN_PRICE ? () => mintCoin() : null;
+    });
+
+    mintedRef.on("value", snap => {
+      mintedCount = snap.val() || 0;
+      mintCountDisplay.textContent = `🪙 Coins Minted: ${mintedCount}`;
+    });
+
+    function flipCoin() {
+      const isHeads = Math.random() < 0.5;
+      document.getElementById("coin").src = isHeads ? "roman_coin_heads.png" : "roman_coin_tails.png";
+      document.getElementById("resultText").textContent = `Result: ${isHeads ? "Heads" : "Tails"}`;
+      bankRef.transaction(val => (val || 0) + 25);
+    }
+
+    function getRarity() {
+      const roll = Math.random() * 100;
+      if (roll <= 1) return { name: "Rhodium", color: "#e6e8fa" };
+      if (roll <= 5) return { name: "Iridium", color: "#c0c0ff" };
+      if (roll <= 15) return { name: "Platinum", color: "#b5e2fa" };
+      return { name: "Gold", color: null };
+    }
+
+    function mintCoin() {
+      const userName = prompt("Enter your name (optional):");
+      if (userName && !isClean(userName)) return alert("Inappropriate name.");
+      const userKey = "user_" + Math.random().toString(36).slice(2);
+      const now = Date.now();
+
+      cooldownRef.child(userKey).once("value").then(snap => {
+        const last = snap.val() || 0;
+        if (now - last < COOLDOWN_MS) {
+          alert("Please wait before minting again.");
+          return;
+        }
+
+        bankRef.set(currentBank - COIN_PRICE);
+        const serial = mintedCount + 1;
+        mintedRef.set(serial);
+        cooldownRef.child(userKey).set(now);
+
+        const rarity = getRarity();
+        const canvas = document.getElementById("mintCanvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        const imgMap = {
+          "Gold": "stewmin_coin.png",
+          "Platinum": "stewmin_coin_platinum.png",
+          "Iridium": "stewmin_coin_iridium.png",
+          "Rhodium": "stewmin_coin_rhodium.png"
+        };
+
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "#111";
+          ctx.fillRect(0, 0, 1024, 1024);
+          ctx.drawImage(img, 256, 100, 512, 512);
+
+          if (rarity.color) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(512, 356, 256, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.fillStyle = rarity.color;
+            ctx.globalAlpha = 0.25;
+            ctx.fill();
+            ctx.restore();
+            ctx.globalAlpha = 1;
+          }
+
+          ctx.fillStyle = "gold";
+          ctx.font = "48px Orbitron";
+          ctx.textAlign = "center";
+          ctx.fillText("STEWMIN MINT", 512, 680);
+          ctx.font = "28px Orbitron";
+          ctx.fillText(`Serial #${serial}`, 512, 740);
+          ctx.fillText(`Rarity: ${rarity.name}`, 512, 790);
+          ctx.font = "20px Orbitron";
+          ctx.fillStyle = "#ccc";
+          ctx.fillText(new Date().toLocaleDateString(), 512, 840);
+
+          const url = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `Stewmin_Coin_${serial}.png`;
+          a.click();
+
+          registryRef.child("coin_" + serial).set({
+            serial,
+            name: userName || "Anonymous",
+            rarity: rarity.name,
+            date: new Date().toISOString()
+          });
+        };
+
+        img.src = imgMap[rarity.name];
+      });
+    }
+
+    function downloadRegistry() {
+      registryRef.once("value", snap => {
+        const data = snap.val();
+        if (!data) return;
+        const sorted = Object.values(data).sort((a, b) => a.serial - b.serial);
+        const csv = [["Serial", "Name", "Rarity", "Date"], ...sorted.map(r =>
+          [r.serial, r.name, r.rarity, new Date(r.date).toLocaleString()]
+        )].map(row => row.join(",")).join("\n");
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "stewmin_registry.csv";
+        a.click();
+      });
+    }
+
+    registryRef.on("value", snap => {
+      const data = snap.val();
+      const tbody = document.getElementById("mintTableBody");
+      tbody.innerHTML = "";
+      if (!data) return;
+      const sorted = Object.values(data).sort((a, b) => a.serial - b.serial);
+      sorted.forEach(entry => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${entry.serial}</td><td>${entry.name}</td><td>${entry.rarity}</td><td>${new Date(entry.date).toLocaleString()}</td>`;
+        tbody.appendChild(row);
+      });
+    });
+  </script>
+</body>
+</html>
