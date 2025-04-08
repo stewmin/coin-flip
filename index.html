@@ -73,6 +73,25 @@
       font-size: 1.4em;
       color: #ffd700;
     }
+
+    #downloadLink {
+      display: none;
+      margin-top: 30px;
+      padding: 12px 24px;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+      background-color: gold;
+      color: black;
+      border-radius: 10px;
+      text-decoration: none;
+      border: 2px solid #c2a200;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    #downloadLink:hover {
+      background-color: #f2d46d;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -83,6 +102,9 @@
 
   <button onclick="flipCoin()">Flip Coin</button>
   <div id="resultText"></div>
+
+  <!-- Stewmin Coin Download Button -->
+  <a id="downloadLink" href="stewmin_coin.png" download>Download Stewmin Coin 🪙</a>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -106,14 +128,28 @@
     const coin = document.getElementById('coin');
     const resultText = document.getElementById('resultText');
     const bankDisplay = document.getElementById('bank');
+    const downloadBtn = document.getElementById('downloadLink');
 
     const HEADS_IMG = 'roman_coin_heads.png';
     const TAILS_IMG = 'roman_coin_tails.png';
+    const COIN_PRICE = 100000; // $1000 in cents
 
-    // Live bank value
+    // Live bank updates
     bankRef.on('value', (snapshot) => {
       const total = snapshot.val() || 0;
       bankDisplay.textContent = `Coin Bank: $${(total / 100).toFixed(2)}`;
+
+      // Enable/disable Stewmin Coin button
+      if (total >= COIN_PRICE) {
+        downloadBtn.style.display = "inline-block";
+        downloadBtn.onclick = () => {
+          // Deduct $1000 from pot
+          bankRef.set(total - COIN_PRICE);
+        };
+      } else {
+        downloadBtn.style.display = "none";
+        downloadBtn.onclick = null;
+      }
     });
 
     function flipCoin() {
@@ -129,6 +165,7 @@
         resultText.textContent = `Result: ${result}`;
       }, 200);
 
+      // Add $0.25 to the bank
       bankRef.once('value').then(snapshot => {
         const current = snapshot.val() || 0;
         bankRef.set(current + 25);
