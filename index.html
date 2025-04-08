@@ -12,10 +12,12 @@
       text-align: center;
       height: 100vh;
       margin: 0;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
 
     h1 {
@@ -23,12 +25,14 @@
       margin-bottom: 10px;
       color: gold;
       text-shadow: 0 0 10px black;
+      z-index: 1;
     }
 
     #bank {
       font-size: 1.5em;
       margin-bottom: 20px;
       color: #90ee90;
+      z-index: 1;
     }
 
     #coin {
@@ -39,6 +43,7 @@
       box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
       object-fit: cover;
       transition: transform 0.2s ease-in-out;
+      z-index: 1;
     }
 
     .flip {
@@ -62,6 +67,7 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       transition: background-color 0.2s;
       margin-top: 20px;
+      z-index: 1;
     }
 
     button:hover {
@@ -72,25 +78,50 @@
       margin-top: 20px;
       font-size: 1.4em;
       color: #ffd700;
+      z-index: 1;
     }
 
-    #downloadLink {
-      display: none;
-      margin-top: 30px;
-      padding: 12px 24px;
-      font-size: 18px;
-      font-family: 'Orbitron', sans-serif;
-      background-color: gold;
-      color: black;
+    /* Stewmin Coin Display */
+    #stewmin-coin-box {
+      position: absolute;
+      left: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: center;
+      z-index: 2;
+    }
+
+    #stewmin-coin-img {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: 4px solid gold;
+      object-fit: cover;
+      animation: spin 3s linear infinite;
+      filter: grayscale(100%);
+      cursor: not-allowed;
+      transition: filter 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #stewmin-coin-img.unlocked {
+      filter: none;
+      cursor: pointer;
+      box-shadow: 0 0 25px gold;
+    }
+
+    #coin-price {
+      margin-top: 8px;
+      font-size: 1em;
+      color: #ffdf00;
+      background: rgba(0,0,0,0.4);
+      padding: 5px 10px;
       border-radius: 10px;
-      text-decoration: none;
-      border: 2px solid #c2a200;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      display: inline-block;
     }
 
-    #downloadLink:hover {
-      background-color: #f2d46d;
-      transform: scale(1.05);
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -99,12 +130,14 @@
   <div id="bank">Coin Bank: $0.00</div>
 
   <img id="coin" src="roman_coin_heads.png" alt="Coin">
-
   <button onclick="flipCoin()">Flip Coin</button>
   <div id="resultText"></div>
 
-  <!-- Stewmin Coin Download Button -->
-  <a id="downloadLink" href="stewmin_coin.png" download>Download Stewmin Coin 🪙</a>
+  <!-- Stewmin Coin Ad -->
+  <div id="stewmin-coin-box">
+    <img id="stewmin-coin-img" src="stewmin_coin.png" alt="Stewmin Coin">
+    <div id="coin-price">$1000</div>
+  </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -128,27 +161,35 @@
     const coin = document.getElementById('coin');
     const resultText = document.getElementById('resultText');
     const bankDisplay = document.getElementById('bank');
-    const downloadBtn = document.getElementById('downloadLink');
+    const stewminImg = document.getElementById('stewmin-coin-img');
 
     const HEADS_IMG = 'roman_coin_heads.png';
     const TAILS_IMG = 'roman_coin_tails.png';
+    const STEWMIN_IMG = 'stewmin_coin.png';
     const COIN_PRICE = 100000; // $1000 in cents
 
-    // Live bank updates
+    // Update bank + unlock coin
     bankRef.on('value', (snapshot) => {
       const total = snapshot.val() || 0;
       bankDisplay.textContent = `Coin Bank: $${(total / 100).toFixed(2)}`;
 
-      // Enable/disable Stewmin Coin button
       if (total >= COIN_PRICE) {
-        downloadBtn.style.display = "inline-block";
-        downloadBtn.onclick = () => {
+        stewminImg.classList.add('unlocked');
+        stewminImg.onclick = () => {
+          // Trigger download
+          const link = document.createElement('a');
+          link.href = STEWMIN_IMG;
+          link.download = 'stewmin_coin.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
           // Deduct $1000 from pot
           bankRef.set(total - COIN_PRICE);
         };
       } else {
-        downloadBtn.style.display = "none";
-        downloadBtn.onclick = null;
+        stewminImg.classList.remove('unlocked');
+        stewminImg.onclick = null;
       }
     });
 
@@ -165,7 +206,6 @@
         resultText.textContent = `Result: ${result}`;
       }, 200);
 
-      // Add $0.25 to the bank
       bankRef.once('value').then(snapshot => {
         const current = snapshot.val() || 0;
         bankRef.set(current + 25);
