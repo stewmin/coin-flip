@@ -3,12 +3,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Virtual Coin Flip</title>
+  <title>Roman Coin Flip</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, #1e1e1e, #444);
+      background: linear-gradient(135deg, #1e1e1e, #3a321e);
       color: white;
       text-align: center;
       height: 100vh;
@@ -22,7 +22,7 @@
     h1 {
       font-size: 3em;
       margin-bottom: 10px;
-      color: #ffd700;
+      color: gold;
       text-shadow: 0 0 10px black;
     }
 
@@ -32,49 +32,25 @@
       color: #90ee90;
     }
 
-    .coin-container {
+    .coin {
       width: 200px;
       height: 200px;
-      perspective: 1000px;
-      margin-bottom: 30px;
-    }
-
-    .coin {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 1s ease;
-    }
-
-    .coin.flip {
-      transform: rotateY(1800deg);
-    }
-
-    .coin-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
+      border-radius: 50%;
       background-size: cover;
       background-position: center;
-      border-radius: 50%;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      transition: transform 0.4s ease-in-out;
+      margin-bottom: 30px;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
     }
 
-    .heads {
-      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/2006_Quarter_Obverse.png/200px-2006_Quarter_Obverse.png');
-    }
-
-    .tails {
-      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/2006_Quarter_Reverse.png/200px-2006_Quarter_Reverse.png');
+    .flip {
       transform: rotateY(180deg);
     }
 
     button {
       padding: 15px 40px;
       font-size: 1.2em;
-      background-color: #ffd700;
+      background-color: gold;
       color: black;
       border: none;
       border-radius: 10px;
@@ -84,12 +60,13 @@
     }
 
     button:hover {
-      background-color: #e6c200;
+      background-color: #d4af37;
     }
 
     #resultText {
       margin-top: 20px;
       font-size: 1.4em;
+      color: #ffd700;
     }
   </style>
 </head>
@@ -97,12 +74,7 @@
   <h1>Flip the Coin</h1>
   <div id="bank">Coin Bank: $0.00</div>
 
-  <div class="coin-container">
-    <div id="coin" class="coin">
-      <div class="coin-face heads"></div>
-      <div class="coin-face tails"></div>
-    </div>
-  </div>
+  <div id="coin" class="coin" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Denarius_Julius_Caesar_Imitatio.jpg/200px-Denarius_Julius_Caesar_Imitatio.jpg');"></div>
 
   <button onclick="flipCoin()">Flip Coin</button>
   <div id="resultText"></div>
@@ -130,34 +102,35 @@
     const resultText = document.getElementById('resultText');
     const bankDisplay = document.getElementById('bank');
 
-    // Show live bank updates
+    // Show live bank value
     bankRef.on('value', (snapshot) => {
       const total = snapshot.val() || 0;
       bankDisplay.textContent = `Coin Bank: $${(total / 100).toFixed(2)}`;
     });
 
     function flipCoin() {
-      // Start spin
+      // Begin flip animation
       coin.classList.remove('flip');
-      void coin.offsetWidth; // force reflow
+      void coin.offsetWidth; // reflow trick
       coin.classList.add('flip');
 
-      // Wait for spin to finish, then determine result
+      // After animation, swap image and show result
       setTimeout(() => {
-        const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+        const isHeads = Math.random() < 0.5;
+        const result = isHeads ? 'Heads' : 'Tails';
         resultText.textContent = `Result: ${result}`;
 
-        // Set the visible face
-        coin.style.transform = result === 'Heads'
-          ? 'rotateY(0deg)'  // heads side
-          : 'rotateY(180deg)'; // tails side
+        // Set image to heads or tails
+        coin.style.backgroundImage = isHeads
+          ? "url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Denarius_Julius_Caesar_Imitatio.jpg/200px-Denarius_Julius_Caesar_Imitatio.jpg')"
+          : "url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Denarius_Eagle_CAESAR.jpg/200px-Denarius_Eagle_CAESAR.jpg')";
 
-        // Add 25 cents to bank
+        // Update shared bank
         bankRef.once('value').then(snapshot => {
           const current = snapshot.val() || 0;
           bankRef.set(current + 25);
         });
-      }, 1000); // match animation duration
+      }, 400); // matches CSS flip time
     }
   </script>
 </body>
