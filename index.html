@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,14 +39,14 @@
       border: 5px solid gold;
       box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
       object-fit: cover;
-      transition: transform 0.4s ease-in-out;
+      transition: transform 0.2s ease-in-out;
     }
 
-    .animate-flip {
-      animation: flip 0.4s ease-in-out;
+    .flip {
+      animation: flipAnim 0.4s ease-in-out;
     }
 
-    @keyframes flip {
+    @keyframes flipAnim {
       0%   { transform: scaleX(1); }
       50%  { transform: scaleX(0); }
       100% { transform: scaleX(1); }
@@ -79,7 +80,7 @@
   <h1>Flip the Coin</h1>
   <div id="bank">Coin Bank: $0.00</div>
 
-  <img id="coin" src="https://i.imgur.com/SUJ2RAh.png" alt="Coin">
+  <img id="coin" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Julius_Caesar_coin_obverse.png/200px-Julius_Caesar_coin_obverse.png" alt="Coin">
 
   <button onclick="flipCoin()">Flip Coin</button>
   <div id="resultText"></div>
@@ -107,8 +108,8 @@
     const resultText = document.getElementById('resultText');
     const bankDisplay = document.getElementById('bank');
 
-    const HEADS_IMG = 'https://i.imgur.com/SUJ2RAh.png'; // Caesar
-    const TAILS_IMG = 'https://i.imgur.com/yMQwNLO.png'; // Eagle
+    const HEADS_IMG = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Julius_Caesar_coin_obverse.png/200px-Julius_Caesar_coin_obverse.png';
+    const TAILS_IMG = 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Julius_Caesar_coin_reverse.png/200px-Julius_Caesar_coin_reverse.png';
 
     // Live bank value
     bankRef.on('value', (snapshot) => {
@@ -120,22 +121,18 @@
       const isHeads = Math.random() < 0.5;
       const result = isHeads ? 'Heads' : 'Tails';
 
-      // Animate coin flip
-      coin.classList.remove('animate-flip');
+      // Animate flip
+      coin.classList.remove('flip');
       void coin.offsetWidth; // reset animation
-      coin.classList.add('animate-flip');
+      coin.classList.add('flip');
 
-      // Wait half-flip, then swap image
+      // Switch image mid-flip
       setTimeout(() => {
         coin.src = isHeads ? HEADS_IMG : TAILS_IMG;
+        resultText.textContent = `Result: ${result}`;
       }, 200);
 
-      // Final result display after animation
-      setTimeout(() => {
-        resultText.textContent = `Result: ${result}`;
-      }, 400);
-
-      // Add 25 cents to bank
+      // Update bank
       bankRef.once('value').then(snapshot => {
         const current = snapshot.val() || 0;
         bankRef.set(current + 25);
