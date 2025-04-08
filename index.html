@@ -279,7 +279,13 @@
             rarity: rarity.name
           });
         };
-        img.src = BASE_IMG;
+       const rarityImgMap = {
+  "Gold": "stewmin_coin.png",
+  "Platinum": "stewmin_coin_platinum.png",
+  "Iridium": "stewmin_coin_iridium.png",
+  "Rhodium": "stewmin_coin_rhodium.png"
+};
+img.src = rarityImgMap[rarity.name];
       });
     }
 
