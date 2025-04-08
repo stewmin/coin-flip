@@ -117,7 +117,50 @@
   <img id="coin" src="roman_coin_heads.png" alt="Coin">
   <button onclick="flipCoin()">Flip Coin</button>
   <div id="resultText"></div>
+<!-- Rarity Showcase -->
+<h2>🪙 Possible Stewmin Coin Variants</h2>
+<div id="rarity-showcase" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;"></div>
+<script>
+  const rarityData = [
+    { name: "Gold", color: null, chance: "85%" },
+    { name: "Platinum", color: "#b5e2fa", chance: "10%" },
+    { name: "Iridium", color: "#c0c0ff", chance: "4%" },
+    { name: "Rhodium", color: "#e6e8fa", chance: "1%" }
+  ];
 
+  const showcase = document.getElementById("rarity-showcase");
+  rarityData.forEach(rarity => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, 64, 64);
+      ctx.drawImage(img, 0, 0, 64, 64);
+      if (rarity.color) {
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.fillStyle = rarity.color;
+        ctx.fillRect(0, 0, 64, 64);
+        ctx.globalCompositeOperation = "source-over";
+      }
+    };
+    img.src = "stewmin_coin.png";
+
+    const container = document.createElement("div");
+    container.style.textAlign = "center";
+
+    const label = document.createElement("div");
+    label.textContent = `${rarity.name} — ${rarity.chance}`;
+    label.style.marginTop = "8px";
+    label.style.fontSize = "14px";
+    label.style.color = "gold";
+
+    container.appendChild(canvas);
+    container.appendChild(label);
+    showcase.appendChild(container);
+  });
+</script>
   <!-- Mint Display -->
   <div id="mint-display">
     <img id="mint-coin" src="stewmin_coin.png" alt="Stewmin Coin">
