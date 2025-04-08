@@ -305,5 +305,65 @@
       document.body.appendChild(container);
     });
   </script>
+  <!-- 🔗 Mint Registry Table + Download -->
+<h2 style="margin-top: 50px;">🧾 Mint Registry</h2>
+<button onclick="downloadRegistry()" style="margin-bottom: 15px; padding: 10px 20px; font-size: 1em;">💾 Download Registry (CSV)</button>
+<table id="mintTable" style="margin: 0 auto; border-collapse: collapse; width: 90%;">
+  <thead>
+    <tr style="background-color: #444; color: gold;">
+      <th style="padding: 10px; border: 1px solid #888;">#</th>
+      <th style="padding: 10px; border: 1px solid #888;">Name</th>
+      <th style="padding: 10px; border: 1px solid #888;">Rarity</th>
+      <th style="padding: 10px; border: 1px solid #888;">Date</th>
+    </tr>
+  </thead>
+  <tbody id="mintTableBody"></tbody>
+</table>
+
+<script>
+  function formatDate(dt) {
+    const d = new Date(dt);
+    return d.toLocaleString();
+  }
+
+  registryRef.on("value", snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    const sorted = Object.values(data).sort((a, b) => a.serial - b.serial);
+    const tbody = document.getElementById("mintTableBody");
+    tbody.innerHTML = "";
+
+    sorted.forEach(entry => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td style="padding: 8px; border: 1px solid #666;">${entry.serial}</td>
+        <td style="padding: 8px; border: 1px solid #666;">${entry.name}</td>
+        <td style="padding: 8px; border: 1px solid #666;">${entry.rarity}</td>
+        <td style="padding: 8px; border: 1px solid #666;">${formatDate(entry.date)}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  });
+
+  function downloadRegistry() {
+    registryRef.once("value", snap => {
+      const data = snap.val();
+      if (!data) return alert("No registry data available.");
+      const sorted = Object.values(data).sort((a, b) => a.serial - b.serial);
+      const csv = [
+        ["Serial", "Name", "Rarity", "Date"],
+        ...sorted.map(r => [r.serial, r.name, r.rarity, formatDate(r.date)])
+      ].map(row => row.join(",")).join("\\n");
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "stewmin_registry.csv";
+      a.click();
+    });
+  }
+</script>
 </body>
 </html>
