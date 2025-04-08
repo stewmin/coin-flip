@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,31 +21,54 @@
 
     h1 {
       font-size: 3em;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       color: #ffd700;
       text-shadow: 0 0 10px black;
-    }
-
-    #coin {
-      font-size: 5em;
-      margin: 30px;
-      transition: transform 0.3s ease;
-    }
-
-    .flip {
-      animation: coinFlip 0.4s ease;
-    }
-
-    @keyframes coinFlip {
-      0% { transform: scale(1) rotate(0); }
-      50% { transform: scale(1.5) rotate(10deg); }
-      100% { transform: scale(1) rotate(0); }
     }
 
     #bank {
       font-size: 1.5em;
       margin-bottom: 20px;
       color: #90ee90;
+    }
+
+    .coin-container {
+      width: 200px;
+      height: 200px;
+      perspective: 1000px;
+      margin-bottom: 30px;
+    }
+
+    .coin {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s ease;
+    }
+
+    .coin.flip {
+      transform: rotateY(1800deg);
+    }
+
+    .coin-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      background-size: cover;
+      background-position: center;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .heads {
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/2006_Quarter_Obverse.png/200px-2006_Quarter_Obverse.png');
+    }
+
+    .tails {
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/2006_Quarter_Reverse.png/200px-2006_Quarter_Reverse.png');
+      transform: rotateY(180deg);
     }
 
     button {
@@ -62,56 +86,79 @@
     button:hover {
       background-color: #e6c200;
     }
+
+    #resultText {
+      margin-top: 20px;
+      font-size: 1.4em;
+    }
   </style>
 </head>
 <body>
   <h1>Flip the Coin</h1>
   <div id="bank">Coin Bank: $0.00</div>
-  <div id="coin">🪙</div>
+
+  <div class="coin-container">
+    <div id="coin" class="coin">
+      <div class="coin-face heads"></div>
+      <div class="coin-face tails"></div>
+    </div>
+  </div>
+
   <button onclick="flipCoin()">Flip Coin</button>
+  <div id="resultText"></div>
 
   <!-- Firebase -->
-  <!-- Firebase with No Modules -->
-<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
-    authDomain: "coin-flip-4a693.firebaseapp.com",
-    databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
-    projectId: "coin-flip-4a693",
-    storageBucket: "coin-flip-4a693.firebasestorage.app",
-    messagingSenderId: "572907715515",
-    appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e",
-    measurementId: "G-GDK2Q4SR9E"
-  };
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
+      authDomain: "coin-flip-4a693.firebaseapp.com",
+      databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
+      projectId: "coin-flip-4a693",
+      storageBucket: "coin-flip-4a693.firebasestorage.app",
+      messagingSenderId: "572907715515",
+      appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e",
+      measurementId: "G-GDK2Q4SR9E"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const bankRef = db.ref('coinBank');
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const bankRef = db.ref('coinBank');
 
-  const coinDiv = document.getElementById('coin');
-  const bankDisplay = document.getElementById('bank');
+    const coin = document.getElementById('coin');
+    const resultText = document.getElementById('resultText');
+    const bankDisplay = document.getElementById('bank');
 
-  // Live display of the bank
-  bankRef.on('value', (snapshot) => {
-    const total = snapshot.val() || 0;
-    bankDisplay.textContent = `Coin Bank: $${(total / 100).toFixed(2)}`;
-  });
-
-  function flipCoin() {
-    coinDiv.classList.remove('flip');
-    void coinDiv.offsetWidth;
-    const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
-    coinDiv.textContent = result === 'Heads' ? '🪙 Heads' : '🪙 Tails';
-    coinDiv.classList.add('flip');
-
-    // Add 25 cents
-    bankRef.once('value').then(snapshot => {
-      const current = snapshot.val() || 0;
-      bankRef.set(current + 25);
+    // Show live bank updates
+    bankRef.on('value', (snapshot) => {
+      const total = snapshot.val() || 0;
+      bankDisplay.textContent = `Coin Bank: $${(total / 100).toFixed(2)}`;
     });
-  }
-</script>
+
+    function flipCoin() {
+      // Start spin
+      coin.classList.remove('flip');
+      void coin.offsetWidth; // force reflow
+      coin.classList.add('flip');
+
+      // Wait for spin to finish, then determine result
+      setTimeout(() => {
+        const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+        resultText.textContent = `Result: ${result}`;
+
+        // Set the visible face
+        coin.style.transform = result === 'Heads'
+          ? 'rotateY(0deg)'  // heads side
+          : 'rotateY(180deg)'; // tails side
+
+        // Add 25 cents to bank
+        bankRef.once('value').then(snapshot => {
+          const current = snapshot.val() || 0;
+          bankRef.set(current + 25);
+        });
+      }, 1000); // match animation duration
+    }
+  </script>
 </body>
 </html>
