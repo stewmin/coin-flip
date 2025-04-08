@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Virtual Coin Flip</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 30px;
+    }
+
+    #coin {
+      font-size: 4em;
+      margin: 20px;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      cursor: pointer;
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+
+    button:hover {
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Flip the Coin</h1>
+  <div id="coin">🪙</div>
+  <button onclick="flipCoin()">Flip Coin</button>
+
+  <script>
+    function flipCoin() {
+      const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+      const coinDiv = document.getElementById('coin');
+      coinDiv.textContent = result === 'Heads' ? '🪙 Heads' : '🪙 Tails';
+    }
+  </script>
+</body>
+</html>
