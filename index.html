@@ -4,14 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vault Street</title>
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  
+  <!-- Firebase Libraries -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+
   <style>
     body {
       margin: 0;
       font-family: 'Press Start 2P', cursive;
+      /* Check that the image URL is correct and accessible */
       background: url('https://i.imgur.com/eDdBA4c.png') repeat;
       color: white;
     }
@@ -56,287 +61,294 @@
   </style>
 </head>
 <body>
-<!-- AUDIO SYSTEM -->
-<audio id="bgMusic" autoplay loop>
-  <source src="https://cdn.pixabay.com/download/audio/2023/04/07/audio_a9c23c43fb.mp3?filename=fantasy-market-ambience-143152.mp3" type="audio/mp3">
-</audio>
-<audio id="sfxMint">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3d3a9a6397.mp3?filename=coin-spin-140139.mp3" type="audio/mp3">
-</audio>
-<audio id="sfxTrade">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6a9ee734cc.mp3?filename=coins-153522.mp3" type="audio/mp3">
-</audio>
+  <!-- AUDIO SYSTEM -->
+  <audio id="bgMusic" autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2023/04/07/audio_a9c23c43fb.mp3?filename=fantasy-market-ambience-143152.mp3" type="audio/mp3">
+  </audio>
+  <audio id="sfxMint">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3d3a9a6397.mp3?filename=coin-spin-140139.mp3" type="audio/mp3">
+  </audio>
+  <audio id="sfxTrade">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6a9ee734cc.mp3?filename=coins-153522.mp3" type="audio/mp3">
+  </audio>
 
-<button onclick="toggleAudio()" style="float:right; margin: 10px;">🔊 Mute/Unmute</button>
+  <button onclick="toggleAudio()" style="float:right; margin: 10px;">🔊 Mute/Unmute</button>
 
-<header>
-  <h1>🏛️ Vault Street</h1>
-</header>
-<div class="container" id="app">
-  <!-- Content blocks go here -->
-  <div id="tradeBanner" style="background: #111; padding: 8px; font-size: 10px; overflow: hidden; white-space: nowrap;">
-    <marquee id="tradeTicker" scrollamount="4">Loading trades...</marquee>
+  <header>
+    <h1>🏛️ Vault Street</h1>
+  </header>
+  
+  <div class="container" id="app">
+    <!-- Content blocks go here -->
+    <div id="tradeBanner" style="background: #111; padding: 8px; font-size: 10px; overflow: hidden; white-space: nowrap;">
+      <marquee id="tradeTicker" scrollamount="4">Loading trades...</marquee>
+    </div>
+
+    <!-- Auth & Mint Panel -->
+    <div id="user-panel" style="display: none;">
+      <h2>Welcome, <span id="userEmail"></span></h2>
+
+      <div id="mintSection">
+        <h3>Mint a Coin</h3>
+        <button id="mintBtn" disabled>Mint New Coin</button>
+        <p id="mintNotice" style="color: red; font-size: 12px;">Minting is disabled. Market ratio is below 1.0</p>
+      </div>
+
+      <div id="vault" style="margin-top: 20px;">
+        <h3>Your Coins</h3>
+        <div id="vaultCoins" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+      </div>
+
+      <div id="tradeForm" style="margin-top: 40px;">
+        <h3>Send Coins</h3>
+        <label>Recipient Email: <input type="email" id="recipientEmail" /></label><br/>
+        <label>Rarity:
+          <select id="tradeRarity">
+            <option>Gold</option>
+            <option>Platinum</option>
+            <option>Iridium</option>
+            <option>Rhodium</option>
+          </select>
+        </label><br/>
+        <label>Quantity: <input type="number" id="tradeQuantity" min="1" value="1" /></label><br/>
+        <button onclick="sendTrade()">Send Trade</button>
+        <p id="tradeStatus" style="font-size: 12px; color: lime;"></p>
+      </div>
+
+      <div id="leaderboard" style="margin-top: 40px;">
+        <h3>Vault Leaderboard</h3>
+        <ul id="leaderList"></ul>
+      </div>
+
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Auth Form -->
+    <div id="auth-panel">
+      <h3>Login or Register</h3>
+      <input type="email" id="email" placeholder="Email" /><br />
+      <input type="password" id="password" placeholder="Password" /><br />
+      <button onclick="login()">Login / Register</button>
+    </div>
   </div>
 
-  <!-- Auth & Mint Panel -->
-  <div id="user-panel" style="display: none;">
-    <h2>Welcome, <span id="userEmail"></span></h2>
+  <footer>
+    <p>&copy; 2025 Vault Street</p>
+  </footer>
 
-    <div id="mintSection">
-      <h3>Mint a Coin</h3>
-      <button id="mintBtn" disabled>Mint New Coin</button>
-      <p id="mintNotice" style="color: red; font-size: 12px;">Minting is disabled. Market ratio is below 1.0</p>
-    </div>
+  <!-- Main Custom Script Loaded After the DOM is Ready -->
+  <script>
+    // Wait for the DOM to load fully
+    document.addEventListener('DOMContentLoaded', function () {
+      // Firebase Config
+      const firebaseConfig = {
+        apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
+        authDomain: "coin-flip-4a693.firebaseapp.com",
+        databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
+        projectId: "coin-flip-4a693",
+        storageBucket: "coin-flip-4a693.appspot.com",
+        messagingSenderId: "572907715515",
+        appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.database();
+      const userRef = uid => db.ref("users/" + uid + "/coins");
+      const registryRef = db.ref("mintRegistry");
+      const mintedRef = db.ref("mintedCount");
+      let canMint = false;
 
-    <div id="vault" style="margin-top: 20px;">
-      <h3>Your Coins</h3>
-      <div id="vaultCoins" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
-    </div>
+      function updateMintAccess() {
+        db.ref("tradeStats").once("value").then(snap => {
+          const data = snap.val() || {};
+          const avgRatio = data.averageTradeRatio ?? 0;
+          canMint = avgRatio >= 1.0;
+          document.getElementById("mintBtn").disabled = !canMint;
+          document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
+        });
+      }
 
-    <div id="tradeForm" style="margin-top: 40px;">
-      <h3>Send Coins</h3>
-      <label>Recipient Email: <input type="email" id="recipientEmail" /></label><br/>
-      <label>Rarity:
-        <select id="tradeRarity">
-          <option>Gold</option>
-          <option>Platinum</option>
-          <option>Iridium</option>
-          <option>Rhodium</option>
-        </select>
-      </label><br/>
-      <label>Quantity: <input type="number" id="tradeQuantity" min="1" value="1" /></label><br/>
-      <button onclick="sendTrade()">Send Trade</button>
-      <p id="tradeStatus" style="font-size: 12px; color: lime;"></p>
-    </div>
-
-    <div id="leaderboard" style="margin-top: 40px;">
-      <h3>Vault Leaderboard</h3>
-      <ul id="leaderList"></ul>
-    </div>
-
-    <button onclick="logout()">Logout</button>
-  </div>
-
-  <!-- Auth Form -->
-  <div id="auth-panel">
-    <h3>Login or Register</h3>
-    <input type="email" id="email" placeholder="Email" /><br />
-    <input type="password" id="password" placeholder="Password" /><br />
-    <button onclick="login()">Login / Register</button>
-  </div>
-</div>
-<footer>
-  <p>&copy; 2025 Vault Street</p>
-</footer>
-<script>
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
-  authDomain: "coin-flip-4a693.firebaseapp.com",
-  databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
-  projectId: "coin-flip-4a693",
-  storageBucket: "coin-flip-4a693.appspot.com",
-  messagingSenderId: "572907715515",
-  appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-const userRef = uid => db.ref("users/" + uid + "/coins");
-const registryRef = db.ref("mintRegistry");
-const mintedRef = db.ref("mintedCount");
-let canMint = false;
-
-function updateMintAccess() {
-  db.ref("tradeStats").once("value").then(snap => {
-    const data = snap.val() || {};
-    const avgRatio = data.averageTradeRatio ?? 0;
-    canMint = avgRatio >= 1.0;
-    document.getElementById("mintBtn").disabled = !canMint;
-    document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
-  });
-}
-
-auth.onAuthStateChanged(user => {
-  if (user) {
-    document.getElementById("auth-panel").style.display = "none";
-    document.getElementById("user-panel").style.display = "block";
-    document.getElementById("userEmail").textContent = user.email;
-    db.ref("users/" + user.uid).update({ email: user.email });
-    updateMintAccess();
-    loadVault();
-    updateLeaderboard();
-  } else {
-    document.getElementById("auth-panel").style.display = "block";
-    document.getElementById("user-panel").style.display = "none";
-  }
-});
-
-function login() {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, pass).catch(() => {
-    auth.createUserWithEmailAndPassword(email, pass)
-      .then(userCred => db.ref("users/" + userCred.user.uid).update({ email }))
-      .catch(err => alert(err.message));
-  });
-}
-
-function logout() { auth.signOut(); }
-
-document.getElementById("mintBtn").addEventListener("click", () => {
-  const user = auth.currentUser;
-  if (!user || !canMint) return alert("Minting disabled or not logged in.");
-  mintedRef.once("value").then(snap => {
-    const serial = (snap.val() || 0) + 1;
-    const rarity = getRarity();
-    const now = new Date().toISOString();
-    const coinData = { serial, rarity, date: now };
-
-    registryRef.child("coin_" + serial).set(coinData);
-    userRef(user.uid).child("coin_" + serial).set(coinData);
-    mintedRef.set(serial);
-
-    playSFX('sfxMint');
-    alert(`Minted Coin #${serial} (${rarity})`);
-    updateMintAccess();
-    loadVault();
-    updateLeaderboard();
-  });
-});
-
-function getRarity() {
-  const roll = Math.random() * 100;
-  if (roll <= 1) return "Rhodium";
-  if (roll <= 5) return "Iridium";
-  if (roll <= 15) return "Platinum";
-  return "Gold";
-}
-
-function loadVault() {
-  const user = auth.currentUser;
-  if (!user) return;
-  userRef(user.uid).once("value").then(snap => {
-    const data = snap.val();
-    const vault = document.getElementById("vaultCoins");
-    vault.innerHTML = "";
-    if (!data) {
-      vault.innerHTML = "<p>No coins yet.</p>";
-      return;
-    }
-    Object.values(data).forEach(coin => {
-      const div = document.createElement("div");
-      div.className = "coin-frame " + coin.rarity.toLowerCase();
-      div.innerHTML = `#${coin.serial}<br>${coin.rarity}<br><small>${new Date(coin.date).toLocaleDateString()}</small>`;
-      vault.appendChild(div);
-    });
-  });
-}
-
-function calculateVaultScore(coins) {
-  if (!coins) return 0;
-  const rarityValues = { Gold: 1, Platinum: 2, Iridium: 4, Rhodium: 8 };
-  let score = 0;
-  const owned = new Set();
-  Object.values(coins).forEach(c => {
-    owned.add(c.rarity);
-    score += rarityValues[c.rarity] || 0;
-    if (parseInt(c.serial) < 100) score += 1;
-  });
-  if (owned.size === 4) score += 5;
-  return score;
-}
-
-function updateLeaderboard() {
-  db.ref("users").once("value").then(snapshot => {
-    const scores = [];
-    snapshot.forEach(userSnap => {
-      const coins = userSnap.val()?.coins;
-      const score = calculateVaultScore(coins);
-      scores.push({ email: userSnap.val()?.email || "Unknown", score });
-    });
-    scores.sort((a, b) => b.score - a.score);
-    const list = document.getElementById("leaderList");
-    list.innerHTML = "";
-    scores.forEach(u => {
-      const color = u.score < 1 ? "red" : u.score > 2 ? "limegreen" : "orange";
-      const li = document.createElement("li");
-      li.innerHTML = `${u.email} — <span style="color:${color}">${u.score.toFixed(2)}</span>`;
-      list.appendChild(li);
-    });
-  });
-}
-
-function sendTrade() {
-  const rarity = document.getElementById("tradeRarity").value;
-  const qty = parseInt(document.getElementById("tradeQuantity").value);
-  const recipientEmail = document.getElementById("recipientEmail").value;
-  const user = auth.currentUser;
-  if (!user || !recipientEmail || !rarity || qty < 1) return alert("Invalid input");
-
-  userRef(user.uid).once("value").then(snap => {
-    const coins = snap.val();
-    if (!coins) return alert("No coins to send.");
-    const matching = Object.entries(coins).filter(([id, c]) => c.rarity === rarity).slice(0, qty);
-    if (matching.length < qty) return alert("Not enough coins of that rarity.");
-
-    db.ref("users").once("value").then(allUsers => {
-      let recipientUID = null;
-      allUsers.forEach(userSnap => {
-        if (userSnap.val().email === recipientEmail) {
-          recipientUID = userSnap.key;
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          document.getElementById("auth-panel").style.display = "none";
+          document.getElementById("user-panel").style.display = "block";
+          document.getElementById("userEmail").textContent = user.email;
+          db.ref("users/" + user.uid).update({ email: user.email });
+          updateMintAccess();
+          loadVault();
+          updateLeaderboard();
+        } else {
+          document.getElementById("auth-panel").style.display = "block";
+          document.getElementById("user-panel").style.display = "none";
         }
       });
-      if (!recipientUID) return alert("Recipient not found");
 
-      matching.forEach(([coinID, coinData]) => {
-        userRef(recipientUID).child(coinID).set(coinData);
-        userRef(user.uid).child(coinID).remove();
+      function login() {
+        const email = document.getElementById("email").value;
+        const pass = document.getElementById("password").value;
+        auth.signInWithEmailAndPassword(email, pass).catch(() => {
+          auth.createUserWithEmailAndPassword(email, pass)
+            .then(userCred => db.ref("users/" + userCred.user.uid).update({ email }))
+            .catch(err => alert(err.message));
+        });
+      }
+
+      function logout() { auth.signOut(); }
+
+      document.getElementById("mintBtn").addEventListener("click", () => {
+        const user = auth.currentUser;
+        if (!user || !canMint) return alert("Minting disabled or not logged in.");
+        mintedRef.once("value").then(snap => {
+          const serial = (snap.val() || 0) + 1;
+          const rarity = getRarity();
+          const now = new Date().toISOString();
+          const coinData = { serial, rarity, date: now };
+
+          registryRef.child("coin_" + serial).set(coinData);
+          userRef(user.uid).child("coin_" + serial).set(coinData);
+          mintedRef.set(serial);
+
+          playSFX('sfxMint');
+          alert(`Minted Coin #${serial} (${rarity})`);
+          updateMintAccess();
+          loadVault();
+          updateLeaderboard();
+        });
       });
 
-      document.getElementById("tradeStatus").textContent = `Sent ${qty} ${rarity} coin(s) to ${recipientEmail}`;
-      playSFX('sfxTrade');
-      loadVault();
-      updateLeaderboard();
+      function getRarity() {
+        const roll = Math.random() * 100;
+        if (roll <= 1) return "Rhodium";
+        if (roll <= 5) return "Iridium";
+        if (roll <= 15) return "Platinum";
+        return "Gold";
+      }
+
+      function loadVault() {
+        const user = auth.currentUser;
+        if (!user) return;
+        userRef(user.uid).once("value").then(snap => {
+          const data = snap.val();
+          const vault = document.getElementById("vaultCoins");
+          vault.innerHTML = "";
+          if (!data) {
+            vault.innerHTML = "<p>No coins yet.</p>";
+            return;
+          }
+          Object.values(data).forEach(coin => {
+            const div = document.createElement("div");
+            div.className = "coin-frame " + coin.rarity.toLowerCase();
+            div.innerHTML = `#${coin.serial}<br>${coin.rarity}<br><small>${new Date(coin.date).toLocaleDateString()}</small>`;
+            vault.appendChild(div);
+          });
+        });
+      }
+
+      function calculateVaultScore(coins) {
+        if (!coins) return 0;
+        const rarityValues = { Gold: 1, Platinum: 2, Iridium: 4, Rhodium: 8 };
+        let score = 0;
+        const owned = new Set();
+        Object.values(coins).forEach(c => {
+          owned.add(c.rarity);
+          score += rarityValues[c.rarity] || 0;
+          if (parseInt(c.serial) < 100) score += 1;
+        });
+        if (owned.size === 4) score += 5;
+        return score;
+      }
+
+      function updateLeaderboard() {
+        db.ref("users").once("value").then(snapshot => {
+          const scores = [];
+          snapshot.forEach(userSnap => {
+            const coins = userSnap.val()?.coins;
+            const score = calculateVaultScore(coins);
+            scores.push({ email: userSnap.val()?.email || "Unknown", score });
+          });
+          scores.sort((a, b) => b.score - a.score);
+          const list = document.getElementById("leaderList");
+          list.innerHTML = "";
+          scores.forEach(u => {
+            const color = u.score < 1 ? "red" : u.score > 2 ? "limegreen" : "orange";
+            const li = document.createElement("li");
+            li.innerHTML = `${u.email} — <span style="color:${color}">${u.score.toFixed(2)}</span>`;
+            list.appendChild(li);
+          });
+        });
+      }
+
+      function sendTrade() {
+        const rarity = document.getElementById("tradeRarity").value;
+        const qty = parseInt(document.getElementById("tradeQuantity").value);
+        const recipientEmail = document.getElementById("recipientEmail").value;
+        const user = auth.currentUser;
+        if (!user || !recipientEmail || !rarity || qty < 1) return alert("Invalid input");
+
+        userRef(user.uid).once("value").then(snap => {
+          const coins = snap.val();
+          if (!coins) return alert("No coins to send.");
+          const matching = Object.entries(coins).filter(([id, c]) => c.rarity === rarity).slice(0, qty);
+          if (matching.length < qty) return alert("Not enough coins of that rarity.");
+
+          db.ref("users").once("value").then(allUsers => {
+            let recipientUID = null;
+            allUsers.forEach(userSnap => {
+              if (userSnap.val().email === recipientEmail) {
+                recipientUID = userSnap.key;
+              }
+            });
+            if (!recipientUID) return alert("Recipient not found");
+
+            matching.forEach(([coinID, coinData]) => {
+              userRef(recipientUID).child(coinID).set(coinData);
+              userRef(user.uid).child(coinID).remove();
+            });
+
+            document.getElementById("tradeStatus").textContent = `Sent ${qty} ${rarity} coin(s) to ${recipientEmail}`;
+            playSFX('sfxTrade');
+            loadVault();
+            updateLeaderboard();
+          });
+        });
+      }
+
+      function updateTradeTicker() {
+        db.ref("mintRegistry").once("value").then(snap => {
+          const data = snap.val();
+          if (!data) return;
+          const trades = Object.values(data)
+            .sort((a, b) => b.serial - a.serial)
+            .slice(0, 10)
+            .map(entry => {
+              const ratio = entry.ratio || Math.random() * 2.5;
+              const emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
+              return `#${entry.serial}: ${entry.rarity} (${ratio.toFixed(2)}) ${emoji}`;
+            });
+          document.getElementById("tradeTicker").textContent = trades.join(" | ");
+        });
+      }
+      setInterval(updateTradeTicker, 30000);
+      updateTradeTicker();
+
+      // Handle audio toggling
+      let muted = localStorage.getItem("vaultAudioMuted") === "true";
+      document.getElementById("bgMusic").muted = muted;
+      window.toggleAudio = function() {
+        muted = !muted;
+        localStorage.setItem("vaultAudioMuted", muted);
+        document.getElementById("bgMusic").muted = muted;
+      };
+
+      function playSFX(id) {
+        const audio = document.getElementById(id);
+        if (!muted && audio) {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.play().catch(err => console.warn("SFX play error:", err));
+        }
+      }
     });
-  });
-}
-
-function updateTradeTicker() {
-  db.ref("mintRegistry").once("value").then(snap => {
-    const data = snap.val();
-    if (!data) return;
-    const trades = Object.values(data)
-      .sort((a, b) => b.serial - a.serial)
-      .slice(0, 10)
-      .map(entry => {
-        const ratio = entry.ratio || Math.random() * 2.5;
-        const emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
-        return `#${entry.serial}: ${entry.rarity} (${ratio.toFixed(2)}) ${emoji}`;
-      });
-    document.getElementById("tradeTicker").textContent = trades.join(" | ");
-  });
-}
-setInterval(updateTradeTicker, 30000);
-updateTradeTicker();
-
-let muted = localStorage.getItem("vaultAudioMuted") === "true";
-document.getElementById("bgMusic").muted = muted;
-
-function toggleAudio() {
-  muted = !muted;
-  localStorage.setItem("vaultAudioMuted", muted);
-  document.getElementById("bgMusic").muted = muted;
-}
-
-function playSFX(id) {
-  const audio = document.getElementById(id);
-  if (!muted && audio) {
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play().catch(err => console.warn(\"SFX play error:\", err));
-  }
-}
-</script>
+  </script>
 </body>
 </html>
