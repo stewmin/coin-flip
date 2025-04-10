@@ -66,7 +66,11 @@
     #vaultRatio {
       font-size: 10px;
       margin-top: 10px;
-      color: cyan;
+    }
+    /* Trading Ratio styling */
+    #tradingRatio {
+      font-size: 10px;
+      margin-top: 10px;
     }
     /* Trading Portal Styling */
     #tradePortal {
@@ -119,13 +123,16 @@
       <input type="password" id="password" placeholder="Password"><br>
       <button onclick="login()">Login / Register</button>
     </div>
+    
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
       <h2>Welcome, <span id="userEmail"></span></h2>
+      
       <!-- Minting Section -->
       <h3>Mint a Coin</h3>
       <button id="mintBtn" disabled>Mint New Coin</button>
       <p id="mintNotice" style="color:red; font-size:10px;">Minting is disabled. Market ratio is below 1.0</p>
+      
       <!-- My Vault Section -->
       <h3>My Vault</h3>
       <div id="vaultSummary">
@@ -133,6 +140,8 @@
       </div>
       <!-- Vault Ratio Display -->
       <p id="vaultRatio"></p>
+      <!-- Trading Ratio Display -->
+      <p id="tradingRatio"></p>
       
       <!-- Trading Portal -->
       <button id="toggleTradePortalButton" onclick="toggleTradePortal()">Open Trading Portal</button>
@@ -195,6 +204,13 @@
     // Helper: Reference to a user's coins
     const userRef = uid => db.ref("users/" + uid + "/coins");
     
+    // Helper: Determine ratio color based on value
+    function getRatioColor(ratio) {
+      if (ratio < 1.0) return "red";
+      else if (ratio <= 1.5) return "yellow";
+      else return "green";
+    }
+    
     // 2. Authentication Listener & Initial Coin Check
     auth.onAuthStateChanged(user => {
       if (user) {
@@ -205,7 +221,8 @@
         updateMintAccess();
         checkInitialCoin();  // Ensure new users start with one coin
         loadVault();
-        updateLeaderboard();  // (if still needed)
+        updateLeaderboard();  // (if needed)
+        updateTradingRatio(); // Update trading ratio on login
       } else {
         document.getElementById("auth-panel").style.display = "block";
         document.getElementById("user-panel").style.display = "none";
@@ -302,8 +319,7 @@
       });
     }
     
-    // 5. My Vault Ratio
-    // Calculate average vault score across all users and compute current user's ratio.
+    // 5. Vault Ratio Calculation and Color Coding
     function updateVaultRatio() {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
@@ -319,12 +335,43 @@
         userRef(currentUser.uid).once("value").then(snapUser => {
           const currentScore = calculateVaultScore(snapUser.val());
           let ratio = averageScore ? (currentScore / averageScore) : 1;
-          document.getElementById("vaultRatio").textContent = "My Vault Ratio: " + ratio.toFixed(2);
+          const vaultRatioEl = document.getElementById("vaultRatio");
+          vaultRatioEl.textContent = "My Vault Ratio: " + ratio.toFixed(2);
+          vaultRatioEl.style.color = getRatioColor(ratio);
         });
       });
     }
     
-    // 6. Trade Request System
+    // 6. Trading Ratio Calculation and Color Coding
+    function updateTradingRatio() {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      let totalTrades = 0, countUsers = 0;
+      db.ref("users").once("value").then(snapshot => {
+        snapshot.forEach(userSnap => {
+          const trades = userSnap.val().trades || 0;
+          totalTrades += trades;
+          countUsers++;
+        });
+        const averageTrades = countUsers ? totalTrades / countUsers : 0;
+        db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
+          const userTrades = snap.val() || 0;
+          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
+          const tradingRatioEl = document.getElementById("tradingRatio");
+          tradingRatioEl.textContent = "My Trading Ratio: " + ratio.toFixed(2);
+          tradingRatioEl.style.color = getRatioColor(ratio);
+        });
+      });
+    }
+    
+    // Helper: Determine color based on ratio value
+    function getRatioColor(ratio) {
+      if (ratio < 1.0) return "red";
+      else if (ratio <= 1.5) return "yellow";
+      else return "green";
+    }
+    
+    // 7. Trade Request System
     // (a) Submit a new trade request
     function submitTradeRequest() {
       const currentUser = auth.currentUser;
@@ -421,7 +468,7 @@
               return;
             }
             // Execute the trade:
-            // Remove acceptor's coins
+            // Remove acceptor's coins (given up coins)
             coinIds.forEach(coinId => {
               db.ref("users/" + currentUser.uid + "/coins/" + coinId).remove();
             });
@@ -439,15 +486,20 @@
             });
             // Remove the trade request
             db.ref("tradeRequests/" + requestId).remove();
+            // Update trade stats for both parties
+            updateUserTradeStat(currentUser.uid);
+            updateUserTradeStat(req.requesterUid);
             playSFX('sfxTrade');
             alert("Trade accepted and completed successfully!");
             loadVault();
+            updateLeaderboard();
+            updateTradingRatio();
           });
         });
       });
     }
     
-    // 7. Leaderboard functionality (optional)
+    // 8. Leaderboard functionality (optional)
     function calculateVaultScore(coins) {
       if (!coins) return 0;
       const rarityValues = { Gold: 1, Platinum: 2, Iridium: 4, Rhodium: 8 };
@@ -475,7 +527,7 @@
       });
     }
     
-    // 8. Trade Ticker functionality (unchanged)
+    // 9. Trade Ticker functionality (unchanged)
     function updateTradeTicker() {
       db.ref("mintRegistry").once("value").then(snap => {
         const data = snap.val();
@@ -494,7 +546,7 @@
     setInterval(updateTradeTicker, 30000);
     updateTradeTicker();
     
-    // 9. Audio Controls
+    // 10. Audio Controls
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
     document.getElementById("bgMusic").muted = muted;
     
@@ -513,7 +565,15 @@
       }
     }
     
-    // 10. Trading Portal Toggle
+    // 11. Update User Trade Stats
+    function updateUserTradeStat(uid) {
+      const ref = db.ref("users/" + uid + "/trades");
+      ref.transaction(currentValue => {
+        return (currentValue || 0) + 1;
+      });
+    }
+    
+    // 12. Trading Portal Toggle
     function toggleTradePortal() {
       const portal = document.getElementById("tradePortal");
       const btn = document.getElementById("toggleTradePortalButton");
@@ -525,7 +585,6 @@
         btn.textContent = "Open Trading Portal";
       }
     }
-    
   </script>
 </body>
 </html>
