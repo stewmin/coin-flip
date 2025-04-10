@@ -231,8 +231,7 @@
 
     // === Global Variables ===
     let currentUsername = "";
-
-    // === Helper Functions ===
+     let canMint = false;     // === Helper Functions ===
     const userRef = uid => db.ref("users/" + uid + "/coins");
     function getRatioColor(ratio) {
       if (ratio < 1.0) return "red";
