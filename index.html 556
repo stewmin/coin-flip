@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* Basic styling adapted from your original design */
+    /* Base styles */
     body {
       margin: 0;
       font-family: 'Press Start 2P', cursive;
@@ -38,11 +38,7 @@
       margin: 20px auto;
       padding: 0 20px;
     }
-    h2 {
-      color: gold;
-      font-size: 12px;
-      margin-top: 30px;
-    }
+    h2 { color: gold; font-size: 12px; margin-top: 30px; }
     button, input, select {
       font-family: 'Press Start 2P', cursive;
       font-size: 10px;
@@ -53,10 +49,7 @@
       margin: 5px 0;
       cursor: pointer;
     }
-    input, select {
-      background: #ddd;
-      color: #000;
-    }
+    input, select { background: #ddd; color: #000; }
     .section {
       margin-top: 30px;
       padding: 15px;
@@ -64,26 +57,10 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    .coin-frame {
-      display: inline-block;
-      width: 80px;
-      height: 80px;
-      border-radius: 8px;
-      text-align: center;
-      padding-top: 10px;
-      font-size: 9px;
-      background: #222;
-      margin: 5px;
-    }
-    .gold { border: 2px solid gold; color: gold; }
-    .platinum { border: 2px solid #b5e2fa; color: #b5e2fa; }
-    .iridium { border: 2px solid #c0c0ff; color: #c0c0ff; }
-    .rhodium { border: 2px solid #fff; color: #fff; }
-    #vaultCoins {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
+    /* New My Vault Summary styling */
+    #vaultSummary p {
+      margin: 5px 0;
+      font-size: 10px;
     }
     footer {
       text-align: center;
@@ -93,8 +70,25 @@
       font-size: 10px;
       margin-top: 40px;
     }
-    label {
-      display: block;
+    label { display: block; margin-top: 10px; }
+    /* Trading Portal Styling */
+    #tradePortal {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
+    #tradeLog {
+      background: #1a120b;
+      border: 2px solid #8b5e3c;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      font-size: 10px;
+      font-family: 'Press Start 2P', cursive;
+      color: #f1e4c8;
       margin-top: 10px;
     }
   </style>
@@ -136,27 +130,32 @@
       <h3>Mint a Coin</h3>
       <button id="mintBtn" disabled>Mint New Coin</button>
       <p id="mintNotice" style="color:red; font-size:10px;">Minting is disabled. Market ratio is below 1.0</p>
-      <!-- Vault Viewer -->
-      <h3>Your Vault</h3>
-      <div id="vaultCoins"></div>
-      <!-- Trade Section -->
-      <h3>Trade Coins</h3>
-      <label>Email:</label>
-      <input type="email" id="recipientEmail" placeholder="Recipient Email">
-      <label>Rarity:</label>
-      <select id="tradeRarity">
-        <option>Gold</option>
-        <option>Platinum</option>
-        <option>Iridium</option>
-        <option>Rhodium</option>
-      </select>
-      <label>Quantity:</label>
-      <input type="number" id="tradeQuantity" min="1" value="1">
-      <button onclick="sendTrade()">Send Trade</button>
-      <p id="tradeStatus" style="font-size:10px; color:lime;"></p>
-      <!-- Leaderboard -->
-      <h3>Leaderboard</h3>
-      <ul id="leaderList" style="font-size:10px; list-style:none; padding-left:0;"></ul>
+      <!-- My Vault Summary Section -->
+      <h3>My Vault</h3>
+      <div id="vaultSummary">
+        <!-- This will be filled with the summary counts -->
+      </div>
+      <!-- Trading Portal Toggle Button -->
+      <button id="toggleTradePortalButton" onclick="toggleTradePortal()">Open Trading Portal</button>
+      <!-- Trading Portal Section -->
+      <div id="tradePortal">
+        <h3>Trading Portal</h3>
+        <label>Recipient Email:</label>
+        <input type="email" id="recipientEmail" placeholder="Recipient Email">
+        <label>Rarity:</label>
+        <select id="tradeRarity">
+          <option>Gold</option>
+          <option>Platinum</option>
+          <option>Iridium</option>
+          <option>Rhodium</option>
+        </select>
+        <label>Quantity:</label>
+        <input type="number" id="tradeQuantity" min="1" value="1">
+        <button onclick="sendTrade()">Send Trade</button>
+        <p id="tradeStatus" style="font-size:10px; color:lime;"></p>
+        <h3>Trade History</h3>
+        <div id="tradeLog"></div>
+      </div>
       <button onclick="logout()">Logout</button>
     </div>
   </div>
@@ -260,23 +259,27 @@
       return "Gold";
     }
     
+    // loadVault now creates a summary of coins by rarity
     function loadVault() {
       const user = auth.currentUser;
       if (!user) return;
       userRef(user.uid).once("value").then(snap => {
         const data = snap.val();
-        const vault = document.getElementById("vaultCoins");
-        vault.innerHTML = "";
-        if (!data) {
-          vault.innerHTML = "<p>No coins yet.</p>";
-          return;
+        // Count coins by rarity
+        const counts = { Gold: 0, Platinum: 0, Iridium: 0, Rhodium: 0 };
+        if (data) {
+          Object.values(data).forEach(coin => {
+            counts[coin.rarity] = (counts[coin.rarity] || 0) + 1;
+          });
         }
-        Object.values(data).forEach(coin => {
-          const div = document.createElement("div");
-          div.className = "coin-frame " + coin.rarity.toLowerCase();
-          div.innerHTML = `#${coin.serial}<br>${coin.rarity}<br><small>${new Date(coin.date).toLocaleDateString()}</small>`;
-          vault.appendChild(div);
-        });
+        // Update the vault summary display
+        const vaultSummary = document.getElementById("vaultSummary");
+        vaultSummary.innerHTML = `
+          <p>Gold: ${counts["Gold"] || 0}</p>
+          <p>Platinum: ${counts["Platinum"] || 0}</p>
+          <p>Iridium: ${counts["Iridium"] || 0}</p>
+          <p>Rhodium: ${counts["Rhodium"] || 0}</p>
+        `;
       });
     }
     
@@ -358,7 +361,6 @@
       db.ref("mintRegistry").once("value").then(snap => {
         const data = snap.val();
         if (!data) return;
-    
         const trades = Object.values(data)
           .sort((a, b) => b.serial - a.serial)
           .slice(0, 10)
@@ -373,7 +375,21 @@
     setInterval(updateTradeTicker, 30000);
     updateTradeTicker();
     
-    // 9. Trade Log for Bulletin Board
+    // 9. Trade Log for Trading Portal
+    function listenTradeLog() {
+      const tradeLogRef = db.ref("tradeLog");
+      tradeLogRef.on("child_added", (snap) => {
+        const msg = snap.val();
+        const p = document.createElement("p");
+        p.textContent = msg;
+        const tradeLogDiv = document.getElementById("tradeLog");
+        tradeLogDiv.appendChild(p);
+        tradeLogDiv.scrollTop = tradeLogDiv.scrollHeight;
+      });
+    }
+    listenTradeLog();
+    
+    // Log a new trade into the trade log
     function logTradeToBoard(senderEmail, recipientEmail, qty, rarity) {
       const tradeLogRef = db.ref("tradeLog");
       const emoji = qty > 3 ? "🪙🪙🪙" : qty > 1 ? "🪙🪙" : "🪙";
@@ -381,7 +397,20 @@
       tradeLogRef.push(msg);
     }
     
-    // 10. Audio Controls
+    // 10. Trading Portal Toggle
+    function toggleTradePortal() {
+      const portal = document.getElementById("tradePortal");
+      const btn = document.getElementById("toggleTradePortalButton");
+      if (portal.style.display === "none" || portal.style.display === "") {
+        portal.style.display = "block";
+        btn.textContent = "Close Trading Portal";
+      } else {
+        portal.style.display = "none";
+        btn.textContent = "Open Trading Portal";
+      }
+    }
+    
+    // 11. Audio Controls
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
     document.getElementById("bgMusic").muted = muted;
     
