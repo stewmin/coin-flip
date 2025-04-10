@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* Basic styling adapted from your original design */
+    /* Base styles */
     body {
       margin: 0;
       font-family: 'Press Start 2P', cursive;
@@ -38,11 +38,7 @@
       margin: 20px auto;
       padding: 0 20px;
     }
-    h2 {
-      color: gold;
-      font-size: 12px;
-      margin-top: 30px;
-    }
+    h2 { color: gold; font-size: 12px; margin-top: 30px; }
     button, input, select {
       font-family: 'Press Start 2P', cursive;
       font-size: 10px;
@@ -53,10 +49,7 @@
       margin: 5px 0;
       cursor: pointer;
     }
-    input, select {
-      background: #ddd;
-      color: #000;
-    }
+    input, select { background: #ddd; color: #000; }
     .section {
       margin-top: 30px;
       padding: 15px;
@@ -64,40 +57,12 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    .coin-frame {
-      display: inline-block;
-      width: 80px;
-      height: 80px;
-      border-radius: 8px;
-      text-align: center;
-      padding-top: 10px;
-      font-size: 9px;
-      background: #222;
-      margin: 5px;
-    }
-    .gold { border: 2px solid gold; color: gold; }
-    .platinum { border: 2px solid #b5e2fa; color: #b5e2fa; }
-    .iridium { border: 2px solid #c0c0ff; color: #c0c0ff; }
-    .rhodium { border: 2px solid #fff; color: #fff; }
-    #vaultCoins {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    footer {
-      text-align: center;
-      background: #000;
-      color: gray;
-      padding: 20px;
+    /* My Vault Summary styling */
+    #vaultSummary p {
+      margin: 5px 0;
       font-size: 10px;
-      margin-top: 40px;
     }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    /* Trade Portal styling */
+    /* Trading Portal Styling */
     #tradePortal {
       display: none;
       margin-top: 20px;
@@ -106,23 +71,25 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    #tradeLog {
-      background: #1a120b;
-      border: 2px solid #8b5e3c;
-      padding: 10px;
-      height: 150px;
-      overflow-y: auto;
+    /* Trade Request form & list styling */
+    #tradeRequestForm p { margin: 5px 0; font-size: 10px; }
+    #tradeRequestsList p { margin: 5px 0; font-size: 10px; }
+    footer {
+      text-align: center;
+      background: #000;
+      color: gray;
+      padding: 20px;
       font-size: 10px;
-      font-family: 'Press Start 2P', cursive;
-      color: #f1e4c8;
-      margin-top: 10px;
+      margin-top: 40px;
     }
+    label { display: block; margin-top: 10px; }
   </style>
 </head>
 <body>
   <header>
     <h1>🏛️ Vault Street</h1>
   </header>
+  
   <!-- AUDIO SYSTEM -->
   <audio id="bgMusic" autoplay loop>
     <source src="https://cdn.pixabay.com/download/audio/2023/04/07/audio_a9c23c43fb.mp3?filename=fantasy-market-ambience-143152.mp3" type="audio/mp3">
@@ -133,8 +100,10 @@
   <audio id="sfxTrade">
     <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6a9ee734cc.mp3?filename=coins-153522.mp3" type="audio/mp3">
   </audio>
+  
   <!-- Mute/Unmute Toggle -->
   <button onclick="toggleAudio()" style="position: fixed; top: 10px; right: 10px; z-index:999;">🔊 Mute/Unmute</button>
+  
   <!-- Ticker -->
   <div class="ticker">
     <marquee id="tradeTicker" scrollamount="4">Vault Street Exchange — live market loading...</marquee>
@@ -148,38 +117,56 @@
       <input type="password" id="password" placeholder="Password"><br>
       <button onclick="login()">Login / Register</button>
     </div>
+    
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
       <h2>Welcome, <span id="userEmail"></span></h2>
+      
       <!-- Minting Section -->
       <h3>Mint a Coin</h3>
       <button id="mintBtn" disabled>Mint New Coin</button>
       <p id="mintNotice" style="color:red; font-size:10px;">Minting is disabled. Market ratio is below 1.0</p>
-      <!-- Vault Viewer -->
-      <h3>Your Vault</h3>
-      <div id="vaultCoins"></div>
       
-      <!-- Trading Portal Toggle Button -->
+      <!-- My Vault Summary Section -->
+      <h3>My Vault</h3>
+      <div id="vaultSummary">
+        <!-- Coin counts per rarity will appear here -->
+      </div>
+      
+      <!-- Trading Portal -->
       <button id="toggleTradePortalButton" onclick="toggleTradePortal()">Open Trading Portal</button>
-      
-      <!-- Trading Portal Section -->
       <div id="tradePortal">
         <h3>Trading Portal</h3>
-        <label>Recipient Email:</label>
-        <input type="email" id="recipientEmail" placeholder="Recipient Email">
-        <label>Rarity:</label>
-        <select id="tradeRarity">
-          <option>Gold</option>
-          <option>Platinum</option>
-          <option>Iridium</option>
-          <option>Rhodium</option>
-        </select>
-        <label>Quantity:</label>
-        <input type="number" id="tradeQuantity" min="1" value="1">
-        <button onclick="sendTrade()">Send Trade</button>
-        <p id="tradeStatus" style="font-size:10px; color:lime;"></p>
-        <h3>Trade History</h3>
-        <div id="tradeLog"></div>
+        
+        <!-- Trade Request Creation Form -->
+        <div id="tradeRequestForm" class="section" style="background:#222;">
+          <h4>Create Trade Request</h4>
+          <label>Offer Coin Type:</label>
+          <select id="tradeOfferType">
+            <option>Gold</option>
+            <option>Platinum</option>
+            <option>Iridium</option>
+            <option>Rhodium</option>
+          </select>
+          <label>Offer Quantity:</label>
+          <input type="number" id="tradeOfferQty" min="1" value="1">
+          <label>Request Coin Type:</label>
+          <select id="tradeRequestType">
+            <option>Gold</option>
+            <option>Platinum</option>
+            <option>Iridium</option>
+            <option>Rhodium</option>
+          </select>
+          <label>Request Quantity:</label>
+          <input type="number" id="tradeRequestQty" min="1" value="1">
+          <button onclick="submitTradeRequest()">Submit Trade Request</button>
+        </div>
+        
+        <!-- Pending Trade Requests List -->
+        <h4>Pending Trade Requests</h4>
+        <div id="tradeRequestsList">
+          <!-- Trade requests will be displayed here -->
+        </div>
       </div>
       
       <button onclick="logout()">Logout</button>
@@ -206,7 +193,10 @@
     const auth = firebase.auth();
     const db = firebase.database();
     
-    // 2. Listen for authentication state changes
+    // Helper: Reference to a user's coins
+    const userRef = uid => db.ref("users/" + uid + "/coins");
+    
+    // 2. Authentication Listener
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById("auth-panel").style.display = "none";
@@ -215,14 +205,14 @@
         db.ref("users/" + user.uid).update({ email: user.email });
         updateMintAccess();
         loadVault();
-        updateLeaderboard();
+        updateLeaderboard();  // (if you still have this functionality)
       } else {
         document.getElementById("auth-panel").style.display = "block";
         document.getElementById("user-panel").style.display = "none";
       }
     });
     
-    // 3. Login / Register
+    // 3. Login / Register functions
     function login() {
       const email = document.getElementById("email").value;
       const pass = document.getElementById("password").value;
@@ -235,13 +225,11 @@
       });
     }
     
-    // 4. Logout
     function logout() {
       auth.signOut();
     }
     
-    // 5. Vault & Minting functionality
-    const userRef = uid => db.ref("users/" + uid + "/coins");
+    // 4. Minting & Vault Functionality (unchanged from before)
     const registryRef = db.ref("mintRegistry");
     const mintedRef = db.ref("mintedCount");
     let canMint = false;
@@ -285,75 +273,162 @@
       return "Gold";
     }
     
+    // loadVault creates a summary of coins in the user's vault by rarity
     function loadVault() {
       const user = auth.currentUser;
       if (!user) return;
       userRef(user.uid).once("value").then(snap => {
         const data = snap.val();
-        const vault = document.getElementById("vaultCoins");
-        vault.innerHTML = "";
-        if (!data) {
-          vault.innerHTML = "<p>No coins yet.</p>";
-          return;
+        const counts = { Gold: 0, Platinum: 0, Iridium: 0, Rhodium: 0 };
+        if (data) {
+          Object.values(data).forEach(coin => {
+            counts[coin.rarity] = (counts[coin.rarity] || 0) + 1;
+          });
         }
-        Object.values(data).forEach(coin => {
-          const div = document.createElement("div");
-          div.className = "coin-frame " + coin.rarity.toLowerCase();
-          div.innerHTML = `#${coin.serial}<br>${coin.rarity}<br><small>${new Date(coin.date).toLocaleDateString()}</small>`;
-          vault.appendChild(div);
-        });
+        const vaultSummary = document.getElementById("vaultSummary");
+        vaultSummary.innerHTML = `
+          <p>Gold: ${counts["Gold"] || 0}</p>
+          <p>Platinum: ${counts["Platinum"] || 0}</p>
+          <p>Iridium: ${counts["Iridium"] || 0}</p>
+          <p>Rhodium: ${counts["Rhodium"] || 0}</p>
+        `;
       });
     }
     
-    // 6. Trade functionality
-    function sendTrade() {
-      const rarity = document.getElementById("tradeRarity").value;
-      const qty = parseInt(document.getElementById("tradeQuantity").value);
-      const recipientEmail = document.getElementById("recipientEmail").value;
-      const user = auth.currentUser;
-      if (!user || !recipientEmail || !rarity || qty < 1) return alert("Invalid input");
+    // 5. Trade Request System
+    // (a) Submit a new trade request
+    function submitTradeRequest() {
+      const currentUser = auth.currentUser;
+      if (!currentUser) { alert("You must be logged in."); return; }
+      const offerType = document.getElementById("tradeOfferType").value;
+      const offerQty = parseInt(document.getElementById("tradeOfferQty").value);
+      const requestType = document.getElementById("tradeRequestType").value;
+      const requestQty = parseInt(document.getElementById("tradeRequestQty").value);
+      
+      if (offerQty < 1 || requestQty < 1) {
+        alert("Please enter valid quantities.");
+        return;
+      }
+      
+      const tradeRequest = {
+        requesterUid: currentUser.uid,
+        requesterEmail: currentUser.email,
+        offer: { coinType: offerType, quantity: offerQty },
+        request: { coinType: requestType, quantity: requestQty },
+        timestamp: Date.now()
+      };
+      
+      db.ref("tradeRequests").push(tradeRequest, error => {
+        if (error) {
+          alert("Trade request submission failed.");
+        } else {
+          alert("Trade request submitted.");
+        }
+      });
+    }
     
-      userRef(user.uid).once("value").then(snap => {
-        const coins = snap.val();
-        if (!coins) return alert("No coins to send.");
-        const matching = Object.entries(coins).filter(([id, c]) => c.rarity === rarity).slice(0, qty);
-        if (matching.length < qty) return alert("Not enough coins of that rarity.");
-    
-        db.ref("users").once("value").then(allUsers => {
-          let recipientUID = null;
-          allUsers.forEach(userSnap => {
-            if (userSnap.val().email === recipientEmail) {
-              recipientUID = userSnap.key;
+    // (b) Listen for and display pending trade requests
+    function listenTradeRequests() {
+      const ref = db.ref("tradeRequests");
+      ref.on("value", (snap) => {
+        const data = snap.val();
+        const listDiv = document.getElementById("tradeRequestsList");
+        listDiv.innerHTML = "";
+        if (!data) {
+          listDiv.innerHTML = "<p>No pending trade requests.</p>";
+        } else {
+          Object.entries(data).forEach(([id, req]) => {
+            let html = `<p>${req.requesterEmail} offers ${req.offer.quantity} ${req.offer.coinType} coin${req.offer.quantity > 1 ? "s" : ""} in exchange for ${req.request.quantity} ${req.request.coinType} coin${req.request.quantity > 1 ? "s" : ""}`;
+            if (auth.currentUser && auth.currentUser.uid !== req.requesterUid) {
+              html += ` <button onclick="acceptTradeRequest('${id}')">Accept Trade</button>`;
             }
+            html += `</p>`;
+            listDiv.innerHTML += html;
           });
-          if (!recipientUID) return alert("Recipient not found");
+        }
+      });
+    }
+    listenTradeRequests();
     
-          matching.forEach(([coinID, coinData]) => {
-            userRef(recipientUID).child(coinID).set(coinData);
-            userRef(user.uid).child(coinID).remove();
+    // (c) Accept a trade request
+    function acceptTradeRequest(requestId) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) { alert("You must be logged in."); return; }
+      db.ref("tradeRequests/" + requestId).once("value").then(snap => {
+        const req = snap.val();
+        if (!req) { alert("Trade request no longer exists."); return; }
+        // Check that the acceptor has enough of the requested coin type
+        userRef(currentUser.uid).once("value").then(snapVault => {
+          const vaultData = snapVault.val();
+          let count = 0;
+          let coinIds = [];
+          if (vaultData) {
+            Object.entries(vaultData).forEach(([coinId, coin]) => {
+              if (coin.rarity === req.request.coinType && count < req.request.quantity) {
+                count++;
+                coinIds.push(coinId);
+              }
+            });
+          }
+          if (count < req.request.quantity) {
+            alert("You do not have enough " + req.request.coinType + " coins to fulfill this trade.");
+            return;
+          }
+          // Now check that the requester still has the offered coins
+          userRef(req.requesterUid).once("value").then(snapRequester => {
+            const requesterData = snapRequester.val();
+            let reqCount = 0;
+            let reqCoinIds = [];
+            if (requesterData) {
+              Object.entries(requesterData).forEach(([coinId, coin]) => {
+                if (coin.rarity === req.offer.coinType && reqCount < req.offer.quantity) {
+                  reqCount++;
+                  reqCoinIds.push(coinId);
+                }
+              });
+            }
+            if (reqCount < req.offer.quantity) {
+              alert("The requester no longer has enough " + req.offer.coinType + " coins.");
+              return;
+            }
+            // Execute the trade:
+            // Remove the acceptor's coins (the ones they are giving up)
+            coinIds.forEach(coinId => {
+              db.ref("users/" + currentUser.uid + "/coins/" + coinId).remove();
+            });
+            // Add those coins to the requester's vault
+            coinIds.forEach(() => {
+              db.ref("users/" + req.requesterUid + "/coins").push({ serial: "traded", rarity: req.request.coinType, date: new Date().toISOString() });
+            });
+            // Remove the requester's offered coins
+            reqCoinIds.forEach(coinId => {
+              db.ref("users/" + req.requesterUid + "/coins/" + coinId).remove();
+            });
+            // Add those coins to the acceptor's vault
+            reqCoinIds.forEach(() => {
+              db.ref("users/" + currentUser.uid + "/coins").push({ serial: "traded", rarity: req.offer.coinType, date: new Date().toISOString() });
+            });
+            // Finally, remove the trade request entry
+            db.ref("tradeRequests/" + requestId).remove();
+            playSFX('sfxTrade');
+            alert("Trade accepted and completed successfully!");
+            loadVault();
           });
-          playSFX('sfxTrade');
-          document.getElementById("tradeStatus").textContent = `✅ Sent ${qty} ${rarity} coin(s) to ${recipientEmail}`;
-          loadVault();
-          updateLeaderboard();
-          logTradeToBoard(user.email, recipientEmail, qty, rarity);
         });
       });
     }
     
-    // 7. Leaderboard functionality
+    // 6. (Optional) Leaderboard functionality (if still needed)
     function calculateVaultScore(coins) {
       if (!coins) return 0;
       const rarityValues = { Gold: 1, Platinum: 2, Iridium: 4, Rhodium: 8 };
       let score = 0;
       const owned = new Set();
-    
       Object.values(coins).forEach(c => {
         owned.add(c.rarity);
         score += rarityValues[c.rarity] || 0;
         if (parseInt(c.serial) < 100) score += 1;
       });
-    
       if (owned.size === 4) score += 5;
       return score;
     }
@@ -367,18 +442,11 @@
           scores.push({ email: userSnap.val()?.email || "Unknown", score });
         });
         scores.sort((a, b) => b.score - a.score);
-        const list = document.getElementById("leaderList");
-        list.innerHTML = "";
-        scores.forEach(u => {
-          const color = u.score < 1 ? "red" : u.score > 2 ? "limegreen" : "orange";
-          const li = document.createElement("li");
-          li.innerHTML = `${u.email} — <span style="color:${color}">${u.score.toFixed(2)}</span>`;
-          list.appendChild(li);
-        });
+        // (This could update a leaderboard element if you have one)
       });
     }
     
-    // 8. Trade Ticker functionality
+    // 7. Trade Ticker functionality (unchanged)
     function updateTradeTicker() {
       db.ref("mintRegistry").once("value").then(snap => {
         const data = snap.val();
@@ -397,42 +465,7 @@
     setInterval(updateTradeTicker, 30000);
     updateTradeTicker();
     
-    // 9. Trade Log for Trading Portal (listen for new trade log messages)
-    function listenTradeLog() {
-      const tradeLogRef = db.ref("tradeLog");
-      tradeLogRef.on("child_added", (snap) => {
-        const msg = snap.val();
-        const p = document.createElement("p");
-        p.textContent = msg;
-        const tradeLogDiv = document.getElementById("tradeLog");
-        tradeLogDiv.appendChild(p);
-        tradeLogDiv.scrollTop = tradeLogDiv.scrollHeight;
-      });
-    }
-    listenTradeLog();
-    
-    // Log a new trade into the trade log
-    function logTradeToBoard(senderEmail, recipientEmail, qty, rarity) {
-      const tradeLogRef = db.ref("tradeLog");
-      const emoji = qty > 3 ? "🪙🪙🪙" : qty > 1 ? "🪙🪙" : "🪙";
-      const msg = `${senderEmail} sent ${qty} ${rarity} coin${qty > 1 ? 's' : ''} to ${recipientEmail} ${emoji}`;
-      tradeLogRef.push(msg);
-    }
-    
-    // 10. Trading Portal Toggle
-    function toggleTradePortal() {
-      const portal = document.getElementById("tradePortal");
-      const btn = document.getElementById("toggleTradePortalButton");
-      if (portal.style.display === "none" || portal.style.display === "") {
-        portal.style.display = "block";
-        btn.textContent = "Close Trading Portal";
-      } else {
-        portal.style.display = "none";
-        btn.textContent = "Open Trading Portal";
-      }
-    }
-    
-    // 11. Audio Controls
+    // 8. Audio Controls
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
     document.getElementById("bgMusic").muted = muted;
     
@@ -450,6 +483,20 @@
         audio.play().catch(err => console.warn("SFX play error:", err));
       }
     }
+    
+    // 9. Trading Portal Toggle
+    function toggleTradePortal() {
+      const portal = document.getElementById("tradePortal");
+      const btn = document.getElementById("toggleTradePortalButton");
+      if (portal.style.display === "none" || portal.style.display === "") {
+        portal.style.display = "block";
+        btn.textContent = "Close Trading Portal";
+      } else {
+        portal.style.display = "none";
+        btn.textContent = "Open Trading Portal";
+      }
+    }
+    
   </script>
 </body>
 </html>
