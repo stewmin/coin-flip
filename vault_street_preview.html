@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vault Street - Fantasy Trading Market</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: url('https://i.imgur.com/eDdBA4c.png') repeat;
+      color: #fff;
+    }
+    header, footer {
+      background: #222;
+      color: gold;
+      text-align: center;
+      padding: 10px;
+      border-bottom: 4px solid #555;
+    }
+    .container {
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+      background: rgba(0, 0, 0, 0.7);
+      border: 4px ridge #444;
+    }
+    .market-building {
+      background: url('https://i.imgur.com/yI8swjW.png') no-repeat center;
+      background-size: cover;
+      height: 120px;
+      margin-bottom: 20px;
+      border: 2px solid gold;
+    }
+    h1 {
+      font-size: 1.2em;
+    }
+    .market-listing, .vault-gallery, .trade-banner, .leaderboard {
+      background: #333;
+      padding: 10px;
+      border: 2px dashed #888;
+      margin-top: 20px;
+    }
+    .market-listing button, .vault-gallery button {
+      font-family: 'Press Start 2P', cursive;
+      padding: 6px 10px;
+      margin: 4px;
+      background: gold;
+      color: #000;
+      border: none;
+      cursor: pointer;
+    }
+    .coin-frame {
+      display: inline-block;
+      margin: 5px;
+      padding: 10px;
+      border: 3px solid gold;
+      background: #222;
+    }
+    .coin-frame.platinum { border-color: #b5e2fa; }
+    .coin-frame.iridium { border-color: #6d6dfb; }
+    .coin-frame.rhodium { border-color: #e6e8fa; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏛️ Vault Street - Fantasy Trading Market</h1>
+  </header>
+
+  <div class="container">
+    <div class="market-building" title="Vaults active: 1,021 coins - Registry health: Excellent">
+    </div>
+
+    <div class="trade-banner">
+      <marquee behavior="scroll" direction="left" scrollamount="4">
+        #991: Rhodium → 4 Platinum (2.47) ✅ | #990: Gold → 1 Iridium (0.88) ❌ | #989: Platinum → 2 Gold (1.01) ⚖️
+      </marquee>
+    </div>
+
+    <div class="vault-gallery">
+      <h2>Your Vault</h2>
+      <div class="coin-frame">#542<br>Gold</div>
+      <div class="coin-frame platinum">#543<br>Platinum</div>
+      <div class="coin-frame iridium">#544<br>Iridium</div>
+      <div class="coin-frame rhodium">#545<br>Rhodium</div>
+      <p>Vault Value Ratio: <span style="color:lime">2.112</span></p>
+      <button>List Coins for Trade</button>
+    </div>
+
+    <div class="market-listing">
+      <h2>Vault Street Marketplace</h2>
+      <label>Filter: 
+        <select>
+          <option>All</option>
+          <option>Gold</option>
+          <option>Platinum</option>
+          <option>Iridium</option>
+          <option>Rhodium</option>
+        </select>
+      </label>
+      <div>
+        <strong>#546</strong> — Rhodium | Asking: 4 Platinum 
+        <button>Buy</button> 
+        <button>Counter Offer</button>
+      </div>
+      <div>
+        <strong>#547-549</strong> — Bundle: 2 Iridium + 1 Gold | Asking: 3 Platinum 
+        <button>Buy</button> 
+        <button>Counter Offer</button>
+      </div>
+    </div>
+
+    <div class="leaderboard">
+      <h2>Vault Leaderboard</h2>
+      <p>🥇 UserA — Vault Ratio: <span style="color:limegreen">2.88</span></p>
+      <p>🥈 UserB — Vault Ratio: <span style="color:yellow">1.65</span></p>
+      <p>🥉 UserC — Vault Ratio: <span style="color:red">0.78</span></p>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Vault Street</p>
+  </footer>
+</body>
+</html>
