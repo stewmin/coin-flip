@@ -19,22 +19,40 @@
       text-align: center;
       background: #222;
       color: gold;
-      padding: 10px;
+      padding: 12px;
     }
     .container {
-      max-width: 960px;
-      margin: auto;
+      max-width: 1024px;
+      margin: 0 auto;
       padding: 20px;
     }
-    button {
+    button, input, select {
       font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
       background: gold;
       color: black;
       border: none;
-      padding: 8px 16px;
-      margin: 6px 0;
+      padding: 8px 12px;
+      margin: 4px 0;
       cursor: pointer;
     }
+    input, select {
+      background: #eee;
+      color: #000;
+    }
+    .coin-frame {
+      border: 2px solid gold;
+      background: #111;
+      border-radius: 10px;
+      text-align: center;
+      width: 100px;
+      padding: 6px;
+      font-size: 10px;
+    }
+    .gold { border-color: gold; }
+    .platinum { border-color: #b5e2fa; }
+    .iridium { border-color: #c0c0ff; }
+    .rhodium { border-color: #e6e8fa; }
   </style>
 </head>
 <body>
@@ -49,12 +67,13 @@
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6a9ee734cc.mp3?filename=coins-153522.mp3" type="audio/mp3">
 </audio>
 
-<button onclick="toggleAudio()" style="float:right;">🔊 Mute/Unmute</button>
+<button onclick="toggleAudio()" style="float:right; margin: 10px;">🔊 Mute/Unmute</button>
+
 <header>
   <h1>🏛️ Vault Street</h1>
 </header>
-
 <div class="container" id="app">
+  <!-- Content blocks go here -->
   <div id="tradeBanner" style="background: #111; padding: 8px; font-size: 10px; overflow: hidden; white-space: nowrap;">
     <marquee id="tradeTicker" scrollamount="4">Loading trades...</marquee>
   </div>
@@ -106,13 +125,11 @@
     <button onclick="login()">Login / Register</button>
   </div>
 </div>
-
 <footer>
   <p>&copy; 2025 Vault Street</p>
 </footer>
-
 <script>
-// Firebase config block
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
   authDomain: "coin-flip-4a693.firebaseapp.com",
@@ -125,18 +142,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
-
-// Utility functions
 const userRef = uid => db.ref("users/" + uid + "/coins");
 const registryRef = db.ref("mintRegistry");
 const mintedRef = db.ref("mintedCount");
-
 let canMint = false;
 
 function updateMintAccess() {
   db.ref("tradeStats").once("value").then(snap => {
-    const data = snap.val();
-    const avgRatio = data?.averageTradeRatio || 0;
+    const data = snap.val() || {};
+    const avgRatio = data.averageTradeRatio ?? 0;
     canMint = avgRatio >= 1.0;
     document.getElementById("mintBtn").disabled = !canMint;
     document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
@@ -148,6 +162,7 @@ auth.onAuthStateChanged(user => {
     document.getElementById("auth-panel").style.display = "none";
     document.getElementById("user-panel").style.display = "block";
     document.getElementById("userEmail").textContent = user.email;
+    db.ref("users/" + user.uid).update({ email: user.email });
     updateMintAccess();
     loadVault();
     updateLeaderboard();
@@ -161,13 +176,13 @@ function login() {
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
   auth.signInWithEmailAndPassword(email, pass).catch(() => {
-    auth.createUserWithEmailAndPassword(email, pass).catch(err => alert(err.message));
+    auth.createUserWithEmailAndPassword(email, pass)
+      .then(userCred => db.ref("users/" + userCred.user.uid).update({ email }))
+      .catch(err => alert(err.message));
   });
 }
 
-function logout() {
-  auth.signOut();
-}
+function logout() { auth.signOut(); }
 
 document.getElementById("mintBtn").addEventListener("click", () => {
   const user = auth.currentUser;
@@ -205,12 +220,10 @@ function loadVault() {
     const data = snap.val();
     const vault = document.getElementById("vaultCoins");
     vault.innerHTML = "";
-
     if (!data) {
       vault.innerHTML = "<p>No coins yet.</p>";
       return;
     }
-
     Object.values(data).forEach(coin => {
       const div = document.createElement("div");
       div.className = "coin-frame " + coin.rarity.toLowerCase();
@@ -225,13 +238,11 @@ function calculateVaultScore(coins) {
   const rarityValues = { Gold: 1, Platinum: 2, Iridium: 4, Rhodium: 8 };
   let score = 0;
   const owned = new Set();
-
   Object.values(coins).forEach(c => {
     owned.add(c.rarity);
     score += rarityValues[c.rarity] || 0;
     if (parseInt(c.serial) < 100) score += 1;
   });
-
   if (owned.size === 4) score += 5;
   return score;
 }
@@ -239,13 +250,11 @@ function calculateVaultScore(coins) {
 function updateLeaderboard() {
   db.ref("users").once("value").then(snapshot => {
     const scores = [];
-
     snapshot.forEach(userSnap => {
       const coins = userSnap.val()?.coins;
       const score = calculateVaultScore(coins);
       scores.push({ email: userSnap.val()?.email || "Unknown", score });
     });
-
     scores.sort((a, b) => b.score - a.score);
     const list = document.getElementById("leaderList");
     list.innerHTML = "";
@@ -297,7 +306,6 @@ function updateTradeTicker() {
   db.ref("mintRegistry").once("value").then(snap => {
     const data = snap.val();
     if (!data) return;
-
     const trades = Object.values(data)
       .sort((a, b) => b.serial - a.serial)
       .slice(0, 10)
@@ -306,7 +314,6 @@ function updateTradeTicker() {
         const emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
         return `#${entry.serial}: ${entry.rarity} (${ratio.toFixed(2)}) ${emoji}`;
       });
-
     document.getElementById("tradeTicker").textContent = trades.join(" | ");
   });
 }
@@ -323,7 +330,12 @@ function toggleAudio() {
 }
 
 function playSFX(id) {
-  if (!muted) document.getElementById(id).play();
+  const audio = document.getElementById(id);
+  if (!muted && audio) {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play().catch(err => console.warn(\"SFX play error:\", err));
+  }
 }
 </script>
 </body>
