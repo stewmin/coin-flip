@@ -366,37 +366,46 @@
     setInterval(updateMintedStats, 60000);
     updateMintedStats();
     
-    // === Authentication & Initial Setup ===
     auth.onAuthStateChanged(user => {
-      if (user) {
-        document.getElementById("auth-panel").style.display = "none";
-        document.getElementById("user-panel").style.display = "block";
-        db.ref("users/" + user.uid).once("value").then(snap => {
-          const data = snap.val() || {};
-          currentUsername = data.username || "";
-          if (!currentUsername) {
-            currentUsername = document.getElementById("username").value.trim() || user.email.split("@")[0];
-            db.ref("users/" + user.uid).update({ username: currentUsername });
-          }
-          document.getElementById("displayName").textContent = currentUsername;
-          if (user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
-            document.getElementById("adminPanel").style.display = "block";
-          } else {
-            document.getElementById("adminPanel").style.display = "none";
-          }
-        });
-        db.ref("users/" + user.uid).update({ email: user.email });
-        updateMintAccess();
-        checkInitialCoin();
-        loadVault();
-        updateLeaderboard();
-        updateTradingRatio();
+  if (user) {
+    console.log("User logged in:", user);
+    document.getElementById("auth-panel").style.display = "none";
+    document.getElementById("user-panel").style.display = "block";
+    db.ref("users/" + user.uid).once("value").then(snap => {
+      let data = snap.val() || {};
+      currentUsername = data.username || "";
+      // Force the admin username if the email matches
+      if (user.email === "stewmin20k@gmail.com") {
+        console.log("Forcing admin username");
+        currentUsername = "stewmin";
+        data.username = "stewmin";
+        db.ref("users/" + user.uid).update({ username: "stewmin" });
+      } else if (!currentUsername) {
+        currentUsername = document.getElementById("username").value.trim() || user.email.split("@")[0];
+        db.ref("users/" + user.uid).update({ username: currentUsername });
+      }
+      console.log("Current username:", currentUsername);
+      document.getElementById("displayName").textContent = currentUsername;
+      // Show admin panel if both email and username match the admin credentials.
+      if (user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
+        document.getElementById("adminPanel").style.display = "block";
+        console.log("Admin panel displayed");
       } else {
-        document.getElementById("auth-panel").style.display = "block";
-        document.getElementById("user-panel").style.display = "none";
+        document.getElementById("adminPanel").style.display = "none";
+        console.log("Admin panel hidden");
       }
     });
-    
+    db.ref("users/" + user.uid).update({ email: user.email });
+    updateMintAccess();
+    checkInitialCoin();
+    loadVault();
+    updateLeaderboard();
+    updateTradingRatio();
+  } else {
+    document.getElementById("auth-panel").style.display = "block";
+    document.getElementById("user-panel").style.display = "none";
+  }
+});    
     function login() {
       const email = document.getElementById("email").value;
       const pass = document.getElementById("password").value;
