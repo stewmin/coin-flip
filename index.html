@@ -245,7 +245,8 @@ function login() {
     auth.createUserWithEmailAndPassword(email, pass)
       .then(userCred => {
         db.ref("users/" + userCred.user.uid).update({ email });
-      })
+<button onclick="login()">Login / Register</button>
+})
       .catch(err => alert(err.message));
   });
 }
