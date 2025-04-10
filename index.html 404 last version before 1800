@@ -53,9 +53,7 @@
       font-size: 12px;
       margin-top: 30px;
     }
-    button,
-    input,
-    select {
+    button, input, select {
       font-family: 'Press Start 2P', cursive;
       font-size: 10px;
       background: gold;
@@ -65,11 +63,7 @@
       margin: 5px 0;
       cursor: pointer;
     }
-    input,
-    select {
-      background: #ddd;
-      color: #000;
-    }
+    input, select { background: #ddd; color: #000; }
     .section {
       margin-top: 30px;
       padding: 15px;
@@ -77,23 +71,12 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    /* Auth Panel styling */
-    #auth-panel input {
-      margin-bottom: 5px;
-    }
-    /* My Vault & Stats */
-    #vaultSummary p,
-    #mintedStats p {
-      margin: 5px 0;
-      font-size: 10px;
-    }
-    #vaultRatio,
-    #tradingRatio,
-    #tradeRecommendation {
-      font-size: 10px;
-      margin-top: 10px;
-    }
-    /* Trading Portal Styling */
+    /* Auth Panel */
+    #auth-panel input { margin-bottom: 5px; }
+    /* Vault & Stats */
+    #vaultSummary p, #mintedStats p { margin: 5px 0; font-size: 10px; }
+    #vaultRatio, #tradingRatio, #tradeRecommendation { font-size: 10px; margin-top: 10px; }
+    /* Trading Portal */
     #tradePortal {
       display: none;
       margin-top: 20px;
@@ -102,25 +85,12 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    #tradeRequestForm p,
-    #tradeRequestsList p {
-      margin: 5px 0;
-      font-size: 10px;
-    }
+    #tradeRequestForm p, #tradeRequestsList p { margin: 5px 0; font-size: 10px; }
     /* Trade Filters */
-    #tradeFilters label {
-      display: block;
-      margin-top: 10px;
-    }
-    /* Tiny Mute Button in User Panel */
-    #userControls {
-      text-align: right;
-    }
-    #userControls button {
-      font-size: 8px;
-      padding: 2px 4px;
-      margin: 0;
-    }
+    #tradeFilters label { display: block; margin-top: 10px; }
+    /* Tiny Mute Button */
+    #userControls { text-align: right; }
+    #userControls button { font-size: 8px; padding: 2px 4px; margin: 0; }
     footer {
       text-align: center;
       background: #000;
@@ -142,12 +112,10 @@
     <p id="todayMinted">Minted Today: Loading...</p>
   </div>
   
-  <!-- General Ticker -->
+  <!-- Tickers -->
   <div class="ticker">
     <marquee id="tradeTicker" scrollamount="4">Vault Street Exchange — live market loading...</marquee>
   </div>
-  
-  <!-- Confirmed Trades Ticker -->
   <div class="ticker">
     <marquee id="confirmedTradeTicker" scrollamount="4">Confirmed Trades: Loading...</marquee>
   </div>
@@ -165,12 +133,11 @@
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
       <div id="userControls">
-        <!-- Tiny mute/unmute button in user panel -->
         <button onclick="toggleAudio()">🔇</button>
       </div>
       <h2>Welcome, <span id="displayName"></span></h2>
       
-      <!-- Admin Panel (visible only to admin account) -->
+      <!-- Admin Panel (only if email is admin and username is "stewmin") -->
       <div id="adminPanel" style="display:none; margin-bottom:10px;">
         <button onclick="adminResetMarket()">Admin: Reset Market Ratio to 1.0</button>
         <button onclick="adminClearCoinHistory()">Admin: Clear All Coin History</button>
@@ -183,9 +150,7 @@
       
       <!-- My Vault Section -->
       <h3>My Vault</h3>
-      <div id="vaultSummary">
-        <!-- Coin counts per rarity will appear here -->
-      </div>
+      <div id="vaultSummary"><!-- Populated dynamically --></div>
       <p id="vaultRatio"></p>
       <p id="tradingRatio"></p>
       <div id="tradeRecommendation"></div>
@@ -194,7 +159,7 @@
       <button id="toggleTradePortalButton" onclick="toggleTradePortal()">Open Trading Portal</button>
       <div id="tradePortal">
         <h3>Trading Portal</h3>
-        <!-- Trade Request Creation Form -->
+        <!-- Trade Request Form -->
         <div id="tradeRequestForm" class="section" style="background:#222;">
           <h4>Create Trade Request</h4>
           <label>Offer Coin Type:</label>
@@ -233,11 +198,9 @@
           <button onclick="applyTradeFilter()">Apply Filter</button>
           <button onclick="clearTradeFilter()">Clear Filter</button>
         </div>
-        <!-- Pending Trade Requests List -->
+        <!-- Pending Trade Requests -->
         <h4>Pending Trade Requests</h4>
-        <div id="tradeRequestsList">
-          <!-- Trade requests will be listed here -->
-        </div>
+        <div id="tradeRequestsList"><!-- Populated dynamically --></div>
       </div>
       
       <button onclick="logout()">Logout</button>
@@ -249,9 +212,9 @@
   </footer>
   
   <script>
-    // === CONSTANTS ===
-    const TRADE_EXPIRATION_MS = 3600000; // 1 hour in ms
-    
+    // === Constants ===
+    const TRADE_EXPIRATION_MS = 3600000; // 1 hour
+
     // === Firebase Initialization ===
     const firebaseConfig = {
       apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
@@ -265,10 +228,10 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
-    
-    // Global variable for current username
+
+    // === Global Variables ===
     let currentUsername = "";
-    
+
     // === Helper Functions ===
     const userRef = uid => db.ref("users/" + uid + "/coins");
     function getRatioColor(ratio) {
@@ -276,8 +239,7 @@
       else if (ratio <= 1.5) return "yellow";
       else return "green";
     }
-    
-    // New Minting Algorithm using 7 rarities.
+    // 7-Rarity Minting Algorithm
     function getRarity() {
       const roll = Math.random() * 100;
       if (roll < 50) return "Copper";      // 50%
@@ -288,7 +250,7 @@
       else if (roll < 99) return "Iridium";  // 2%
       else return "Rhodium";                // 1%
     }
-    
+
     // === Admin Functions ===
     function adminResetMarket() {
       const user = auth.currentUser;
@@ -300,14 +262,11 @@
         alert("You do not have permission to do that.");
       }
     }
-    
     function adminClearCoinHistory() {
       const user = auth.currentUser;
       if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
         if (confirm("Are you sure you want to clear all coin history? This will erase all coins from the mint registry and user vaults.")) {
-          // Clear the mint registry
           db.ref("mintRegistry").remove();
-          // Clear coins from all users’ vaults
           db.ref("users").once("value").then(snapshot => {
             snapshot.forEach(userSnap => {
               const uid = userSnap.key;
@@ -322,14 +281,14 @@
         alert("You do not have permission to do that.");
       }
     }
-    
+
     // === Market Ratio Auto-Reset at 7am CT ===
     function resetMarketRatioIfNeeded() {
       db.ref("tradeStats/lastReset").once("value").then(snap => {
         const lastReset = snap.val() || 0;
         const now = new Date();
         const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
-        const nowCT = new Date(nowUTC.getTime() - 6 * 3600000); // Assume CT = UTC-6 (simplified)
+        const nowCT = new Date(nowUTC.getTime() - 6 * 3600000); // Simplified: CT = UTC-6
         const todayStr = nowCT.toISOString().split("T")[0];
         const lastResetDate = lastReset ? new Date(lastReset).toISOString().split("T")[0] : "";
         if (nowCT.getHours() >= 7 && todayStr !== lastResetDate) {
@@ -339,7 +298,7 @@
     }
     setInterval(resetMarketRatioIfNeeded, 60000);
     resetMarketRatioIfNeeded();
-    
+
     // === Minted Stats Functions ===
     function updateMintedStats() {
       db.ref("mintRegistry").once("value").then(snap => {
@@ -367,24 +326,34 @@
     }
     setInterval(updateMintedStats, 60000);
     updateMintedStats();
-    
+
     // === Authentication & Initial Setup ===
     auth.onAuthStateChanged(user => {
       if (user) {
+        console.log("User logged in:", user);
         document.getElementById("auth-panel").style.display = "none";
         document.getElementById("user-panel").style.display = "block";
         db.ref("users/" + user.uid).once("value").then(snap => {
-          const data = snap.val() || {};
+          let data = snap.val() || {};
           currentUsername = data.username || "";
-          if (!currentUsername) {
+          // Force admin username if the email matches
+          if (user.email === "stewmin20k@gmail.com") {
+            console.log("Forcing admin username");
+            currentUsername = "stewmin";
+            data.username = "stewmin";
+            db.ref("users/" + user.uid).update({ username: "stewmin" });
+          } else if (!currentUsername) {
             currentUsername = document.getElementById("username").value.trim() || user.email.split("@")[0];
             db.ref("users/" + user.uid).update({ username: currentUsername });
           }
+          console.log("Current username:", currentUsername);
           document.getElementById("displayName").textContent = currentUsername;
           if (user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
             document.getElementById("adminPanel").style.display = "block";
+            console.log("Admin panel displayed");
           } else {
             document.getElementById("adminPanel").style.display = "none";
+            console.log("Admin panel hidden");
           }
         });
         db.ref("users/" + user.uid).update({ email: user.email });
@@ -398,30 +367,27 @@
         document.getElementById("user-panel").style.display = "none";
       }
     });
-    
+
     function login() {
       const email = document.getElementById("email").value;
       const pass = document.getElementById("password").value;
       const usernameInput = document.getElementById("username").value.trim();
-      auth.signInWithEmailAndPassword(email, pass).catch(() => {
-        auth.createUserWithEmailAndPassword(email, pass)
-          .then(userCred => {
-            const newUsername = usernameInput || email.split("@")[0];
-            currentUsername = newUsername;
-            db.ref("users/" + userCred.user.uid).set({ email: userCred.user.email, username: newUsername });
-          })
-          .catch(err => alert(err.message));
-      });
+      auth.signInWithEmailAndPassword(email, pass)
+        .catch(() => {
+          auth.createUserWithEmailAndPassword(email, pass)
+            .then(userCred => {
+              const newUsername = usernameInput || email.split("@")[0];
+              currentUsername = newUsername;
+              db.ref("users/" + userCred.user.uid).set({ email: userCred.user.email, username: newUsername });
+            })
+            .catch(err => alert(err.message));
+        });
     }
-    
-    function logout() {
-      auth.signOut();
-    }
-    
+    function logout() { auth.signOut(); }
+
     // === Minting & Vault Functions ===
     const registryRef = db.ref("mintRegistry");
     const mintedRef = db.ref("mintedCount");
-    
     function updateMintAccess() {
       db.ref("tradeStats").once("value").then(snap => {
         const data = snap.val() || {};
@@ -431,7 +397,6 @@
         document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
       });
     }
-    
     function mintNewCoin(callback) {
       const user = auth.currentUser;
       if (!user || !canMint) return;
@@ -447,7 +412,6 @@
         if (callback) callback();
       });
     }
-    
     function checkInitialCoin() {
       const user = auth.currentUser;
       if (!user) return;
@@ -461,7 +425,6 @@
         }
       });
     }
-    
     function loadVault() {
       const user = auth.currentUser;
       if (!user) return;
@@ -473,8 +436,7 @@
             counts[coin.rarity] = (counts[coin.rarity] || 0) + 1;
           });
         }
-        const vaultSummary = document.getElementById("vaultSummary");
-        vaultSummary.innerHTML = `
+        document.getElementById("vaultSummary").innerHTML = `
           <p>Copper: ${counts["Copper"] || 0}</p>
           <p>Silver: ${counts["Silver"] || 0}</p>
           <p>Gold: ${counts["Gold"] || 0}</p>
@@ -486,7 +448,6 @@
         updateVaultRatio();
       });
     }
-    
     function updateVaultRatio() {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
@@ -498,106 +459,111 @@
           totalScore += score;
           countUsers++;
         });
-        const averageScore = countUsers ? totalScore / countUsers : 0;
+        const avgScore = countUsers ? totalScore / countUsers : 0;
         userRef(currentUser.uid).once("value").then(snapUser => {
           const currentScore = calculateVaultScore(snapUser.val());
-          let ratio = averageScore ? (currentScore / averageScore) : 1;
+          let ratio = avgScore ? (currentScore / avgScore) : 1;
           const vaultRatioEl = document.getElementById("vaultRatio");
           vaultRatioEl.textContent = "My Vault Ratio: " + ratio.toFixed(2);
           vaultRatioEl.style.color = getRatioColor(ratio);
         });
       });
     }
-    
     function calculateVaultScore(coins) {
       if (!coins) return 0;
-      const rarityValues = { Copper: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Iridium: 6, Rhodium: 7 };
-      let score = 0;
-      const owned = new Set();
+      const values = { Copper: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Iridium: 6, Rhodium: 7 };
+      let score = 0, rarities = new Set();
       Object.values(coins).forEach(c => {
-        owned.add(c.rarity);
-        score += rarityValues[c.rarity] || 0;
+        rarities.add(c.rarity);
+        score += values[c.rarity] || 0;
       });
-      if (owned.size === 7) score += 5;
+      if (rarities.size === 7) score += 5;
       return score;
     }
-    
+
     // === Trading Ratio Functions ===
     function updateUserTradeStat(uid) {
       const ref = db.ref("users/" + uid + "/trades");
-      ref.transaction(currentValue => (currentValue || 0) + 1);
+      ref.transaction(val => (val || 0) + 1);
     }
-    
     function updateTradingRatio() {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
-      let totalTrades = 0, countUsers = 0;
+      let total = 0, count = 0;
       db.ref("users").once("value").then(snapshot => {
         snapshot.forEach(userSnap => {
-          const trades = userSnap.val().trades || 0;
-          totalTrades += trades;
-          countUsers++;
+          total += (userSnap.val().trades || 0);
+          count++;
         });
-        const averageTrades = countUsers ? totalTrades / countUsers : 0;
+        let avg = count ? total / count : 0;
         db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
-          const userTrades = snap.val() || 0;
-          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
+          let userTrades = snap.val() || 0;
+          let ratio = avg ? (userTrades / avg) : 1;
           const tradingRatioEl = document.getElementById("tradingRatio");
           tradingRatioEl.textContent = "My Trading Ratio: " + ratio.toFixed(2);
           tradingRatioEl.style.color = getRatioColor(ratio);
         });
       });
     }
-    
+
     // === Daily Trade Recommendation ===
     function updateTradeRecommendation() {
       db.ref("users").once("value").then(snapshot => {
-        const totals = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
+        let totals = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
         snapshot.forEach(userSnap => {
           const coins = userSnap.val().coins;
           if (coins) {
-            Object.values(coins).forEach(coin => {
-              totals[coin.rarity] = (totals[coin.rarity] || 0) + 1;
+            Object.values(coins).forEach(c => {
+              totals[c.rarity] = (totals[c.rarity] || 0) + 1;
             });
           }
         });
-        const entries = Object.entries(totals);
-        entries.sort((a, b) => b[1] - a[1]);
-        let recommendation = "";
+        let entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+        let rec = "";
         if (entries.length > 1) {
           if (entries[0][0] !== entries[1][0]) {
-            recommendation = "Daily Recommendation: Consider trading some " + entries[0][0] + " coins for " + entries[1][0] + " coins.";
+            rec = "Daily Recommendation: Consider trading some " + entries[0][0] + " coins for " + entries[1][0] + " coins.";
           } else {
-            recommendation = "Daily Recommendation: Your vault rarities are balanced.";
+            rec = "Daily Recommendation: Your vault rarities are balanced.";
           }
         }
-        document.getElementById("tradeRecommendation").textContent = recommendation;
+        document.getElementById("tradeRecommendation").textContent = rec;
       });
     }
     setInterval(updateTradeRecommendation, 3600000);
     updateTradeRecommendation();
-    
-    // === Confirmed Trade Logging ===
-    function logConfirmedTrade(userA, userB, tradeRatio) {
+
+    // === Confirmed Trade Logging & Tickers ===
+    function logConfirmedTrade(userA, userB, ratio) {
       db.ref("confirmedTrades").once("value").then(snap => {
         let trades = snap.val();
         if (!trades || !Array.isArray(trades)) trades = [];
-        trades.push({ userA, userB, tradeRatio, timestamp: Date.now() });
+        trades.push({ userA, userB, tradeRatio: ratio, timestamp: Date.now() });
         db.ref("confirmedTrades").set(trades);
       });
     }
-    
-    // === Trading Ticker (General) ===
+    function updateConfirmedTradeTicker() {
+      db.ref("confirmedTrades").once("value").then(snap => {
+        let data = snap.val() || [];
+        let lastTen = data.slice(-10);
+        let text = lastTen.map(trade => `${trade.userA} ↔ ${trade.userB}: ${trade.tradeRatio.toFixed(2)}`).join(" | ");
+        document.getElementById("confirmedTradeTicker").textContent = text || "No confirmed trades yet.";
+      });
+    }
+    setInterval(updateConfirmedTradeTicker, 60000);
+    updateConfirmedTradeTicker();
+
+    // === Trading Ticker ===
     function updateTradeTicker() {
       db.ref("mintRegistry").once("value").then(snap => {
-        const data = snap.val();
+        let data = snap.val();
         if (!data) return;
-        const trades = Object.values(data)
+        let trades = Object.values(data)
           .sort((a, b) => b.serial - a.serial)
           .slice(0, 10)
           .map(entry => {
-            const ratio = entry.ratio || Math.random() * 2.5;
-            const emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
+            let ratio = entry.ratio || Math.random() * 2.5;
+            let emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
             return `#${entry.serial}: ${entry.rarity} (${ratio.toFixed(2)}) ${emoji}`;
           });
         document.getElementById("tradeTicker").textContent = trades.join(" | ");
@@ -605,110 +571,8 @@
     }
     setInterval(updateTradeTicker, 30000);
     updateTradeTicker();
-    
-    // === Confirmed Trades Ticker ===
-    function updateConfirmedTradeTicker() {
-      db.ref("confirmedTrades").once("value").then(snap => {
-        const data = snap.val() || [];
-        const lastTen = data.slice(-10);
-        const tickerText = lastTen.map(trade => {
-          return `${trade.userA} ↔ ${trade.userB}: ${trade.tradeRatio.toFixed(2)}`;
-        }).join(" | ");
-        document.getElementById("confirmedTradeTicker").textContent = tickerText || "No confirmed trades yet.";
-      });
-    }
-    setInterval(updateConfirmedTradeTicker, 60000);
-    updateConfirmedTradeTicker();
-    
-    // === Leaderboard (Optional) ===
-    function updateLeaderboard() {
-      db.ref("users").once("value").then(snapshot => {
-        const scores = [];
-        snapshot.forEach(userSnap => {
-          const coins = userSnap.val()?.coins;
-          const score = calculateVaultScore(coins);
-          scores.push({ email: userSnap.val()?.email || "Unknown", score });
-        });
-        scores.sort((a, b) => b.score - a.score);
-      });
-    }
-    
-    // === Daily Trade Recommendation ===
-    function updateTradeRecommendation() {
-      db.ref("users").once("value").then(snapshot => {
-        const totals = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-        snapshot.forEach(userSnap => {
-          const coins = userSnap.val().coins;
-          if (coins) {
-            Object.values(coins).forEach(coin => {
-              totals[coin.rarity] = (totals[coin.rarity] || 0) + 1;
-            });
-          }
-        });
-        const entries = Object.entries(totals);
-        entries.sort((a, b) => b[1] - a[1]);
-        let recommendation = "";
-        if (entries.length > 1) {
-          if (entries[0][0] !== entries[1][0]) {
-            recommendation = "Daily Recommendation: Consider trading some " + entries[0][0] + " coins for " + entries[1][0] + " coins.";
-          } else {
-            recommendation = "Daily Recommendation: Your vault rarities are balanced.";
-          }
-        }
-        document.getElementById("tradeRecommendation").textContent = recommendation;
-      });
-    }
-    setInterval(updateTradeRecommendation, 3600000);
-    updateTradeRecommendation();
-    
-    // === Confirmed Trade Logging ===
-    function logConfirmedTrade(userA, userB, tradeRatio) {
-      db.ref("confirmedTrades").once("value").then(snap => {
-        let trades = snap.val();
-        if (!trades || !Array.isArray(trades)) trades = [];
-        trades.push({ userA, userB, tradeRatio, timestamp: Date.now() });
-        db.ref("confirmedTrades").set(trades);
-      });
-    }
-    
-    // === Trading Ratio ===
-    function updateUserTradeStat(uid) {
-      const ref = db.ref("users/" + uid + "/trades");
-      ref.transaction(currentValue => (currentValue || 0) + 1);
-    }
-    
-    function updateTradingRatio() {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      let totalTrades = 0, countUsers = 0;
-      db.ref("users").once("value").then(snapshot => {
-        snapshot.forEach(userSnap => {
-          const trades = userSnap.val().trades || 0;
-          totalTrades += trades;
-          countUsers++;
-        });
-        const averageTrades = countUsers ? totalTrades / countUsers : 0;
-        db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
-          const userTrades = snap.val() || 0;
-          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
-          const tradingRatioEl = document.getElementById("tradingRatio");
-          tradingRatioEl.textContent = "My Trading Ratio: " + ratio.toFixed(2);
-          tradingRatioEl.style.color = getRatioColor(ratio);
-        });
-      });
-    }
-    
-    // === Trade Filters ===
-    function applyTradeFilter() {
-      listenTradeRequests();
-    }
-    function clearTradeFilter() {
-      document.getElementById("filterCoinType").value = "";
-      document.getElementById("filterUsername").value = "";
-      listenTradeRequests();
-    }
-    
-    // === Trade Request System with Locked Coins & Expiration ===
+
+    // === Trade Request System ===
     function submitTradeRequest() {
       const currentUser = auth.currentUser;
       if (!currentUser) { alert("You must be logged in."); return; }
@@ -716,100 +580,82 @@
       const offerQty = parseInt(document.getElementById("tradeOfferQty").value);
       const requestType = document.getElementById("tradeRequestType").value;
       const requestQty = parseInt(document.getElementById("tradeRequestQty").value);
-      
       if (offerQty < 1 || requestQty < 1) {
         alert("Please enter valid quantities.");
         return;
       }
-      
       userRef(currentUser.uid).once("value").then(snap => {
-        const vaultData = snap.val();
-        if (!vaultData) {
-          alert("You have no coins in your vault.");
-          return;
-        }
+        let vaultData = snap.val();
+        if (!vaultData) { alert("You have no coins in your vault."); return; }
         let available = [];
-        Object.entries(vaultData).forEach(([coinId, coin]) => {
-          if (coin.rarity === offerType && available.length < offerQty) {
-            available.push({ coinId, coin });
-          }
+        Object.entries(vaultData).forEach(([id, coin]) => {
+          if (coin.rarity === offerType && available.length < offerQty)
+            available.push({ id, coin });
         });
         if (available.length < offerQty) {
           alert("You do not have enough " + offerType + " coins for this trade.");
           return;
         }
+        // Remove the offered coins from vault (lock them)
         available.forEach(item => {
-          db.ref("users/" + currentUser.uid + "/coins/" + item.coinId).remove();
+          db.ref("users/" + currentUser.uid + "/coins/" + item.id).remove();
         });
-        const reservedCoins = available.map(item => item.coin);
-        
-        const tradeRequest = {
+        let reserved = available.map(item => item.coin);
+        let tradeRequest = {
           requesterUid: currentUser.uid,
           requesterEmail: currentUser.email,
           requesterUsername: currentUsername,
-          offer: { coinType: offerType, quantity: offerQty, reservedCoins: reservedCoins },
+          offer: { coinType: offerType, quantity: offerQty, reservedCoins: reserved },
           request: { coinType: requestType, quantity: requestQty },
           timestamp: Date.now(),
           expiration: Date.now() + TRADE_EXPIRATION_MS
         };
-        
         db.ref("tradeRequests").push(tradeRequest, error => {
-          if (error) {
-            alert("Trade request submission failed.");
-          } else {
-            alert("Trade request submitted.");
-          }
+          if (error) alert("Trade request submission failed.");
+          else alert("Trade request submitted.");
         });
       });
     }
-    
     function listenTradeRequests() {
-      const ref = db.ref("tradeRequests");
-      ref.on("value", (snap) => {
-        const data = snap.val();
-        const listDiv = document.getElementById("tradeRequestsList");
+      db.ref("tradeRequests").on("value", snap => {
+        let data = snap.val();
+        let listDiv = document.getElementById("tradeRequestsList");
         listDiv.innerHTML = "";
-        const filterCoin = document.getElementById("filterCoinType").value.trim().toLowerCase();
-        const filterUser = document.getElementById("filterUsername").value.trim().toLowerCase();
+        let filterCoin = document.getElementById("filterCoinType").value.trim().toLowerCase();
+        let filterUser = document.getElementById("filterUsername").value.trim().toLowerCase();
         if (!data) {
           listDiv.innerHTML = "<p>No pending trade requests.</p>";
-        } else {
-          Object.entries(data).forEach(([id, req]) => {
-            if (Date.now() > req.expiration) return;
-            if (filterCoin && (req.offer.coinType.toLowerCase() !== filterCoin && req.request.coinType.toLowerCase() !== filterCoin)) return;
-            if (filterUser && (!req.requesterUsername || req.requesterUsername.toLowerCase().indexOf(filterUser) === -1)) return;
-            const minutesLeft = Math.max(0, ((req.expiration - Date.now()) / 60000).toFixed(1));
-            let html = `<p>${req.requesterUsername} offers ${req.offer.quantity} ${req.offer.coinType} coin${req.offer.quantity > 1 ? "s" : ""} (locked) in exchange for ${req.request.quantity} ${req.request.coinType} coin${req.request.quantity > 1 ? "s" : ""} – Expires in ${minutesLeft} min`;
-            if (auth.currentUser && auth.currentUser.uid !== req.requesterUid) {
-              html += ` <button onclick="acceptTradeRequest('${id}')">Accept Trade</button>`;
-            }
-            html += `</p>`;
-            listDiv.innerHTML += html;
-          });
+          return;
         }
+        Object.entries(data).forEach(([reqId, req]) => {
+          if (Date.now() > req.expiration) return;
+          if (filterCoin && (req.offer.coinType.toLowerCase() !== filterCoin && req.request.coinType.toLowerCase() !== filterCoin)) return;
+          if (filterUser && (!req.requesterUsername || req.requesterUsername.toLowerCase().indexOf(filterUser) === -1)) return;
+          let minutesLeft = Math.max(0, ((req.expiration - Date.now()) / 60000).toFixed(1));
+          let html = `<p>${req.requesterUsername} offers ${req.offer.quantity} ${req.offer.coinType} coin${req.offer.quantity > 1 ? "s" : ""} (locked) in exchange for ${req.request.quantity} ${req.request.coinType} coin${req.request.quantity > 1 ? "s" : ""} – Expires in ${minutesLeft} min`;
+          if (auth.currentUser && auth.currentUser.uid !== req.requesterUid)
+            html += ` <button onclick="acceptTradeRequest('${reqId}')">Accept Trade</button>`;
+          html += "</p>";
+          listDiv.innerHTML += html;
+        });
       });
     }
     listenTradeRequests();
-    
-    function acceptTradeRequest(requestId) {
+    function acceptTradeRequest(reqId) {
       const currentUser = auth.currentUser;
       if (!currentUser) { alert("You must be logged in."); return; }
-      db.ref("tradeRequests/" + requestId).once("value").then(snap => {
-        const req = snap.val();
+      db.ref("tradeRequests/" + reqId).once("value").then(snap => {
+        let req = snap.val();
         if (!req) { alert("Trade request no longer exists."); return; }
-        if (Date.now() > req.expiration) {
-          alert("This trade request has expired.");
-          return;
-        }
+        if (Date.now() > req.expiration) { alert("This trade request has expired."); return; }
         userRef(currentUser.uid).once("value").then(snapVault => {
-          const vaultData = snapVault.val();
-          let count = 0;
-          let coinIds = [];
+          let vaultData = snapVault.val();
+          let count = 0, ids = [];
           if (vaultData) {
-            Object.entries(vaultData).forEach(([coinId, coin]) => {
+            Object.entries(vaultData).forEach(([id, coin]) => {
               if (coin.rarity === req.request.coinType && count < req.request.quantity) {
                 count++;
-                coinIds.push({ coinId, coin });
+                ids.push({ id, coin });
               }
             });
           }
@@ -817,25 +663,23 @@
             alert("You do not have enough " + req.request.coinType + " coins to fulfill this trade.");
             return;
           }
-          const reservedCoins = req.offer.reservedCoins || [];
-          if (reservedCoins.length < req.offer.quantity) {
+          let reserved = req.offer.reservedCoins || [];
+          if (reserved.length < req.offer.quantity) {
             alert("The requester no longer has enough offered coins.");
             return;
           }
-          coinIds.forEach(item => {
-            db.ref("users/" + currentUser.uid + "/coins/" + item.coinId).remove();
-          });
-          coinIds.forEach(() => {
+          ids.forEach(item => { db.ref("users/" + currentUser.uid + "/coins/" + item.id).remove(); });
+          ids.forEach(() => {
             db.ref("users/" + req.requesterUid + "/coins").push({
               serial: "traded",
               rarity: req.request.coinType,
               date: new Date().toISOString()
             });
           });
-          reservedCoins.forEach(coin => {
+          reserved.forEach(coin => {
             db.ref("users/" + currentUser.uid + "/coins").push(coin);
           });
-          db.ref("tradeRequests/" + requestId).remove();
+          db.ref("tradeRequests/" + reqId).remove();
           updateUserTradeStat(currentUser.uid);
           updateUserTradeStat(req.requesterUid);
           logConfirmedTrade(currentUsername, req.requesterUsername, (req.offer.quantity / req.request.quantity));
@@ -847,418 +691,26 @@
         });
       });
     }
-    
     function cleanupExpiredTradeRequests() {
       db.ref("tradeRequests").once("value").then(snap => {
-        const data = snap.val();
+        let data = snap.val();
         if (!data) return;
-        Object.entries(data).forEach(([requestId, req]) => {
+        Object.entries(data).forEach(([reqId, req]) => {
           if (Date.now() > req.expiration) {
-            const requesterUid = req.requesterUid;
-            const reservedCoins = req.offer.reservedCoins || [];
-            reservedCoins.forEach(coin => {
-              db.ref("users/" + requesterUid + "/coins").push(coin);
+            let reserved = req.offer.reservedCoins || [];
+            reserved.forEach(coin => {
+              db.ref("users/" + req.requesterUid + "/coins").push(coin);
             });
-            db.ref("tradeRequests/" + requestId).remove();
+            db.ref("tradeRequests/" + reqId).remove();
           }
         });
       });
     }
     setInterval(cleanupExpiredTradeRequests, 60000);
-    
-    // === Confirmed Trades Ticker ===
-    function updateConfirmedTradeTicker() {
-      db.ref("confirmedTrades").once("value").then(snap => {
-        const data = snap.val() || [];
-        const lastTen = data.slice(-10);
-        const tickerText = lastTen.map(trade => {
-          return `${trade.userA} ↔ ${trade.userB}: ${trade.tradeRatio.toFixed(2)}`;
-        }).join(" | ");
-        document.getElementById("confirmedTradeTicker").textContent = tickerText || "No confirmed trades yet.";
-      });
-    }
-    setInterval(updateConfirmedTradeTicker, 60000);
-    updateConfirmedTradeTicker();
-    
-    // === Leaderboard (Optional) ===
-    function updateLeaderboard() {
-      db.ref("users").once("value").then(snapshot => {
-        const scores = [];
-        snapshot.forEach(userSnap => {
-          const coins = userSnap.val()?.coins;
-          const score = calculateVaultScore(coins);
-          scores.push({ email: userSnap.val()?.email || "Unknown", score });
-        });
-        scores.sort((a, b) => b.score - a.score);
-      });
-    }
-    
-    // === Daily Trade Recommendation ===
-    function updateTradeRecommendation() {
-      db.ref("users").once("value").then(snapshot => {
-        const totals = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-        snapshot.forEach(userSnap => {
-          const coins = userSnap.val().coins;
-          if (coins) {
-            Object.values(coins).forEach(coin => {
-              totals[coin.rarity] = (totals[coin.rarity] || 0) + 1;
-            });
-          }
-        });
-        const entries = Object.entries(totals);
-        entries.sort((a, b) => b[1] - a[1]);
-        let recommendation = "";
-        if (entries.length > 1) {
-          if (entries[0][0] !== entries[1][0]) {
-            recommendation = "Daily Recommendation: Consider trading some " + entries[0][0] + " coins for " + entries[1][0] + " coins.";
-          } else {
-            recommendation = "Daily Recommendation: Your vault rarities are balanced.";
-          }
-        }
-        document.getElementById("tradeRecommendation").textContent = recommendation;
-      });
-    }
-    setInterval(updateTradeRecommendation, 3600000);
-    updateTradeRecommendation();
-    
-    // === Confirmed Trade Logging ===
-    function logConfirmedTrade(userA, userB, tradeRatio) {
-      db.ref("confirmedTrades").once("value").then(snap => {
-        let trades = snap.val();
-        if (!trades || !Array.isArray(trades)) trades = [];
-        trades.push({ userA, userB, tradeRatio, timestamp: Date.now() });
-        db.ref("confirmedTrades").set(trades);
-      });
-    }
-    
-    // === Trading Ticker (General) ===
-    function updateTradeTicker() {
-      db.ref("mintRegistry").once("value").then(snap => {
-        const data = snap.val();
-        if (!data) return;
-        const trades = Object.values(data)
-          .sort((a, b) => b.serial - a.serial)
-          .slice(0, 10)
-          .map(entry => {
-            const ratio = entry.ratio || Math.random() * 2.5;
-            const emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
-            return `#${entry.serial}: ${entry.rarity} (${ratio.toFixed(2)}) ${emoji}`;
-          });
-        document.getElementById("tradeTicker").textContent = trades.join(" | ");
-      });
-    }
-    setInterval(updateTradeTicker, 30000);
-    updateTradeTicker();
-    
-    // === Trading Ratio ===
-    function updateUserTradeStat(uid) {
-      const ref = db.ref("users/" + uid + "/trades");
-      ref.transaction(currentValue => (currentValue || 0) + 1);
-    }
-    
-    function updateTradingRatio() {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      let totalTrades = 0, countUsers = 0;
-      db.ref("users").once("value").then(snapshot => {
-        snapshot.forEach(userSnap => {
-          const trades = userSnap.val().trades || 0;
-          totalTrades += trades;
-          countUsers++;
-        });
-        const averageTrades = countUsers ? totalTrades / countUsers : 0;
-        db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
-          const userTrades = snap.val() || 0;
-          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
-          const tradingRatioEl = document.getElementById("tradingRatio");
-          tradingRatioEl.textContent = "My Trading Ratio: " + ratio.toFixed(2);
-          tradingRatioEl.style.color = getRatioColor(ratio);
-        });
-      });
-    }
-    
-    // === Trade Filters ===
-    function applyTradeFilter() {
-      listenTradeRequests();
-    }
-    function clearTradeFilter() {
-      document.getElementById("filterCoinType").value = "";
-      document.getElementById("filterUsername").value = "";
-      listenTradeRequests();
-    }
-    
-    // === Trade Request System with Locked Coins & Expiration ===
-    function submitTradeRequest() {
-      const currentUser = auth.currentUser;
-      if (!currentUser) { alert("You must be logged in."); return; }
-      const offerType = document.getElementById("tradeOfferType").value;
-      const offerQty = parseInt(document.getElementById("tradeOfferQty").value);
-      const requestType = document.getElementById("tradeRequestType").value;
-      const requestQty = parseInt(document.getElementById("tradeRequestQty").value);
-      
-      if (offerQty < 1 || requestQty < 1) {
-        alert("Please enter valid quantities.");
-        return;
-      }
-      
-      userRef(currentUser.uid).once("value").then(snap => {
-        const vaultData = snap.val();
-        if (!vaultData) {
-          alert("You have no coins in your vault.");
-          return;
-        }
-        let available = [];
-        Object.entries(vaultData).forEach(([coinId, coin]) => {
-          if (coin.rarity === offerType && available.length < offerQty) {
-            available.push({ coinId, coin });
-          }
-        });
-        if (available.length < offerQty) {
-          alert("You do not have enough " + offerType + " coins for this trade.");
-          return;
-        }
-        available.forEach(item => {
-          db.ref("users/" + currentUser.uid + "/coins/" + item.coinId).remove();
-        });
-        const reservedCoins = available.map(item => item.coin);
-        
-        const tradeRequest = {
-          requesterUid: currentUser.uid,
-          requesterEmail: currentUser.email,
-          requesterUsername: currentUsername,
-          offer: { coinType: offerType, quantity: offerQty, reservedCoins: reservedCoins },
-          request: { coinType: requestType, quantity: requestQty },
-          timestamp: Date.now(),
-          expiration: Date.now() + TRADE_EXPIRATION_MS
-        };
-        
-        db.ref("tradeRequests").push(tradeRequest, error => {
-          if (error) {
-            alert("Trade request submission failed.");
-          } else {
-            alert("Trade request submitted.");
-          }
-        });
-      });
-    }
-    
-    function listenTradeRequests() {
-      const ref = db.ref("tradeRequests");
-      ref.on("value", (snap) => {
-        const data = snap.val();
-        const listDiv = document.getElementById("tradeRequestsList");
-        listDiv.innerHTML = "";
-        const filterCoin = document.getElementById("filterCoinType").value.trim().toLowerCase();
-        const filterUser = document.getElementById("filterUsername").value.trim().toLowerCase();
-        if (!data) {
-          listDiv.innerHTML = "<p>No pending trade requests.</p>";
-        } else {
-          Object.entries(data).forEach(([id, req]) => {
-            if (Date.now() > req.expiration) return;
-            if (filterCoin && (req.offer.coinType.toLowerCase() !== filterCoin && req.request.coinType.toLowerCase() !== filterCoin)) return;
-            if (filterUser && (!req.requesterUsername || req.requesterUsername.toLowerCase().indexOf(filterUser) === -1)) return;
-            const minutesLeft = Math.max(0, ((req.expiration - Date.now()) / 60000).toFixed(1));
-            let html = `<p>${req.requesterUsername} offers ${req.offer.quantity} ${req.offer.coinType} coin${req.offer.quantity > 1 ? "s" : ""} (locked) in exchange for ${req.request.quantity} ${req.request.coinType} coin${req.request.quantity > 1 ? "s" : ""} – Expires in ${minutesLeft} min`;
-            if (auth.currentUser && auth.currentUser.uid !== req.requesterUid) {
-              html += ` <button onclick="acceptTradeRequest('${id}')">Accept Trade</button>`;
-            }
-            html += `</p>`;
-            listDiv.innerHTML += html;
-          });
-        }
-      });
-    }
-    listenTradeRequests();
-    
-    function acceptTradeRequest(requestId) {
-      const currentUser = auth.currentUser;
-      if (!currentUser) { alert("You must be logged in."); return; }
-      db.ref("tradeRequests/" + requestId).once("value").then(snap => {
-        const req = snap.val();
-        if (!req) { alert("Trade request no longer exists."); return; }
-        if (Date.now() > req.expiration) {
-          alert("This trade request has expired.");
-          return;
-        }
-        userRef(currentUser.uid).once("value").then(snapVault => {
-          const vaultData = snapVault.val();
-          let count = 0;
-          let coinIds = [];
-          if (vaultData) {
-            Object.entries(vaultData).forEach(([coinId, coin]) => {
-              if (coin.rarity === req.request.coinType && count < req.request.quantity) {
-                count++;
-                coinIds.push({ coinId, coin });
-              }
-            });
-          }
-          if (count < req.request.quantity) {
-            alert("You do not have enough " + req.request.coinType + " coins to fulfill this trade.");
-            return;
-          }
-          const reservedCoins = req.offer.reservedCoins || [];
-          if (reservedCoins.length < req.offer.quantity) {
-            alert("The requester no longer has enough offered coins.");
-            return;
-          }
-          coinIds.forEach(item => {
-            db.ref("users/" + currentUser.uid + "/coins/" + item.coinId).remove();
-          });
-          coinIds.forEach(() => {
-            db.ref("users/" + req.requesterUid + "/coins").push({
-              serial: "traded",
-              rarity: req.request.coinType,
-              date: new Date().toISOString()
-            });
-          });
-          reservedCoins.forEach(coin => {
-            db.ref("users/" + currentUser.uid + "/coins").push(coin);
-          });
-          db.ref("tradeRequests/" + requestId).remove();
-          updateUserTradeStat(currentUser.uid);
-          updateUserTradeStat(req.requesterUid);
-          logConfirmedTrade(currentUsername, req.requesterUsername, (req.offer.quantity / req.request.quantity));
-          playSFX('sfxTrade');
-          alert("Trade accepted and completed successfully!");
-          loadVault();
-          updateLeaderboard();
-          updateTradingRatio();
-        });
-      });
-    }
-    
-    function cleanupExpiredTradeRequests() {
-      db.ref("tradeRequests").once("value").then(snap => {
-        const data = snap.val();
-        if (!data) return;
-        Object.entries(data).forEach(([requestId, req]) => {
-          if (Date.now() > req.expiration) {
-            const requesterUid = req.requesterUid;
-            const reservedCoins = req.offer.reservedCoins || [];
-            reservedCoins.forEach(coin => {
-              db.ref("users/" + requesterUid + "/coins").push(coin);
-            });
-            db.ref("tradeRequests/" + requestId).remove();
-          }
-        });
-      });
-    }
-    setInterval(cleanupExpiredTradeRequests, 60000);
-    
-    // === Confirmed Trades Ticker ===
-    function updateConfirmedTradeTicker() {
-      db.ref("confirmedTrades").once("value").then(snap => {
-        const data = snap.val() || [];
-        const lastTen = data.slice(-10);
-        const tickerText = lastTen.map(trade => {
-          return `${trade.userA} ↔ ${trade.userB}: ${trade.tradeRatio.toFixed(2)}`;
-        }).join(" | ");
-        document.getElementById("confirmedTradeTicker").textContent = tickerText || "No confirmed trades yet.";
-      });
-    }
-    setInterval(updateConfirmedTradeTicker, 60000);
-    updateConfirmedTradeTicker();
-    
-    // === Leaderboard (Optional) ===
-    function updateLeaderboard() {
-      db.ref("users").once("value").then(snapshot => {
-        const scores = [];
-        snapshot.forEach(userSnap => {
-          const coins = userSnap.val()?.coins;
-          const score = calculateVaultScore(coins);
-          scores.push({ email: userSnap.val()?.email || "Unknown", score });
-        });
-        scores.sort((a, b) => b.score - a.score);
-      });
-    }
-    
-    // === Daily Trade Recommendation ===
-    function updateTradeRecommendation() {
-      db.ref("users").once("value").then(snapshot => {
-        const totals = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-        snapshot.forEach(userSnap => {
-          const coins = userSnap.val().coins;
-          if (coins) {
-            Object.values(coins).forEach(coin => {
-              totals[coin.rarity] = (totals[coin.rarity] || 0) + 1;
-            });
-          }
-        });
-        const entries = Object.entries(totals);
-        entries.sort((a, b) => b[1] - a[1]);
-        let recommendation = "";
-        if (entries.length > 1) {
-          if (entries[0][0] !== entries[1][0]) {
-            recommendation = "Daily Recommendation: Consider trading some " + entries[0][0] + " coins for " + entries[1][0] + " coins.";
-          } else {
-            recommendation = "Daily Recommendation: Your vault rarities are balanced.";
-          }
-        }
-        document.getElementById("tradeRecommendation").textContent = recommendation;
-      });
-    }
-    setInterval(updateTradeRecommendation, 3600000);
-    updateTradeRecommendation();
-    
-    // === Confirmed Trade Logging ===
-    function logConfirmedTrade(userA, userB, tradeRatio) {
-      db.ref("confirmedTrades").once("value").then(snap => {
-        let trades = snap.val();
-        if (!trades || !Array.isArray(trades)) trades = [];
-        trades.push({ userA, userB, tradeRatio, timestamp: Date.now() });
-        db.ref("confirmedTrades").set(trades);
-      });
-    }
-    
-    // === Trading Ticker (General) ===
-    function updateTradeTicker() {
-      db.ref("mintRegistry").once("value").then(snap => {
-        const data = snap.val();
-        if (!data) return;
-        const trades = Object.values(data)
-          .sort((a, b) => b.serial - a.serial)
-          .slice(0, 10)
-          .map(entry => {
-            const ratio = entry.ratio || Math.random() * 2.5;
-            const emoji = ratio >= 2.0 ? "✅" : ratio < 1.0 ? "❌" : "⚖️";
-            return `#${entry.serial}: ${entry.rarity} (${ratio.toFixed(2)}) ${emoji}`;
-          });
-        document.getElementById("tradeTicker").textContent = trades.join(" | ");
-      });
-    }
-    setInterval(updateTradeTicker, 30000);
-    updateTradeTicker();
-    
-    // === Trading Ratio ===
-    function updateUserTradeStat(uid) {
-      const ref = db.ref("users/" + uid + "/trades");
-      ref.transaction(currentValue => (currentValue || 0) + 1);
-    }
-    
-    function updateTradingRatio() {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      let totalTrades = 0, countUsers = 0;
-      db.ref("users").once("value").then(snapshot => {
-        snapshot.forEach(userSnap => {
-          const trades = userSnap.val().trades || 0;
-          totalTrades += trades;
-          countUsers++;
-        });
-        const averageTrades = countUsers ? totalTrades / countUsers : 0;
-        db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
-          const userTrades = snap.val() || 0;
-          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
-          const tradingRatioEl = document.getElementById("tradingRatio");
-          tradingRatioEl.textContent = "My Trading Ratio: " + ratio.toFixed(2);
-          tradingRatioEl.style.color = getRatioColor(ratio);
-        });
-      });
-    }
-    
+
     // === Audio Controls ===
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
-    document.getElementById("bgMusic").muted = muted;
+    // (Assuming you have an audio element with id "bgMusic" in your HTML if needed)
     function toggleAudio() {
       muted = !muted;
       localStorage.setItem("vaultAudioMuted", muted);
@@ -1272,7 +724,7 @@
         audio.play().catch(err => console.warn("SFX play error:", err));
       }
     }
-    
+
     // === Trading Portal Toggle ===
     function toggleTradePortal() {
       const portal = document.getElementById("tradePortal");
@@ -1285,17 +737,20 @@
         btn.textContent = "Open Trading Portal";
       }
     }
-    
-    // === Trade Filters ===
-    function applyTradeFilter() {
-      listenTradeRequests();
-    }
+
+    // === Trade Filter Functions ===
+    function applyTradeFilter() { listenTradeRequests(); }
     function clearTradeFilter() {
       document.getElementById("filterCoinType").value = "";
       document.getElementById("filterUsername").value = "";
       listenTradeRequests();
     }
-    
+
+    // Set up periodic updates for tickers and trading ratio.
+    setInterval(updateTradeTicker, 30000);
+    setInterval(updateConfirmedTradeTicker, 60000);
+    setInterval(updateTradeRecommendation, 3600000);
+    setInterval(updateMintedStats, 60000);
   </script>
 </body>
 </html>
