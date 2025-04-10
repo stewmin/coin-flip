@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vault Street</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: #111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Crect width='1' height='1' fill='%23222222'/%3E%3C/svg%3E") repeat;
+      color: white;
+    }
+    header {
+      text-align: center;
+      background: #000;
+      color: gold;
+      padding: 20px 10px;
+      border-bottom: 2px solid gold;
+      font-size: 12px;
+    }
+    .ticker {
+      background: black;
+      color: gold;
+      padding: 8px;
+      font-size: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .container {
+      max-width: 960px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    h2 {
+      color: gold;
+      font-size: 12px;
+      margin-top: 30px;
+    }
+    button, input, select {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      background: gold;
+      color: black;
+      border: none;
+      padding: 6px 10px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    input, select {
+      background: #ddd;
+      color: #000;
+    }
+    .section {
+      margin-top: 30px;
+      padding: 15px;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
+    .coin-frame {
+      display: inline-block;
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      text-align: center;
+      padding-top: 10px;
+      font-size: 9px;
+      background: #222;
+      margin: 5px;
+    }
+    .gold { border: 2px solid gold; color: gold; }
+    .platinum { border: 2px solid #b5e2fa; color: #b5e2fa; }
+    .iridium { border: 2px solid #c0c0ff; color: #c0c0ff; }
+    .rhodium { border: 2px solid #fff; color: #fff; }
+    #vaultCoins {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    footer {
+      text-align: center;
+      background: #000;
+      color: gray;
+      padding: 20px;
+      font-size: 10px;
+      margin-top: 40px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏛️ Vault Street</h1>
+  </header>
+  <div class="ticker">
+    <marquee behavior="scroll" direction="left" scrollamount="4">⚖️ Vault Street Exchange — Live Market Data Updating...</marquee>
+  </div>
+  <div class="container">
+    <div class="section" id="auth-section">
+      <h2>Login or Register</h2>
+      <input type="email" placeholder="Email" /><br />
+      <input type="password" placeholder="Password" /><br />
+      <button>Login / Register</button>
+    </div>
+
+    <div class="section" id="mint-section">
+      <h2>Mint a Coin</h2>
+      <button disabled>Mint New Coin</button>
+      <p style="color: red; font-size: 10px;">Minting is disabled. Market ratio is below 1.0</p>
+    </div>
+
+    <div class="section" id="vault-section">
+      <h2>Your Coins</h2>
+      <div id="vaultCoins">
+        <div class="coin-frame gold">#001<br>Gold<br><small>04/10</small></div>
+        <div class="coin-frame platinum">#024<br>Platinum<br><small>04/10</small></div>
+        <div class="coin-frame iridium">#073<br>Iridium<br><small>04/09</small></div>
+        <div class="coin-frame rhodium">#100<br>Rhodium<br><small>04/08</small></div>
+      </div>
+    </div>
+
+    <div class="section" id="trade-section">
+      <h2>Send Coins</h2>
+      <label>Email:</label>
+      <input type="email" placeholder="Recipient Email" />
+      <label>Rarity:</label>
+      <select>
+        <option>Gold</option>
+        <option>Platinum</option>
+        <option>Iridium</option>
+        <option>Rhodium</option>
+      </select>
+      <label>Quantity:</label>
+      <input type="number" min="1" value="1" />
+      <button>Send Trade</button>
+    </div>
+
+    <div class="section" id="leaderboard-section">
+      <h2>Leaderboard</h2>
+      <ul style="list-style:none; padding-left:0; font-size: 10px;">
+        <li>alice@example.com — <span style="color:limegreen">12.5</span></li>
+        <li>bob@example.com — <span style="color:orange">4.7</span></li>
+        <li>eve@example.com — <span style="color:red">0.9</span></li>
+      </ul>
+    </div>
+  </div>
+  <footer>
+    <p>&copy; 2025 Vault Street</p>
+  </footer>
+</body>
+</html>
