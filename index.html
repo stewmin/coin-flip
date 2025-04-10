@@ -745,7 +745,23 @@
       document.getElementById("filterUsername").value = "";
       listenTradeRequests();
     }
-
+// Attach event listener for the Mint button
+document.getElementById("mintBtn").addEventListener("click", () => {
+  const user = auth.currentUser;
+  if (!user) {
+    return alert("You are not logged in.");
+  }
+  if (!canMint) {
+    return alert("Minting is disabled because the market ratio is below 1.0.");
+  }
+  // Call mintNewCoin. After minting, update UI elements.
+  mintNewCoin(() => {
+    alert("Coin minted successfully!");
+    updateMintAccess();
+    loadVault();
+    updateLeaderboard();
+  });
+});
     // Set up periodic updates for tickers and trading ratio.
     setInterval(updateTradeTicker, 30000);
     setInterval(updateConfirmedTradeTicker, 60000);
