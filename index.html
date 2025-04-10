@@ -62,6 +62,12 @@
       margin: 5px 0;
       font-size: 10px;
     }
+    /* Vault Ratio styling */
+    #vaultRatio {
+      font-size: 10px;
+      margin-top: 10px;
+      color: cyan;
+    }
     /* Trading Portal Styling */
     #tradePortal {
       display: none;
@@ -71,9 +77,7 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    /* Trade Request form & list styling */
-    #tradeRequestForm p { margin: 5px 0; font-size: 10px; }
-    #tradeRequestsList p { margin: 5px 0; font-size: 10px; }
+    #tradeRequestForm p, #tradeRequestsList p { margin: 5px 0; font-size: 10px; }
     footer {
       text-align: center;
       background: #000;
@@ -89,7 +93,6 @@
   <header>
     <h1>🏛️ Vault Street</h1>
   </header>
-  
   <!-- AUDIO SYSTEM -->
   <audio id="bgMusic" autoplay loop>
     <source src="https://cdn.pixabay.com/download/audio/2023/04/07/audio_a9c23c43fb.mp3?filename=fantasy-market-ambience-143152.mp3" type="audio/mp3">
@@ -100,7 +103,6 @@
   <audio id="sfxTrade">
     <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6a9ee734cc.mp3?filename=coins-153522.mp3" type="audio/mp3">
   </audio>
-  
   <!-- Mute/Unmute Toggle -->
   <button onclick="toggleAudio()" style="position: fixed; top: 10px; right: 10px; z-index:999;">🔊 Mute/Unmute</button>
   
@@ -127,17 +129,20 @@
       <button id="mintBtn" disabled>Mint New Coin</button>
       <p id="mintNotice" style="color:red; font-size:10px;">Minting is disabled. Market ratio is below 1.0</p>
       
-      <!-- My Vault Summary Section -->
+      <!-- My Vault Section -->
       <h3>My Vault</h3>
       <div id="vaultSummary">
         <!-- Coin counts per rarity will appear here -->
       </div>
+      <!-- Vault Ratio Display -->
+      <p id="vaultRatio"></p>
+      <!-- Trading Ratio Display -->
+      <p id="tradingRatio" style="color:magenta;"></p>
       
       <!-- Trading Portal -->
       <button id="toggleTradePortalButton" onclick="toggleTradePortal()">Open Trading Portal</button>
       <div id="tradePortal">
         <h3>Trading Portal</h3>
-        
         <!-- Trade Request Creation Form -->
         <div id="tradeRequestForm" class="section" style="background:#222;">
           <h4>Create Trade Request</h4>
@@ -161,7 +166,6 @@
           <input type="number" id="tradeRequestQty" min="1" value="1">
           <button onclick="submitTradeRequest()">Submit Trade Request</button>
         </div>
-        
         <!-- Pending Trade Requests List -->
         <h4>Pending Trade Requests</h4>
         <div id="tradeRequestsList">
@@ -196,7 +200,7 @@
     // Helper: Reference to a user's coins
     const userRef = uid => db.ref("users/" + uid + "/coins");
     
-    // 2. Authentication Listener
+    // 2. Authentication Listener & Initial Coin Check
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById("auth-panel").style.display = "none";
@@ -204,8 +208,10 @@
         document.getElementById("userEmail").textContent = user.email;
         db.ref("users/" + user.uid).update({ email: user.email });
         updateMintAccess();
+        checkInitialCoin();  // Ensure new users start with one coin
         loadVault();
-        updateLeaderboard();  // (if you still have this functionality)
+        updateLeaderboard();  // (if still needed)
+        updateTradingRatio(); // Update trading ratio on login
       } else {
         document.getElementById("auth-panel").style.display = "block";
         document.getElementById("user-panel").style.display = "none";
@@ -229,7 +235,7 @@
       auth.signOut();
     }
     
-    // 4. Minting & Vault Functionality (unchanged from before)
+    // 4. Minting & Vault Functionality
     const registryRef = db.ref("mintRegistry");
     const mintedRef = db.ref("mintedCount");
     let canMint = false;
@@ -244,9 +250,10 @@
       });
     }
     
-    document.getElementById("mintBtn").addEventListener("click", () => {
+    // Function to mint a coin (used by both button and initial coin check)
+    function mintNewCoin(callback) {
       const user = auth.currentUser;
-      if (!user || !canMint) return alert("Minting disabled or not logged in.");
+      if (!user || !canMint) return;
       mintedRef.once("value").then(snap => {
         const serial = (snap.val() || 0) + 1;
         const rarity = getRarity();
@@ -258,19 +265,23 @@
         mintedRef.set(serial);
     
         playSFX('sfxMint');
-        alert(`Minted Coin #${serial} (${rarity})`);
-        updateMintAccess();
-        loadVault();
-        updateLeaderboard();
+        if (callback) callback();
       });
-    });
+    }
     
-    function getRarity() {
-      const roll = Math.random() * 100;
-      if (roll <= 1) return "Rhodium";
-      if (roll <= 5) return "Iridium";
-      if (roll <= 15) return "Platinum";
-      return "Gold";
+    // Check if a new user has an empty vault; if so, mint an initial coin.
+    function checkInitialCoin() {
+      const user = auth.currentUser;
+      if (!user) return;
+      userRef(user.uid).once("value").then(snap => {
+        if (!snap.exists()) {
+          mintNewCoin(() => {
+            updateMintAccess();
+            loadVault();
+            updateLeaderboard();
+          });
+        }
+      });
     }
     
     // loadVault creates a summary of coins in the user's vault by rarity
@@ -292,10 +303,61 @@
           <p>Iridium: ${counts["Iridium"] || 0}</p>
           <p>Rhodium: ${counts["Rhodium"] || 0}</p>
         `;
+        // Update vault ratio each time vault is loaded
+        updateVaultRatio();
       });
     }
     
-    // 5. Trade Request System
+    // Vault Ratio (as before)
+    function updateVaultRatio() {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      let totalScore = 0, countUsers = 0;
+      db.ref("users").once("value").then(snapshot => {
+        snapshot.forEach(userSnap => {
+          const coins = userSnap.val().coins;
+          const score = calculateVaultScore(coins);
+          totalScore += score;
+          countUsers++;
+        });
+        const averageScore = countUsers ? totalScore / countUsers : 0;
+        userRef(currentUser.uid).once("value").then(snapUser => {
+          const currentScore = calculateVaultScore(snapUser.val());
+          let ratio = averageScore ? (currentScore / averageScore) : 1;
+          document.getElementById("vaultRatio").textContent = "My Vault Ratio: " + ratio.toFixed(2);
+        });
+      });
+    }
+    
+    // 5. Trading Ratio (New)
+    // Update each user's trade count and then compute current user's trading ratio compared to the market.
+    function updateUserTradeStat(uid) {
+      const ref = db.ref("users/" + uid + "/trades");
+      ref.transaction(currentValue => {
+        return (currentValue || 0) + 1;
+      });
+    }
+    
+    function updateTradingRatio() {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      let totalTrades = 0, countUsers = 0;
+      db.ref("users").once("value").then(snapshot => {
+        snapshot.forEach(userSnap => {
+          const trades = userSnap.val().trades || 0;
+          totalTrades += trades;
+          countUsers++;
+        });
+        const averageTrades = countUsers ? totalTrades / countUsers : 0;
+        db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
+          const userTrades = snap.val() || 0;
+          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
+          document.getElementById("tradingRatio").textContent = "My Trading Ratio: " + ratio.toFixed(2);
+        });
+      });
+    }
+    
+    // 6. Trade Request System
     // (a) Submit a new trade request
     function submitTradeRequest() {
       const currentUser = auth.currentUser;
@@ -374,7 +436,7 @@
             alert("You do not have enough " + req.request.coinType + " coins to fulfill this trade.");
             return;
           }
-          // Now check that the requester still has the offered coins
+          // Check that the requester still has the offered coins
           userRef(req.requesterUid).once("value").then(snapRequester => {
             const requesterData = snapRequester.val();
             let reqCount = 0;
@@ -392,7 +454,7 @@
               return;
             }
             // Execute the trade:
-            // Remove the acceptor's coins (the ones they are giving up)
+            // Remove acceptor's coins (given up coins)
             coinIds.forEach(coinId => {
               db.ref("users/" + currentUser.uid + "/coins/" + coinId).remove();
             });
@@ -400,7 +462,7 @@
             coinIds.forEach(() => {
               db.ref("users/" + req.requesterUid + "/coins").push({ serial: "traded", rarity: req.request.coinType, date: new Date().toISOString() });
             });
-            // Remove the requester's offered coins
+            // Remove requester's offered coins
             reqCoinIds.forEach(coinId => {
               db.ref("users/" + req.requesterUid + "/coins/" + coinId).remove();
             });
@@ -408,17 +470,22 @@
             reqCoinIds.forEach(() => {
               db.ref("users/" + currentUser.uid + "/coins").push({ serial: "traded", rarity: req.offer.coinType, date: new Date().toISOString() });
             });
-            // Finally, remove the trade request entry
+            // Remove the trade request
             db.ref("tradeRequests/" + requestId).remove();
+            // Update trade stats for both parties
+            updateUserTradeStat(currentUser.uid);
+            updateUserTradeStat(req.requesterUid);
             playSFX('sfxTrade');
             alert("Trade accepted and completed successfully!");
             loadVault();
+            updateLeaderboard();
+            updateTradingRatio();
           });
         });
       });
     }
     
-    // 6. (Optional) Leaderboard functionality (if still needed)
+    // 7. Leaderboard functionality (optional)
     function calculateVaultScore(coins) {
       if (!coins) return 0;
       const rarityValues = { Gold: 1, Platinum: 2, Iridium: 4, Rhodium: 8 };
@@ -442,11 +509,11 @@
           scores.push({ email: userSnap.val()?.email || "Unknown", score });
         });
         scores.sort((a, b) => b.score - a.score);
-        // (This could update a leaderboard element if you have one)
+        // (Update a leaderboard element if desired)
       });
     }
     
-    // 7. Trade Ticker functionality (unchanged)
+    // 8. Trade Ticker functionality (unchanged)
     function updateTradeTicker() {
       db.ref("mintRegistry").once("value").then(snap => {
         const data = snap.val();
@@ -465,7 +532,7 @@
     setInterval(updateTradeTicker, 30000);
     updateTradeTicker();
     
-    // 8. Audio Controls
+    // 9. Audio Controls
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
     document.getElementById("bgMusic").muted = muted;
     
@@ -484,7 +551,7 @@
       }
     }
     
-    // 9. Trading Portal Toggle
+    // 10. Trading Portal Toggle
     function toggleTradePortal() {
       const portal = document.getElementById("tradePortal");
       const btn = document.getElementById("toggleTradePortalButton");
@@ -495,6 +562,26 @@
         portal.style.display = "none";
         btn.textContent = "Open Trading Portal";
       }
+    }
+    
+    // 11. Update Trading Ratio (calculates user trade count vs. market average)
+    function updateTradingRatio() {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      let totalTrades = 0, countUsers = 0;
+      db.ref("users").once("value").then(snapshot => {
+        snapshot.forEach(userSnap => {
+          const trades = userSnap.val().trades || 0;
+          totalTrades += trades;
+          countUsers++;
+        });
+        const averageTrades = countUsers ? totalTrades / countUsers : 0;
+        db.ref("users/" + currentUser.uid + "/trades").once("value").then(snap => {
+          const userTrades = snap.val() || 0;
+          let ratio = averageTrades ? (userTrades / averageTrades) : 1;
+          document.getElementById("tradingRatio").textContent = "My Trading Ratio: " + ratio.toFixed(2);
+        });
+      });
     }
     
   </script>
