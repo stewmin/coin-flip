@@ -392,7 +392,7 @@
       db.ref("tradeStats").once("value").then(snap => {
         const data = snap.val() || {};
         const avgRatio = data.averageTradeRatio ?? 0;
-        canMint = avgRatio > 1.0;
+        canMint = avgRatio >= 1.0;
         document.getElementById("mintBtn").disabled = !canMint;
         document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
       });
