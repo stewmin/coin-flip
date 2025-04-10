@@ -2,66 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Ensure proper scaling on mobile devices -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stewmin Coin</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet" />
-  <!-- Internal CSS for simplicity. In production, move CSS into an external stylesheet -->
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
       background: linear-gradient(135deg, #1e1e1e, #3a321e);
       color: white;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+    }
+    /* Left-side info banner */
+    #infoBox {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      width: 220px;
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 0.9em;
+      box-shadow: 0 0 8px black;
+      color: gold;
+      z-index: 1000;
+    }
+    /* Top-right user profile */
+    #userInfo {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #2a2a2a;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 0.9em;
+      text-align: left;
+      max-width: 200px;
+      z-index: 1000;
+    }
+    #userInfo h3 {
+      margin: 0 0 5px 0;
+      color: gold;
+      font-size: 1em;
+    }
+    #userInfo button {
+      display: block;
+      margin-top: 6px;
+      width: 100%;
+      font-size: 0.8em;
+    }
+    /* Main container */
+    #container {
+      margin: 80px 240px 40px 240px;
       text-align: center;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header, footer {
-      width: 100%;
-      margin: 10px 0;
-    }
-    .container {
-      max-width: 800px;
-      width: 100%;
+      padding: 20px;
     }
     h1, h2 {
       color: gold;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 1em;
+    #bank, #mint-count, #resultText {
+      font-size: 1.2em;
       margin: 10px;
-      background: gold;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
     }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    input {
-      padding: 8px;
-      margin: 4px;
-      border-radius: 6px;
-      border: none;
-    }
-    #authBox {
-      background: #333;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 300px;
-      margin: 20px auto;
-    }
-    #userInfo {
-      margin-top: 20px;
-      background: #222;
-      padding: 15px;
-      border-radius: 10px;
+    #coin {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: 4px solid gold;
+      object-fit: cover;
     }
     #mint-coin {
       width: 140px;
@@ -72,7 +79,6 @@
       border: 4px solid gold;
       margin: 20px auto;
       opacity: 0.5;
-      transition: box-shadow 0.3s, opacity 0.3s;
     }
     #mint-coin.unlocked {
       opacity: 1;
@@ -83,284 +89,344 @@
       0% { transform: rotateY(0deg); }
       100% { transform: rotateY(360deg); }
     }
-    #coin {
-      width: 200px;
-      height: 200px;
+    /* Rarity Showcase */
+    #rarity-showcase {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    #rarity-showcase div {
+      text-align: center;
+    }
+    #rarity-showcase img {
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
-      border: 4px solid gold;
       object-fit: cover;
     }
-    /* Responsive adjustments */
-    @media (max-width: 600px) {
-      #coin, #mint-coin {
-        width: 150px;
-        height: 150px;
-      }
-      h1, h2 {
-        font-size: 1.5em;
-      }
+    /* Recent Mints Section */
+    #recentMints {
+      margin-top: 30px;
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #recentMints h3 {
+      color: gold;
+      margin-bottom: 10px;
+    }
+    #recentMints ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #recentMints li {
+      margin: 5px 0;
+      color: #ccc;
+    }
+    /* Table (hidden public registry) */
+    table {
+      margin: 20px auto;
+      width: 90%;
+      border-collapse: collapse;
+      display: none;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #888;
+    }
+    th {
+      background: #444;
+      color: gold;
+    }
+    /* Input and button styling */
+    input, button {
+      font-family: 'Orbitron', sans-serif;
+      padding: 8px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+    }
+    button {
+      background: gold;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header>
+
+  <!-- Left-side Explanation Banner -->
+  <div id="infoBox">
+    <strong>Stewmin Coin</strong><br>
+    Flip a Roman coin to add $0.25 to the bank.<br>
+    When the bank hits $100, you can mint a collectible coin with randomized rarity!
+  </div>
+
+  <!-- Top-right User Profile -->
+  <div id="userInfo" style="display:none;">
+    <h3>User</h3>
+    <div>Email: <span id="userEmail"></span></div>
+    <button onclick="downloadUserCoins()">Download My Coins (CSV)</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <!-- Main Content Container -->
+  <div id="container">
     <h1>🪙 Stewmin Coin</h1>
-  </header>
-  
-  <main class="container">
-    <!-- Display of dynamic bank info and minted count -->
     <div id="bank">Coin Bank: $0.00</div>
     <div id="mint-count">🪙 Coins Minted: 0</div>
 
-    <!-- Authentication section -->
-    <section id="authBox" aria-label="Authentication">
-      <input type="email" id="email" placeholder="Email" />
-      <br />
-      <input type="password" id="password" placeholder="Password" />
-      <br />
-      <button id="registerBtn">Register</button>
-      <button id="loginBtn">Login</button>
-      <button id="logoutBtn">Logout</button>
-      <div id="authMessage" role="alert"></div>
-    </section>
-
-    <!-- User info section (displayed after login) -->
-    <section id="userInfo" style="display: none;">
-      <h2>Welcome, <span id="userEmail"></span></h2>
-      <div id="userCoins">Loading your coins...</div>
-    </section>
-
-    <!-- Coin flipping section -->
-    <section id="coinSection">
-      <img id="coin" src="roman_coin_heads.png" alt="Coin face" />
-      <br />
-      <button id="flipCoinBtn">Flip Coin</button>
+    <div>
+      <img id="coin" src="roman_coin_heads.png" alt="Coin"><br>
+      <button onclick="flipCoin()">Flip Coin</button>
       <div id="resultText"></div>
-    </section>
+    </div>
 
-    <!-- Coin minting section -->
-    <section id="mintSection" style="margin-top: 30px;">
-      <img id="mint-coin" src="stewmin_coin.png" alt="Stewmin Coin" />
+    <div style="margin-top: 30px;">
+      <img id="mint-coin" src="stewmin_coin.png" alt="Stewmin Coin"><br>
       <div id="mint-price">$100 Stewmin Coin</div>
-    </section>
-  </main>
+    </div>
+
+    <!-- Rarity Showcase -->
+    <h2>🪙 Possible Stewmin Coin Variants</h2>
+    <div id="rarity-showcase">
+      <div>
+        <img src="stewmin_coin.png" alt="Gold"><br>
+        <span style="color:gold;">Gold — 85%</span>
+      </div>
+      <div>
+        <img src="stewmin_coin_platinum.png" alt="Platinum"><br>
+        <span style="color:#b5e2fa;">Platinum — 10%</span>
+      </div>
+      <div>
+        <img src="stewmin_coin_iridium.png" alt="Iridium"><br>
+        <span style="color:#c0c0ff;">Iridium — 4%</span>
+      </div>
+      <div>
+        <img src="stewmin_coin_rhodium.png" alt="Rhodium"><br>
+        <span style="color:#e6e8fa;">Rhodium — 1%</span>
+      </div>
+    </div>
+
+    <!-- Recent Mints Display (Public Section) -->
+    <div id="recentMints">
+      <h3>Recent Mints</h3>
+      <ul id="recentMintsList">
+        <!-- Last five minted coins (serial and rarity) will be inserted here -->
+      </ul>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <button onclick="downloadRegistry()">Download Full Registry CSV</button>
+    </div>
+  </div>
+
+  <!-- Firebase and Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
+      authDomain: "coin-flip-4a693.firebaseapp.com",
+      databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
+      projectId: "coin-flip-4a693",
+      storageBucket: "coin-flip-4a693.appspot.com",
+      messagingSenderId: "572907715515",
+      appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
   
-  <footer>
-    <p>&copy; 2023 Stewmin Coin</p>
-  </footer>
-
-  <!-- Firebase SDKs loaded with defer to allow HTML parsing first -->
-  <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
-
-  <!-- Main JavaScript code -->
-  <script defer>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Firebase configuration & initialization
-      const firebaseConfig = {
-        apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
-        authDomain: "coin-flip-4a693.firebaseapp.com",
-        databaseURL: "https://coin-flip-4a693-default-rtdb.firebaseio.com",
-        projectId: "coin-flip-4a693",
-        storageBucket: "coin-flip-4a693.appspot.com",
-        messagingSenderId: "572907715515",
-        appId: "1:572907715515:web:68a53fc5a8e4b5157fe29e"
-      };
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.database();
-
-      // Cache DOM elements
-      const bankDisplay = document.getElementById("bank");
-      const mintCountDisplay = document.getElementById("mint-count");
-      const authBox = document.getElementById("authBox");
-      const userInfo = document.getElementById("userInfo");
-      const userEmailDisplay = document.getElementById("userEmail");
-      const userCoinsDisplay = document.getElementById("userCoins");
-      const authMessage = document.getElementById("authMessage");
-      const emailInput = document.getElementById("email");
-      const passwordInput = document.getElementById("password");
-      const registerBtn = document.getElementById("registerBtn");
-      const loginBtn = document.getElementById("loginBtn");
-      const logoutBtn = document.getElementById("logoutBtn");
-      const flipCoinBtn = document.getElementById("flipCoinBtn");
-      const coinImage = document.getElementById("coin");
-      const resultText = document.getElementById("resultText");
-      const mintCoinImage = document.getElementById("mint-coin");
-
-      // Constants and state
-      const COIN_PRICE = 10000;
-      let currentBank = 0;
-      let mintedCount = 0;
-
-      // Firebase database references
-      const bankRef = db.ref("coinBank");
-      const mintedRef = db.ref("mintedCount");
-      const registryRef = db.ref("mintRegistry");
-      const userCoinsRef = uid => db.ref("users/" + uid + "/coins");
-
-      // Register event listeners
-      registerBtn.addEventListener('click', registerUser);
-      loginBtn.addEventListener('click', loginUser);
-      logoutBtn.addEventListener('click', logoutUser);
-      flipCoinBtn.addEventListener('click', flipCoin);
-
-      // Listen to authentication state changes
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          displayUserInfo(user);
-          loadUserCoins(user);
-        } else {
-          authBox.style.display = "block";
-          userInfo.style.display = "none";
-        }
-      });
-
-      // Listen for bank & mint count changes from Firebase
-      bankRef.on("value", snap => {
-        currentBank = snap.val() || 0;
-        bankDisplay.textContent = `Coin Bank: $${(currentBank / 100).toFixed(2)}`;
-        updateMintCoinAvailability();
-      });
-
-      mintedRef.on("value", snap => {
-        mintedCount = snap.val() || 0;
-        mintCountDisplay.textContent = `🪙 Coins Minted: ${mintedCount}`;
-      });
-
-      // Authentication functions
-      function registerUser() {
-        const email = emailInput.value;
-        const password = passwordInput.value;
-        clearAuthMessage();
-        if (!email || !password) {
-          showAuthMessage("Email and Password are required.");
-          return;
-        }
-        auth.createUserWithEmailAndPassword(email, password)
-          .then(() => {
-            showAuthMessage("Registered successfully!", true);
-          })
-          .catch(err => showAuthMessage(err.message));
-      }
-
-      function loginUser() {
-        const email = emailInput.value;
-        const password = passwordInput.value;
-        clearAuthMessage();
-        if (!email || !password) {
-          showAuthMessage("Email and Password are required.");
-          return;
-        }
-        auth.signInWithEmailAndPassword(email, password)
-          .then(() => clearAuthMessage())
-          .catch(err => showAuthMessage(err.message));
-      }
-
-      function logoutUser() {
-        auth.signOut().then(() => {
-          authBox.style.display = "block";
-          userInfo.style.display = "none";
-        });
-      }
-
-      // UI helper functions
-      function displayUserInfo(user) {
-        authBox.style.display = "none";
-        userInfo.style.display = "block";
-        userEmailDisplay.textContent = user.email;
-      }
-
-      function loadUserCoins(user) {
-        userCoinsRef(user.uid).once("value").then(snap => {
-          const data = snap.val();
-          let html = "";
-          if (!data) {
-            html = "<p>You have not minted any coins yet.</p>";
-          } else {
-            html = "<ul>";
-            for (const coin in data) {
-              html += `<li>${coin}</li>`;
-            }
-            html += "</ul>";
-          }
-          userCoinsDisplay.innerHTML = html;
-        });
-      }
-
-      function showAuthMessage(message, isSuccess = false) {
-        authMessage.textContent = message;
-        authMessage.style.color = isSuccess ? 'lightgreen' : 'red';
-      }
-
-      function clearAuthMessage() {
-        authMessage.textContent = "";
-      }
-
-      // Coin flip functionality
-      function flipCoin() {
-        const isHeads = Math.random() < 0.5;
-        coinImage.src = isHeads ? "roman_coin_heads.png" : "roman_coin_tails.png";
-        resultText.textContent = `Result: ${isHeads ? "Heads" : "Tails"}`;
-        // Increase bank balance by $0.25 (25 cents = 25 in our unit)
-        bankRef.transaction(val => (val || 0) + 25);
-      }
-
-      // Manage availability of minting functionality
-      function updateMintCoinAvailability() {
-        if (currentBank >= COIN_PRICE) {
-          mintCoinImage.classList.add("unlocked");
-          mintCoinImage.style.cursor = "pointer";
-          // Attach click listener if not already attached
-          mintCoinImage.addEventListener("click", mintCoinFunction);
-        } else {
-          mintCoinImage.classList.remove("unlocked");
-          mintCoinImage.style.cursor = "default";
-          mintCoinImage.removeEventListener("click", mintCoinFunction);
-        }
-      }
-
-      // Mint coin functionality with rarity logic
-      function mintCoinFunction() {
-        const user = auth.currentUser;
-        if (!user) {
-          alert("Please log in first.");
-          return;
-        }
-        const name = prompt("Enter your name for this coin:");
-        if (!name || name.trim().length === 0) {
-          alert("Name required.");
-          return;
-        }
-        if (currentBank < COIN_PRICE) {
-          alert("Not enough in the pot!");
-          return;
-        }
-        // Deduct the mint price from the bank
-        bankRef.set(currentBank - COIN_PRICE);
-        const serial = mintedCount + 1;
-        mintedRef.set(serial);
-        const rarity = getRarity();
-        registryRef.child("coin_" + serial).set({
-          serial: serial,
-          name: name,
-          rarity: rarity,
-          date: new Date().toISOString()
-        });
-        userCoinsRef(user.uid).child("coin_" + serial).set(true);
-        alert(`Coin #${serial} (${rarity}) minted and added to your profile!`);
-      }
-
-      // Determine coin rarity
-      function getRarity() {
-        const roll = Math.random() * 100;
-        if (roll <= 1) return "Rhodium";
-        if (roll <= 5) return "Iridium";
-        if (roll <= 15) return "Platinum";
-        return "Gold";
+    let currentBank = 0;
+    let mintedCount = 0;
+    const COIN_PRICE = 10000;
+  
+    const bankRef = db.ref("coinBank");
+    const mintedRef = db.ref("mintedCount");
+    const registryRef = db.ref("mintRegistry");
+    const userRef = uid => db.ref("users/" + uid + "/coins");
+  
+    // Authentication
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("userInfo").style.display = "block";
+        document.getElementById("userEmail").textContent = user.email;
+        loadUserCoins();
+      } else {
+        document.getElementById("userInfo").style.display = "none";
+        loginPrompt();
       }
     });
+  
+    function loginPrompt() {
+      const email = prompt("Enter your email to login or register:");
+      const pass = prompt("Enter your password:");
+      if (!email || !pass) return;
+      auth.signInWithEmailAndPassword(email, pass)
+        .catch(() => {
+          auth.createUserWithEmailAndPassword(email, pass)
+            .catch(err => alert(err.message));
+        });
+    }
+  
+    function logout() {
+      auth.signOut();
+    }
+  
+    function loadUserCoins() {
+      const user = auth.currentUser;
+      if (!user) return;
+      userRef(user.uid).once("value").then(snap => {
+        const data = snap.val();
+        let html = "";
+        if (!data) {
+          html = "<p>You haven't minted any coins yet.</p>";
+        } else {
+          html = "<ul>";
+          Object.keys(data).forEach(coin => {
+            html += `<li>${coin}</li>`;
+          });
+          html += "</ul>";
+        }
+        document.getElementById("userCoins").innerHTML = html;
+      });
+    }
+  
+    // Real-time bank and minted count
+    bankRef.on("value", snap => {
+      currentBank = snap.val() || 0;
+      document.getElementById("bank").textContent = `Coin Bank: $${(currentBank / 100).toFixed(2)}`;
+      const mintElem = document.getElementById("mint-coin");
+      if (currentBank >= COIN_PRICE) {
+        mintElem.classList.add("unlocked");
+        mintElem.onclick = () => mintCoinFunction();
+      } else {
+        mintElem.classList.remove("unlocked");
+        mintElem.onclick = null;
+      }
+    });
+  
+    mintedRef.on("value", snap => {
+      mintedCount = snap.val() || 0;
+      document.getElementById("mint-count").textContent = `🪙 Coins Minted: ${mintedCount}`;
+      loadRecentMints();
+    });
+  
+    // Load last 5 mints for public display
+    function loadRecentMints() {
+      registryRef.once("value").then(snap => {
+        const data = snap.val();
+        const listElem = document.getElementById("recentMintsList");
+        listElem.innerHTML = "";
+        if (!data) return;
+        const sorted = Object.values(data).sort((a, b) => b.serial - a.serial);
+        const recent = sorted.slice(0, 5);
+        recent.forEach(entry => {
+          const li = document.createElement("li");
+          li.textContent = `#${entry.serial}: ${entry.rarity}`;
+          listElem.appendChild(li);
+        });
+      });
+    }
+  
+    // Flip coin functionality
+    function flipCoin() {
+      const isHeads = Math.random() < 0.5;
+      document.getElementById("coin").src = isHeads ? "roman_coin_heads.png" : "roman_coin_tails.png";
+      document.getElementById("resultText").textContent = `Result: ${isHeads ? "Heads" : "Tails"}`;
+      bankRef.transaction(val => (val || 0) + 25);
+    }
+  
+    function getRarity() {
+      const roll = Math.random() * 100;
+      if (roll <= 1) return "Rhodium";
+      if (roll <= 5) return "Iridium";
+      if (roll <= 15) return "Platinum";
+      return "Gold";
+    }
+  
+    // Mint coin functionality: registers the coin and links it to the user's account.
+    function mintCoinFunction() {
+      const user = auth.currentUser;
+      if (!user) return alert("Please log in first.");
+      const name = prompt("Enter your name for this coin:");
+      if (!name || name.length < 1) return alert("Name is required.");
+      if (currentBank < COIN_PRICE) return alert("Not enough in the pot!");
+  
+      const serial = mintedCount + 1;
+      mintedRef.set(serial);
+      bankRef.set(currentBank - COIN_PRICE);
+      const rarity = getRarity();
+  
+      // Register coin in the public registry
+      registryRef.child("coin_" + serial).set({
+        serial: serial,
+        name: name,
+        rarity: rarity,
+        date: new Date().toISOString()
+      });
+      // Link coin to the user's account
+      userRef(user.uid).child("coin_" + serial).set({
+        name: name,
+        rarity: rarity,
+        date: new Date().toISOString()
+      });
+  
+      alert(`Coin #${serial} (${rarity}) minted and registered to your profile.`);
+    }
+  
+    function downloadRegistry() {
+      registryRef.once("value").then(snap => {
+        const data = snap.val();
+        if (!data) return alert("No registry data yet.");
+        const sorted = Object.values(data).sort((a, b) => a.serial - b.serial);
+        const csv = [["Serial", "Name", "Rarity", "Date"],
+          ...sorted.map(r => [r.serial, r.name, r.rarity, new Date(r.date).toLocaleString()])
+        ].map(row => row.join(",")).join("\\n");
+  
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "stewmin_registry.csv";
+        a.click();
+      });
+    }
+  
+    function downloadUserCoins() {
+      const user = auth.currentUser;
+      if (!user) return alert("Please log in.");
+      userRef(user.uid).once("value").then(snap => {
+        const data = snap.val();
+        if (!data) return alert("No coins in your account.");
+        const csv = [["ID", "Name", "Rarity", "Date"],
+          ...Object.entries(data).map(([id, coin]) =>
+            [id, coin.name, coin.rarity, new Date(coin.date).toLocaleString()]
+          )
+        ].map(row => row.join(",")).join("\\n");
+  
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "my_stewmin_coins.csv";
+        a.click();
+      });
+    }
   </script>
 </body>
 </html>
+"""
+
+with open(html_path, "w") as f:
+    f.write(full_html)
+
+html_path
