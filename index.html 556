@@ -10,37 +10,36 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* Base Styles */
+    /* ===== CONCRETE THEME STYLES ===== */
     body {
       margin: 0;
       font-family: 'Press Start 2P', cursive;
-      background: #111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Crect width='1' height='1' fill='%23222222'/%3E%3C/svg%3E") repeat;
-      color: white;
+      background: #A8A9AD; /* grey concrete tone */
+      color: #333;
     }
     header {
       text-align: center;
-      background: #000;
-      color: gold;
+      background: #555;
+      color: #fff;
       padding: 20px 10px;
-      border-bottom: 2px solid gold;
+      border-bottom: 2px solid #444;
       font-size: 12px;
     }
-    /* Minted Stats Display (smaller) */
+    /* Minted Stats & Market Ratio (smaller font) */
     #mintedStats {
       text-align: center;
-      background: #222;
+      background: #7B7C80;
       padding: 5px;
       font-size: 9px;
     }
-    /* Overall Market Ratio Display */
     #marketRatioDisplay {
       font-size: 9px;
       margin-top: 2px;
     }
     /* Ticker styles */
     .ticker {
-      background: black;
-      color: gold;
+      background: #555;
+      color: #fff;
       padding: 5px;
       font-size: 10px;
       white-space: nowrap;
@@ -51,99 +50,90 @@
     .container {
       max-width: 960px;
       margin: 20px auto;
-      padding: 0 20px;
+      padding: 0 10px;
     }
     h2 {
-      color: gold;
+      color: #ddd;
       font-size: 12px;
       margin-top: 30px;
     }
     button, input, select {
       font-family: 'Press Start 2P', cursive;
       font-size: 10px;
-      background: gold;
-      color: black;
+      background: #ccc;
+      color: #222;
       border: none;
       padding: 6px 10px;
       margin: 5px 0;
       cursor: pointer;
     }
-    input, select {
-      background: #ddd;
-      color: #000;
-    }
+    input, select { background: #eee; color: #222; }
     .section {
       margin-top: 30px;
       padding: 15px;
-      background: #1a1a1a;
-      border: 2px solid #333;
-      border-radius: 10px;
+      background: #8A8A8A;
+      border: 1px solid #666;
+      border-radius: 5px;
     }
     /* Auth Panel */
-    #auth-panel input {
-      margin-bottom: 5px;
-    }
+    #auth-panel input { margin-bottom: 5px; }
     /* Vault & Stats */
-    #vaultSummary p, #mintedStats p {
-      margin: 5px 0;
-      font-size: 9px;
-    }
+    #vaultSummary p, #mintedStats p { margin: 5px 0; font-size: 9px; }
     #vaultRatio, #tradingRatio, #tradeRecommendation {
       font-size: 10px;
       margin-top: 10px;
     }
-    /* Trade Leaderboard (smaller title) */
+    /* Trade Leaderboard */
+    #tradeRatioLeaderboard {
+      height: 50px;
+      overflow: hidden;
+      position: relative;
+      padding-left: 10px;
+      margin-top: 10px;
+    }
     #tradeRatioLeaderboard h3 {
       font-size: 10px;
       margin-bottom: 5px;
     }
+    #tradeRatioList {
+      position: absolute;
+      width: 100%;
+      animation: verticalScroll 20s linear infinite;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    @keyframes verticalScroll {
+      0% { top: -100%; }
+      100% { top: 100%; }
+    }
+    #tradeRatioLeaderboard ol { padding-left: 20px; font-size: 9px; }
     /* Trading Portal */
     #tradePortal {
       display: none;
       margin-top: 20px;
       padding: 15px;
-      background: #1a1a1a;
-      border: 2px solid #333;
-      border-radius: 10px;
+      background: #8A8A8A;
+      border: 1px solid #666;
+      border-radius: 5px;
     }
-    #tradeRequestForm p, #tradeRequestsList p {
-      margin: 5px 0;
-      font-size: 10px;
-    }
-    /* Trade Filters */
-    #tradeFilters label {
-      display: block;
-      margin-top: 10px;
-    }
-    /* Trade Leaderboard List */
-    #tradeRatioLeaderboard ol {
-      padding-left: 20px;
-      font-size: 9px;
-    }
-    /* Coin Showcase */
-    #coinShowcase {
-      margin-top: 20px;
-      padding: 15px;
-      background: #1a1a1a;
-      border: 2px solid #333;
-      border-radius: 10px;
-      text-align: center;
-    }
-    /* 8-bit Coin Styling (tweaked) */
-    .coin {
+    #tradeRequestForm p, #tradeRequestsList p { margin: 5px 0; font-size: 10px; }
+    #tradeFilters label { display: block; margin-top: 10px; }
+    /* Small Rotating Coin Icon for Vault (twice as fast as before) */
+    .small-coin {
       display: inline-block;
-      width: 35px;
-      height: 35px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      margin: 2px;
-      animation: spin 10s linear infinite;
-      border: 1px solid #222;
+      margin-right: 4px;
+      vertical-align: middle;
+      animation: spin 2.5s linear infinite;
     }
     @keyframes spin {
       from { transform: rotateY(0deg); }
       to { transform: rotateY(360deg); }
     }
-    /* Coin Colors */
+    /* Use same coin colors */
     .copper   { background: #B87333; }
     .silver   { background: #C0C0C0; }
     .gold     { background: #FFD700; }
@@ -151,19 +141,14 @@
     .diamond  { background: #B9F2FF; }
     .iridium  { background: #A9A9A9; }
     .rhodium  { background: #E6E8FA; }
+    /* User Trade Ratio will be displayed in the "tradingRatio" paragraph */
     /* Tiny Mute Button */
-    #userControls {
-      text-align: right;
-    }
-    #userControls button {
-      font-size: 8px;
-      padding: 2px 4px;
-      margin: 0;
-    }
+    #userControls { text-align: right; }
+    #userControls button { font-size: 8px; padding: 2px 4px; margin: 0; }
     footer {
       text-align: center;
-      background: #000;
-      color: gray;
+      background: #555;
+      color: #ccc;
       padding: 20px;
       font-size: 10px;
       margin-top: 40px;
@@ -174,14 +159,14 @@
   <header>
     <h1>🏛️ Vault Street</h1>
   </header>
-
-  <!-- Minted Stats & Market Ratio -->
+  
+  <!-- Minted Stats & Overall Market Ratio -->
   <div id="mintedStats">
-    <p id="totalMinted">Total Minted: Loading...</p>
+    <p id="totalMinted">Daily Record: Loading...</p>
     <p id="todayMinted">Minted Today: Loading...</p>
     <p id="marketRatioDisplay">Market Ratio: Loading...</p>
   </div>
-
+  
   <!-- Tickers -->
   <div class="ticker">
     <marquee id="tradeTicker" scrollamount="4">Vault Street Exchange — live market loading...</marquee>
@@ -189,7 +174,7 @@
   <div class="ticker">
     <marquee id="confirmedTradeTicker" scrollamount="4">Confirmed Trades: Loading...</marquee>
   </div>
-
+  
   <div class="container">
     <!-- Authentication Panel -->
     <div id="auth-panel" class="section">
@@ -199,44 +184,45 @@
       <input type="text" id="username" placeholder="Choose a Username" /><br />
       <button onclick="login()">Login / Register</button>
     </div>
-
+    
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
       <div id="userControls">
         <button onclick="toggleAudio()">🔇</button>
       </div>
       <h2>Welcome, <span id="displayName"></span></h2>
-
-      <!-- Admin Panel (only if admin) -->
+      
+      <!-- Admin Panel (only if admin credentials match) -->
       <div id="adminPanel" style="display:none; margin-bottom:10px;">
         <button onclick="adminResetMarket()">Admin: Reset Market Ratio to 1.0</button>
         <button onclick="adminClearCoinHistory()">Admin: Clear All Coin History</button>
         <button onclick="clearTradePortalMessages()">Admin: Clear Trade Portal</button>
       </div>
-
+      
       <!-- Minting Section -->
       <h3>Mint a Coin</h3>
       <button id="mintBtn" disabled>Mint New Coin</button>
       <p id="mintNotice" style="color:red; font-size:10px;">Minting is disabled. Market ratio is below 1.0</p>
-
+      
       <!-- My Vault Section -->
       <h3>My Vault</h3>
+      <!-- The vault summary displays each rarity with a small, fast-spinning coin icon followed by the count -->
       <div id="vaultSummary"><!-- Populated dynamically --></div>
       <p id="vaultRatio"></p>
       <p id="tradingRatio"></p>
-
-      <!-- Trade Leaderboard -->
+      
+      <!-- Trade Leaderboard with Vertical Scroll -->
       <div id="tradeRatioLeaderboard" class="section">
-        <h3 style="font-size:10px;">Trade Leaderboard</h3>
+        <h3>Trade Leaderboard</h3>
         <ol id="tradeRatioList"><!-- Populated dynamically --></ol>
       </div>
-
+      
       <!-- Trading Portal -->
       <button id="toggleTradePortalButton" onclick="toggleTradePortal()">Open Trading Portal</button>
       <div id="tradePortal">
         <h3>Trading Portal</h3>
         <!-- Trade Request Form -->
-        <div id="tradeRequestForm" class="section" style="background:#222;">
+        <div id="tradeRequestForm" class="section" style="background:#767676;">
           <h4>Create Trade Request</h4>
           <label>Offer Coin Type:</label>
           <select id="tradeOfferType">
@@ -265,7 +251,7 @@
           <button onclick="submitTradeRequest()">Submit Trade Request</button>
         </div>
         <!-- Trade Filters -->
-        <div id="tradeFilters" class="section" style="background:#333;">
+        <div id="tradeFilters" class="section" style="background:#6E6E6E;">
           <h4>Filter Trade Requests</h4>
           <label>Filter by Coin Type:</label>
           <input type="text" id="filterCoinType" placeholder="e.g. Gold" />
@@ -274,33 +260,19 @@
           <button onclick="applyTradeFilter()">Apply Filter</button>
           <button onclick="clearTradeFilter()">Clear Filter</button>
         </div>
-        <!-- Pending Trade Requests -->
+        <!-- Pending Trade Requests List -->
         <h4>Pending Trade Requests</h4>
         <div id="tradeRequestsList"><!-- Populated dynamically --></div>
       </div>
-
-      <!-- Coin Showcase -->
-      <div id="coinShowcase" class="section">
-        <h3>Coin Showcase</h3>
-        <div>
-          <span class="coin copper" title="Copper"></span>
-          <span class="coin silver" title="Silver"></span>
-          <span class="coin gold" title="Gold"></span>
-          <span class="coin platinum" title="Platinum"></span>
-          <span class="coin diamond" title="Diamond"></span>
-          <span class="coin iridium" title="Iridium"></span>
-          <span class="coin rhodium" title="Rhodium"></span>
-        </div>
-      </div>
-
+      
       <button onclick="logout()">Logout</button>
     </div>
   </div>
-
+  
   <footer>
     <p>&copy; 2025 Vault Street</p>
   </footer>
-
+  
   <script>
     // === Constants ===
     const TRADE_EXPIRATION_MS = 3600000; // 1 hour
@@ -357,14 +329,14 @@
     function adminClearCoinHistory() {
       const user = auth.currentUser;
       if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
-        if (confirm("Are you sure you want to clear all coin history? This will erase all coins from the mint registry and user vaults.")) {
+        if (confirm("Are you sure you want to clear all coin history? This will erase all coins from the mint registry and vaults.")) {
           db.ref("mintRegistry").remove();
           db.ref("users").once("value").then(snapshot => {
             snapshot.forEach(uSnap => {
               db.ref("users/" + uSnap.key + "/coins").remove();
             });
           });
-          alert("All coin history has been cleared.");
+          alert("All coin history cleared.");
           updateMintedStats();
           loadVault();
         }
@@ -395,6 +367,21 @@
               db.ref("users/" + uSnap.key + "/dailyTrades").set(0);
             });
           });
+          // Update daily record if today's mints exceed the current record.
+          db.ref("mintRegistry").once("value").then(snap => {
+            let mintedToday = 0;
+            Object.values(snap.val() || {}).forEach(coin => {
+              if (coin && coin.date && coin.date.split("T")[0] === todayStr) {
+                mintedToday++;
+              }
+            });
+            db.ref("tradeStats/dailyRecord").once("value").then(recSnap => {
+              let record = recSnap.val() || 0;
+              if (mintedToday > record) {
+                db.ref("tradeStats").update({ dailyRecord: mintedToday });
+              }
+            });
+          });
         }
       });
     }
@@ -404,26 +391,21 @@
     // === Minted Stats Functions ===
     function updateMintedStats() {
       db.ref("mintRegistry").once("value").then(snap => {
-        const data = snap.val() || {};
-        let total = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-        let today = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
+        let data = snap.val() || {};
         const todayStr = new Date().toISOString().split("T")[0];
+        let mintedToday = 0;
         Object.values(data).forEach(coin => {
-          if (coin && coin.rarity) {
-            total[coin.rarity] = (total[coin.rarity] || 0) + 1;
-            if (coin.date && coin.date.split("T")[0] === todayStr) {
-              today[coin.rarity] = (today[coin.rarity] || 0) + 1;
-            }
+          if (coin && coin.date && coin.date.split("T")[0] === todayStr) {
+            mintedToday++;
           }
         });
-        let totalText = "Total Minted: ";
-        let todayText = "Minted Today: ";
-        for (let r in total) {
-          totalText += r + ": " + total[r] + "   ";
-          todayText += r + ": " + (today[r] || 0) + "   ";
-        }
-        document.getElementById("totalMinted").textContent = totalText;
-        document.getElementById("todayMinted").textContent = todayText;
+        db.ref("tradeStats/dailyRecord").once("value").then(recSnap => {
+          let record = recSnap.val() || 0;
+          document.getElementById("totalMinted").textContent = "Daily Record: " + record;
+          let mtElem = document.getElementById("todayMinted");
+          mtElem.textContent = "Minted Today: " + mintedToday;
+          mtElem.style.color = (mintedToday > record) ? "green" : "";
+        });
       });
     }
     setInterval(updateMintedStats, 60000);
@@ -432,7 +414,7 @@
     // === Market Ratio Display ===
     function updateMarketRatio() {
       db.ref("tradeStats").once("value").then(snap => {
-        const data = snap.val() || {};
+        let data = snap.val() || {};
         const ratio = data.averageTradeRatio ?? 0;
         const disp = document.getElementById("marketRatioDisplay");
         disp.textContent = "Market Ratio: " + ratio.toFixed(2);
@@ -504,7 +486,7 @@
     const mintedRef = db.ref("mintedCount");
     function updateMintAccess() {
       db.ref("tradeStats").once("value").then(snap => {
-        const data = snap.val() || {};
+        let data = snap.val() || {};
         const avg = data.averageTradeRatio ?? 0;
         canMint = avg >= 1.0;
         document.getElementById("mintBtn").disabled = !canMint;
@@ -539,41 +521,38 @@
         }
       });
     }
+    // Modified loadVault displays each rarity with a small rotating coin and count.
     function loadVault() {
       const user = auth.currentUser;
       if (!user) return;
       userRef(user.uid).once("value").then(snap => {
-        const data = snap.val();
-        let counts = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-        if (data) {
-          Object.values(data).forEach(coin => {
-            counts[coin.rarity] = (counts[coin.rarity] || 0) + 1;
-          });
+        let data = snap.val() || {};
+        let rarities = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
+        Object.values(data).forEach(coin => {
+          if (coin && coin.rarity) {
+            rarities[coin.rarity] = (rarities[coin.rarity] || 0) + 1;
+          }
+        });
+        let html = "";
+        for (let r in rarities) {
+          html += `<p><span class="small-coin ${r.toLowerCase()}"></span> ${r}: ${rarities[r]}</p>`;
         }
-        document.getElementById("vaultSummary").innerHTML = `
-          <p>Copper: ${counts["Copper"] || 0}</p>
-          <p>Silver: ${counts["Silver"] || 0}</p>
-          <p>Gold: ${counts["Gold"] || 0}</p>
-          <p>Platinum: ${counts["Platinum"] || 0}</p>
-          <p>Diamond: ${counts["Diamond"] || 0}</p>
-          <p>Iridium: ${counts["Iridium"] || 0}</p>
-          <p>Rhodium: ${counts["Rhodium"] || 0}</p>
-        `;
+        document.getElementById("vaultSummary").innerHTML = html;
         updateVaultRatio();
       });
     }
     function updateVaultRatio() {
       const user = auth.currentUser;
       if (!user) return;
-      let totalScore = 0, count = 0;
+      let totalScore = 0, cnt = 0;
       db.ref("users").once("value").then(snapshot => {
         snapshot.forEach(uSnap => {
           const coins = uSnap.val().coins;
           const score = calculateVaultScore(coins);
           totalScore += score;
-          count++;
+          cnt++;
         });
-        const avgScore = count ? totalScore / count : 0;
+        const avgScore = cnt ? totalScore / cnt : 0;
         userRef(user.uid).once("value").then(snap => {
           const currentScore = calculateVaultScore(snap.val());
           let ratio = avgScore ? (currentScore / avgScore) : 1;
@@ -585,27 +564,21 @@
     }
     function calculateVaultScore(coins) {
       if (!coins) return 0;
-      const values = { Copper: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Iridium: 6, Rhodium: 7 };
-      let score = 0, set = new Set();
+      const vals = { Copper: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Iridium: 6, Rhodium: 7 };
+      let score = 0, unique = new Set();
       Object.values(coins).forEach(c => {
-        set.add(c.rarity);
-        score += values[c.rarity] || 0;
+        unique.add(c.rarity);
+        score += vals[c.rarity] || 0;
       });
-      if (set.size === 7) score += 5;
+      if (unique.size === 7) score += 5;
       return score;
     }
 
-    // === Mint Button Event Listener ===
+    // === Mint Button Listener ===
     document.getElementById("mintBtn").addEventListener("click", () => {
       const user = auth.currentUser;
-      if (!user) {
-        alert("You must be logged in.");
-        return;
-      }
-      if (!canMint) {
-        alert("Minting is disabled because the market ratio is below 1.0.");
-        return;
-      }
+      if (!user) { alert("You must be logged in."); return; }
+      if (!canMint) { alert("Minting is disabled because the market ratio is below 1.0."); return; }
       mintNewCoin(() => {
         alert("Coin minted successfully!");
         updateMintAccess();
@@ -626,13 +599,13 @@
     function updateTradingRatio() {
       const user = auth.currentUser;
       if (!user) return;
-      let total = 0, count = 0;
+      let total = 0, cnt = 0;
       db.ref("users").once("value").then(snapshot => {
         snapshot.forEach(uSnap => {
           total += (uSnap.val().trades || 0);
-          count++;
+          cnt++;
         });
-        let avg = count ? total / count : 0;
+        let avg = cnt ? total / cnt : 0;
         db.ref("users/" + user.uid + "/trades").once("value").then(snap => {
           let userTrades = snap.val() || 0;
           let ratio = avg ? (userTrades / avg) : 1;
@@ -645,25 +618,22 @@
     function updateTradeRatioLeaderboard() {
       db.ref("users").once("value").then(snapshot => {
         let users = [];
-        let totalDaily = 0, count = 0;
+        let totalDaily = 0, cnt = 0;
         snapshot.forEach(uSnap => {
           let dt = uSnap.val().dailyTrades || 0;
           totalDaily += dt;
-          count++;
-          users.push({ username: uSnap.val().username || "Unknown", dailyTrades: dt });
+          cnt++;
+          users.push({ username: uSnap.val().username || "Unknown", daily: dt });
         });
-        let avgDaily = count ? totalDaily / count : 0;
-        users.forEach(u => {
-          u.ratio = avgDaily ? (u.dailyTrades / avgDaily) : 1;
-        });
+        let avgDaily = cnt ? totalDaily / cnt : 0;
+        users.forEach(u => { u.ratio = avgDaily ? (u.daily / avgDaily) : 1; });
         users.sort((a, b) => b.ratio - a.ratio);
         let top10 = users.slice(0, 10);
         let listEl = document.getElementById("tradeRatioList");
         listEl.innerHTML = "";
         top10.forEach(u => {
           let li = document.createElement("li");
-          li.textContent = `${u.username}: ${u.ratio.toFixed(2)}`;
-          li.style.color = getRatioColor(u.ratio);
+          li.innerHTML = `${u.username}: <span style="color: ${getRatioColor(u.ratio)}">${u.ratio.toFixed(2)}</span>`;
           listEl.appendChild(li);
         });
       });
@@ -678,9 +648,7 @@
         snapshot.forEach(uSnap => {
           let coins = uSnap.val().coins;
           if (coins) {
-            Object.values(coins).forEach(c => {
-              totals[c.rarity] = (totals[c.rarity] || 0) + 1;
-            });
+            Object.values(coins).forEach(c => { totals[c.rarity] = (totals[c.rarity] || 0) + 1; });
           }
         });
         let entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
@@ -696,12 +664,12 @@
     setInterval(updateTradeRecommendation, 3600000);
     updateTradeRecommendation();
 
-    // === Confirmed Trade Logging & Tickers ===
-    function logConfirmedTrade(userA, userB, ratio) {
+    // === Confirmed Trade Logging & Ticker Updates ===
+    function logConfirmedTrade(uA, uB, ratio) {
       db.ref("confirmedTrades").once("value").then(snap => {
         let trades = snap.val();
         if (!trades || !Array.isArray(trades)) trades = [];
-        trades.push({ userA, userB, tradeRatio: ratio, timestamp: Date.now() });
+        trades.push({ userA: uA, userB: uB, tradeRatio: ratio, timestamp: Date.now() });
         db.ref("confirmedTrades").set(trades);
       });
     }
@@ -759,7 +727,6 @@
           alert("You do not have enough " + offerType + " coins for this trade.");
           return;
         }
-        // Lock offered coins by removing them from vault
         available.forEach(item => {
           db.ref("users/" + user.uid + "/coins/" + item.id).remove();
         });
