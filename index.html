@@ -443,37 +443,47 @@
     setInterval(distributeTradePortalPot, 60000);
 
     /* ================= PROCESS INVESTMENTS AT 7AM ================= */
-    function processInvestments() {
-      const now = new Date();
-      if (now.getHours() === 7) {
-        db.ref("users").once("value").then(snapshot => {
-          snapshot.forEach(uSnap => {
-            const targetId = uSnap.key;
-            db.ref("users/" + targetId + "/investments").once("value").then(invSnap => {
-              let investments = invSnap.val();
-              if (investments) {
-                // For each investment in target's investments node:
-                Object.entries(investments).forEach(([invKey, inv]) => {
-                  const investorUid = inv.investorUid;
-                  const investedQty = inv.quantity;
-                  // Use target's trading ratio—if not available, default to 1.
-                  const targetRatio = uSnap.val().tradingRatio || 1;
-                  // For bonus calculation, for instance bonus = floor(investedQty * (targetRatio - 1) * 0.1)
-                  const bonus = Math.floor(investedQty * Math.max(0, targetRatio - 1) * 0.1);
-                  // The investor receives their original investment plus bonus.
-                  for (let i = 0; i < investedQty + bonus; i++) {
-                    let coinData = { serial: "investmentReturn", rarity: inv.coinType, date: new Date().toISOString() };
-                    db.ref("users/" + investorUid + "/coins").push(coinData);
-                  }
-                  db.ref("users/" + targetId + "/investments/" + invKey).remove();
-                  console.log("Processed investment from", investorUid, "on", targetId, "with bonus:", bonus);
-                });
+   function processInvestments() {
+  const now = new Date();
+  if (now.getHours() === 7) {
+    db.ref("users").once("value").then(snapshot => {
+      snapshot.forEach(uSnap => {
+        const targetId = uSnap.key;
+        db.ref("users/" + targetId + "/investments").once("value").then(invSnap => {
+          let investments = invSnap.val();
+          if (investments) {
+            Object.entries(investments).forEach(([invKey, inv]) => {
+              const investorUid = inv.investorUid;
+              const investedQty = inv.quantity;
+              const coinType = inv.coinType;
+              const targetRatio = uSnap.val().tradingRatio || 1;
+
+              const rawBonus = Math.floor(investedQty * Math.max(0, targetRatio - 1) * 0.1);
+              const investorBonus = Math.floor(rawBonus * 0.7);
+              const recipientBonus = rawBonus - investorBonus;
+
+              // Return invested coins + bonus to investor
+              for (let i = 0; i < investedQty + investorBonus; i++) {
+                const coinData = { serial: "investmentReturn", rarity: coinType, date: new Date().toISOString() };
+                db.ref("users/" + investorUid + "/coins").push(coinData);
               }
+
+              // Give recipient their commission (stored in bonusCoins, not tradable)
+              for (let j = 0; j < recipientBonus; j++) {
+                const coinData = { serial: "commissionBonus", rarity: coinType, date: new Date().toISOString() };
+                db.ref("users/" + targetId + "/bonusCoins").push(coinData);
+              }
+
+              // Remove the investment record
+              db.ref("users/" + targetId + "/investments/" + invKey).remove();
+              console.log("Processed investment:", investorUid, "->", targetId, "bonus:", rawBonus);
             });
-          });
+          }
         });
-      }
-    }
+      });
+    });
+  }
+}
     setInterval(processInvestments, 60000);
 
     /* ================= MINTED STATS FUNCTIONS ================= */
