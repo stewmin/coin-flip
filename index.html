@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vault Street v2.0 Beta</title>
+  <title>Vault Street Full Game v1.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <!-- Firebase Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* Basic Styles */
+    /* Base Styles */
     body {
       margin: 0;
       font-family: 'Press Start 2P', cursive;
@@ -54,31 +54,41 @@
       margin-top: 40px;
       color: gray;
     }
-    /* Minted Stats Display (Simplified) */
+    /* Minted Stats Display */
     #mintedStats {
       text-align: center;
       background: #222;
       padding: 5px;
       font-size: 10px;
     }
-    /* Vault Clock Display */
+    /* Vault Clock */
     #vaultClockDisplay {
       font-size: 12px;
       color: cyan;
       text-align: center;
       margin-top: 10px;
     }
+    /* Leaderboard */
+    #leaderboard {
+      font-size: 10px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>🏛️ Vault Street v2.0 Beta</h1>
+    <h1>🏛️ Vault Street Full Game v1.0</h1>
   </header>
   
-  <!-- Minted Stats Area: Now a clean summary -->
+  <!-- Minted Stats Area -->
   <div id="mintedStats">
     <p id="totalMinted">Total Minted: Loading...</p>
     <p id="todayMinted">Minted Today: Loading...</p>
+  </div>
+  
+  <!-- Market Ticker for Coin Prices -->
+  <div id="marketTicker" style="background: black; color: gold; padding: 5px; font-size: 10px; text-align:center;">
+    <p id="marketPricesText">Market Prices: Loading...</p>
   </div>
   
   <div class="container">
@@ -88,7 +98,6 @@
       <input type="email" id="email" placeholder="Email" /><br/>
       <input type="password" id="password" placeholder="Password" /><br/>
       <input type="text" id="username" placeholder="Choose Username" /><br/>
-      <!-- Vault type selection removed; default vault type will be set -->
       <button onclick="login()">Login / Register</button>
     </div>
     
@@ -96,26 +105,29 @@
     <div id="user-panel" class="section" style="display: none;">
       <div style="text-align: right;"><button onclick="logout()">Logout</button></div>
       <h2>Welcome, <span id="displayName"></span></h2>
-      
-      <!-- Admin Panel: Visible only to the admin (vault admin) account -->
+      <!-- Admin Panel -->
       <div id="adminPanel" style="display: none; margin-bottom:10px;">
         <button onclick="adminResetMarket()">Admin: Reset Market</button>
         <button onclick="adminClearCoinHistory()">Admin: Clear Coin History</button>
       </div>
-      
-      <!-- Vault Clock & Theme Customization -->
-      <div id="vaultInfo">
+      <!-- User Basic Info -->
+      <div id="userInfo" class="section">
+        <p>Vault Type: <span id="vaultTypeDisplay"></span></p>
+        <p>Cash: $<span id="cashDisplay"></span></p>
         <div id="vaultClockDisplay">Vault Clock: Loading...</div>
-        <div id="vaultThemeSection" class="section">
-          <h3>Customize Vault Theme</h3>
-          <select id="vaultTheme">
-            <option value="default">Gray Default</option>
-            <option value="red">Red</option>
-            <option value="blue">Blue</option>
-            <option value="green">Green</option>
-          </select>
-          <button onclick="updateVaultTheme()">Apply Theme</button>
-        </div>
+      </div>
+      
+      <!-- Vault Theme Customization -->
+      <div id="vaultThemeSection" class="section">
+        <h3>Customize Vault Theme</h3>
+        <select id="vaultTheme">
+          <option value="default">Gray Default</option>
+          <option value="red">Red</option>
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+        </select>
+        <button onclick="updateVaultTheme()">Apply Theme</button>
+        <!-- PLACE BLOCK HERE: In future, implement dynamic pricing and bidding for themes -->
       </div>
       
       <!-- Coin Minting Section -->
@@ -129,12 +141,33 @@
       <div id="vaultSummary" class="section">
         <h3>My Vault</h3>
         <div id="vaultCoins">
-          <!-- User coin counts will appear here -->
+          <!-- Coin counts will be shown here -->
         </div>
         <p id="vaultRatio"></p>
       </div>
       
-      <!-- Future systems such as investments, guilds, and associations can be added in upcoming blocks -->
+      <!-- Investment Section -->
+      <div id="investmentSection" class="section">
+        <h3>Invest in Another Vault</h3>
+        <p>Note: Only Investment and Holdings vaults can receive investments.</p>
+        <input type="text" id="investRecipient" placeholder="Recipient Username" /><br/>
+        <input type="number" id="investAmount" placeholder="Amount ($)" min="1" /><br/>
+        <button onclick="submitInvestment()">Invest</button>
+      </div>
+      
+      <!-- Leaderboard Section -->
+      <div id="leaderboard" class="section">
+        <h3>Leaderboard</h3>
+        <div id="leaderboardContent">
+          <!-- Top vaults will be listed here -->
+        </div>
+      </div>
+      
+      <!-- Placeholder for Guilds/Associations -->
+      <div id="guildSection" class="section">
+        <h3>Vault Guilds & Associations</h3>
+        <p>Coming Soon: Create and join vault guilds or associations to gain group bonuses and unlock extra features.</p>
+      </div>
     </div>
   </div>
   
@@ -167,8 +200,22 @@
     
     // === Global Variables ===
     let currentUsername = "";
-    let defaultVaultType = "Basic"; // Now always defaulting to "Basic" for all users.
+    let defaultVaultType = "Basic";  // All new users start as Basic.
+    let currentCash = 1000; // Default starting cash.
     let canMint = false;
+    
+    // Market base prices for each rarity
+    const basePrices = {
+      Copper: 1,
+      Silver: 5,
+      Gold: 10,
+      Platinum: 25,
+      Diamond: 50,
+      Iridium: 100,
+      Rhodium: 250
+    };
+    // Current market prices (fluctuating)
+    let marketPrices = Object.assign({}, basePrices);
     
     // ---- Helper Functions ----
     function getRatioColor(ratio) {
@@ -177,21 +224,21 @@
       else return "green";
     }
     
-    // Simple rarity function remains the same.
+    // Returns a rarity based on chance.
     function getRarity() {
       const roll = Math.random() * 100;
-      if (roll < 50) return "Copper";
-      else if (roll < 75) return "Silver";
-      else if (roll < 87) return "Gold";
-      else if (roll < 94) return "Platinum";
-      else if (roll < 97) return "Diamond";
-      else if (roll < 99) return "Iridium";
-      else return "Rhodium";
+      if (roll < 50) return "Copper";      
+      else if (roll < 75) return "Silver";   
+      else if (roll < 87) return "Gold";     
+      else if (roll < 94) return "Platinum"; 
+      else if (roll < 97) return "Diamond";  
+      else if (roll < 99) return "Iridium";  
+      else return "Rhodium";                
     }
     
     // ---- Vault Clock System ----
-    // Demo cycle set to 5 minutes (300 seconds) for testing.
-    const cycleLength = 300; // seconds
+    // For testing, a cycle lasts 5 minutes (300 seconds).
+    const cycleLength = 300; // in seconds
     let clockStartTime = Date.now();
     function updateVaultClock() {
       const elapsed = Math.floor((Date.now() - clockStartTime) / 1000);
@@ -200,16 +247,16 @@
       const seconds = remaining % 60;
       document.getElementById("vaultClockDisplay").textContent =
         "Vault Clock: " + minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
-      
-      // When a cycle completes, trigger a reset.
       if (elapsed % cycleLength === 0) {
         vaultClockReset();
       }
     }
     function vaultClockReset() {
       console.log("Vault Clock Reset Triggered");
-      // PLACE BLOCK HERE: Add reset actions (e.g., return unfulfilled market sales, reset theme prices, enable coin conversion)
-      // For now, we simply log the reset.
+      // PLACE BLOCK HERE: Process daily resets, return unsold listings, process investment returns, reset theme prices, etc.
+      // For demo, refresh minted stats and update investments if implemented.
+      updateMintedStats();
+      updateAllInvestments();
     }
     setInterval(updateVaultClock, 1000);
     updateVaultClock();
@@ -217,7 +264,6 @@
     // ---- Vault Theme Customization ----
     function updateVaultTheme() {
       const theme = document.getElementById("vaultTheme").value;
-      // As a simple demo, change the background color of the user panel.
       const userPanel = document.getElementById("user-panel");
       switch(theme) {
         case "red": userPanel.style.backgroundColor = "#330000"; break;
@@ -225,31 +271,41 @@
         case "green": userPanel.style.backgroundColor = "#003300"; break;
         default: userPanel.style.backgroundColor = "#1a1a1a";
       }
-      // Save theme to Firebase.
       if (auth.currentUser) {
         db.ref("users/" + auth.currentUser.uid).update({ theme: theme });
       }
     }
     
-    // ---- Authentication & Registration ----
+    // ---- Authentication & User Initialization ----
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById("auth-panel").style.display = "none";
         document.getElementById("user-panel").style.display = "block";
         db.ref("users/" + user.uid).once("value").then(snap => {
-          const data = snap.val() || {};
-          // If the vault type isn’t set, default to "Basic"
+          let data = snap.val() || {};
+          // Initialize vault type, cash, and theme if not set.
           if (!data.vaultType) {
+            data.vaultType = defaultVaultType;
             db.ref("users/" + user.uid).update({ vaultType: defaultVaultType });
           }
-          document.getElementById("vaultTypeDisplay").textContent = data.vaultType || defaultVaultType;
+          if (!data.cash) {
+            data.cash = currentCash;
+            db.ref("users/" + user.uid).update({ cash: currentCash });
+          }
+          if (!data.theme) {
+            data.theme = "default";
+            db.ref("users/" + user.uid).update({ theme: "default" });
+          }
+          document.getElementById("vaultTypeDisplay").textContent = data.vaultType;
+          currentCash = data.cash;
+          document.getElementById("cashDisplay").textContent = currentCash;
           currentUsername = data.username || "";
           if (!currentUsername) {
             currentUsername = document.getElementById("username").value.trim() || user.email.split("@")[0];
             db.ref("users/" + user.uid).update({ username: currentUsername });
           }
           document.getElementById("displayName").textContent = currentUsername;
-          // Admin check: if logging in with your admin email, force admin username.
+          // Admin check (if admin email)
           if (user.email === "stewmin20k@gmail.com") {
             currentUsername = "stewmin";
             db.ref("users/" + user.uid).update({ username: "stewmin" });
@@ -259,6 +315,7 @@
           }
           updateMintAccess();
           loadVault();
+          updateLeaderboard();
         });
       } else {
         document.getElementById("auth-panel").style.display = "block";
@@ -277,7 +334,10 @@
               email: cred.user.email,
               username: currentUsername,
               vaultType: defaultVaultType,
-              theme: "default"
+              cash: currentCash,
+              theme: "default",
+              coins: {},
+              investments: {}   // For recording investments made/received.
             });
           })
           .catch(err => alert(err.message));
@@ -290,10 +350,9 @@
     // ---- Admin Functions ----
     function adminResetMarket() {
       const user = auth.currentUser;
-      // Only allow admin if email and username match the admin criteria.
       if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
         db.ref("tradeStats").update({ averageTradeRatio: 1.0 });
-        alert("Market reset by admin.");
+        alert("Market reset.");
         updateMintAccess();
       } else {
         alert("Admin access required.");
@@ -302,15 +361,14 @@
     function adminClearCoinHistory() {
       const user = auth.currentUser;
       if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
-        if (confirm("Clear all coin history? This is irreversible.")) {
+        if (confirm("Clear all coin history? This cannot be undone.")) {
           db.ref("mintRegistry").remove();
           db.ref("users").once("value").then(snapshot => {
             snapshot.forEach(userSnap => {
-              const uid = userSnap.key;
-              db.ref("users/" + uid + "/coins").remove();
+              db.ref("users/" + userSnap.key + "/coins").remove();
             });
           });
-          alert("Coin history cleared by admin.");
+          alert("Coin history cleared.");
           updateMintedStats();
           loadVault();
         }
@@ -323,14 +381,11 @@
     const registryRef = db.ref("mintRegistry");
     const mintedRef = db.ref("mintedCount");
     function updateMintAccess() {
-      // Simplified criteria: allow minting if average market ratio > 1.0 (placeholder)
-      db.ref("tradeStats").once("value").then(snap => {
-        const data = snap.val() || {};
-        const avgRatio = data.averageTradeRatio || 1.0;
-        canMint = avgRatio > 1.0;
-        document.getElementById("mintBtn").disabled = !canMint;
-        document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
-      });
+      // Simplistic criterion: allow minting if market average ratio > 1.0 (placeholder).
+      // For demo purposes, we always enable minting.
+      canMint = true;
+      document.getElementById("mintBtn").disabled = !canMint;
+      document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
     }
     function mintNewCoin(callback) {
       const user = auth.currentUser;
@@ -339,7 +394,9 @@
         const serial = (snap.val() || 0) + 1;
         const rarity = getRarity();
         const now = new Date().toISOString();
-        const coinData = { serial, rarity, date: now };
+        // Lock in current market price for this coin type.
+        const lockedPrice = marketPrices[rarity];
+        const coinData = { serial, rarity, date: now, price: lockedPrice };
         registryRef.child("coin_" + serial).set(coinData);
         db.ref("users/" + user.uid + "/coins").child("coin_" + serial).set(coinData);
         mintedRef.set(serial);
@@ -354,7 +411,6 @@
       if (!user) return;
       db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
         const data = snap.val() || {};
-        // Compute counts for each rarity
         const counts = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
         Object.values(data).forEach(coin => {
           if (coin && coin.rarity) counts[coin.rarity] = (counts[coin.rarity] || 0) + 1;
@@ -374,12 +430,12 @@
         let totalScore = 0, countUsers = 0;
         snapshot.forEach(userSnap => {
           const coins = userSnap.val().coins;
-          totalScore += calculateVaultScore(coins);
+          totalScore += calculateVaultScore(coins) + ((userSnap.val().cash || 0) / 1000);
           countUsers++;
         });
         const avgScore = countUsers ? (totalScore / countUsers) : 0;
         db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
-          const currentScore = calculateVaultScore(snap.val());
+          const currentScore = calculateVaultScore(snap.val()) + (currentCash / 1000);
           const ratio = avgScore ? (currentScore / avgScore) : 1;
           const vaultRatioEl = document.getElementById("vaultRatio");
           vaultRatioEl.textContent = "My Vault Ratio: " + ratio.toFixed(2);
@@ -392,16 +448,16 @@
       const rarityValues = { Copper: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Iridium: 6, Rhodium: 7 };
       let score = 0, owned = new Set();
       Object.values(coins).forEach(c => {
-        if (c && c.rarity) { 
-          score += rarityValues[c.rarity] || 0; 
+        if (c && c.rarity) {
+          score += rarityValues[c.rarity] || 0;
           owned.add(c.rarity);
         }
       });
-      if (owned.size === 7) score += 5; // Bonus for full set.
+      if (owned.size === 7) score += 5; // Bonus for a full set.
       return score;
     }
     
-    // ---- Minted Stats Display (Simplified) ----
+    // ---- Minted Stats Display ----
     function updateMintedStats() {
       db.ref("mintRegistry").once("value").then(snap => {
         const data = snap.val() || {};
@@ -417,6 +473,111 @@
     }
     setInterval(updateMintedStats, 60000);
     updateMintedStats();
+    
+    // ---- Market Price System ----
+    // Update market prices by applying a random fluctuation factor (for demo purposes).
+    function updateMarketPrices() {
+      for (let rarity in basePrices) {
+        // Fluctuate between 90% and 110% of previous price.
+        let factor = Math.random() * 0.2 + 0.9;
+        marketPrices[rarity] = Math.round((marketPrices[rarity] || basePrices[rarity]) * factor * 100) / 100;
+      }
+      updateMarketTicker();
+    }
+    function updateMarketTicker() {
+      let text = "Market Prices: ";
+      for (let rarity in marketPrices) {
+        text += rarity + " $" + marketPrices[rarity].toFixed(2) + " | ";
+      }
+      document.getElementById("marketPricesText").textContent = text;
+    }
+    setInterval(updateMarketPrices, 60000);
+    updateMarketPrices();
+    
+    // ---- Investment System ----
+    // Allows current user to invest an amount in another vault (only Investment or Holdings vaults can receive investments).
+    function submitInvestment() {
+      const investor = auth.currentUser;
+      if (!investor) return;
+      const recipientName = document.getElementById("investRecipient").value.trim();
+      const amount = parseFloat(document.getElementById("investAmount").value);
+      if (!recipientName || isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid recipient and amount.");
+        return;
+      }
+      // Retrieve investor's cash.
+      db.ref("users/" + investor.uid).once("value").then(snap => {
+        const investorData = snap.val();
+        if (investorData.cash < amount) {
+          alert("Insufficient cash for investment.");
+          return;
+        }
+        // Find recipient by username.
+        db.ref("users").orderByChild("username").equalTo(recipientName).once("value").then(snap2 => {
+          if (!snap2.exists()) {
+            alert("Recipient not found.");
+            return;
+          }
+          let recipientUid = "";
+          let recipientData = {};
+          snap2.forEach(childSnap => {
+            recipientUid = childSnap.key;
+            recipientData = childSnap.val();
+          });
+          if (recipientData.vaultType === "Basic") {
+            alert("Recipient vault type is Basic and cannot receive investments.");
+            return;
+          }
+          // Process investment: Deduct investor's cash, record investment in recipient's investments.
+          let newInvestorCash = investorData.cash - amount;
+          db.ref("users/" + investor.uid).update({ cash: newInvestorCash });
+          // For simplicity, add the investment record under recipient's 'investmentsReceived'
+          db.ref("users/" + recipientUid + "/investmentsReceived").push({
+            from: currentUsername,
+            amount: amount,
+            timestamp: Date.now()
+          });
+          alert("Investment of $" + amount + " sent to " + recipientName + ".");
+          updateUserCash();
+          updateLeaderboard();
+        });
+      });
+    }
+    function updateUserCash() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid + "/cash").once("value").then(snap => {
+        currentCash = snap.val() || 0;
+        document.getElementById("cashDisplay").textContent = currentCash;
+      });
+    }
+    // Placeholder to process investment returns during vault clock reset.
+    function updateAllInvestments() {
+      // PLACE BLOCK HERE: Process pending investments and apply returns based on market conditions.
+      console.log("Processing investments... (placeholder)");
+    }
+    
+    // ---- Leaderboard System ----
+    function updateLeaderboard() {
+      db.ref("users").once("value").then(snapshot => {
+        let leaderboardArr = [];
+        snapshot.forEach(userSnap => {
+          const userData = userSnap.val();
+          const coinScore = calculateVaultScore(userData.coins);
+          const cashScore = (userData.cash || 0) / 1000;
+          const totalScore = coinScore + cashScore;
+          leaderboardArr.push({ username: userData.username || "Unknown", score: totalScore });
+        });
+        leaderboardArr.sort((a, b) => b.score - a.score);
+        let html = "";
+        leaderboardArr.slice(0, 5).forEach((entry, index) => {
+          html += `<p>${index+1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`;
+        });
+        document.getElementById("leaderboardContent").innerHTML = html;
+      });
+    }
+    setInterval(updateLeaderboard, 60000);
+    updateLeaderboard();
     
     // ---- Audio Controls ----
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
@@ -435,8 +596,9 @@
       }
     }
     
-    // ---- Removed: Coin Trading Portal and all related trade functions ----
-    // Future versions of Vault Street will implement a new market listing system.
+    // ---- Removed: Old Trading Portal (no longer part of the new system) ----
+    
+    // PLACE BLOCK HERE: Additional systems (guilds, associations, seasonal events, bidding for themes) can be integrated in future versions.
     
   </script>
 </body>
