@@ -3,31 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vault Street – Final Game v2.6 (Filtered)</title>
+  <title>Vault Street – Beta Build</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <!-- Firebase Libraries (load these at the very beginning) -->
+  <!-- Load Firebase libraries before any other code -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
+    /* Base Styles */
     body { margin: 0; font-family: 'Press Start 2P', cursive; background: #111; color: white; }
     header { text-align: center; background: #000; padding: 20px; border-bottom: 2px solid gold; }
     .container { max-width: 960px; margin: 20px auto; padding: 0 20px; }
-    .section { margin-top: 30px; padding: 15px; background: #1a1a1a; border: 2px solid #333; border-radius: 10px; }
-    button, input, select { font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 6px 10px; margin: 5px 0; cursor: pointer; }
+    .section { margin-top: 20px; padding: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 5px; }
+    input, button, select { font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 5px; margin: 3px; }
     input, select { background: #ddd; color: #000; }
-    footer { text-align: center; background: #000; padding: 20px; font-size: 10px; margin-top: 40px; color: gray; }
-    /* Notifications & Tickers */
-    #notificationsBox { background: #333; color: white; padding: 5px; font-size: 10px; text-align: center; }
+    footer { text-align: center; background: #000; padding: 20px; font-size: 10px; margin-top: 20px; color: gray; }
+    /* Notifications, Tickers & Leaderboards */
+    #notificationsBox { background: #333; padding: 5px; font-size: 10px; text-align: center; }
     #recordHighTicker, #mintedTodayTicker, #marketTicker marquee, #leaderboard marquee {
-      width: 100%; background: #222; padding: 5px; font-size: 10px; margin-bottom: 5px;
+      background: #222; padding: 5px; font-size: 10px; margin-bottom: 5px;
     }
+    /* Vault Clock */
     #vaultClockDisplay { font-size: 12px; color: cyan; text-align: center; margin-top: 10px; }
-    /* Spinning coin icons */
-    .coin-icon {
-      display: inline-block; width: 12px; height: 12px; border-radius: 50%;
-      margin-right: 3px; animation: spin 2s linear infinite; vertical-align: middle;
-    }
+    /* Spinning coin icons for coin rarity */
+    .coin-icon { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 3px; animation: spin 2s linear infinite; vertical-align: middle; }
     .coin-copper { background: #b87333; }
     .coin-silver { background: #c0c0c0; }
     .coin-gold { background: #ffd700; }
@@ -36,23 +35,26 @@
     .coin-iridium { background: #6a0dad; }
     .coin-rhodium { background: #ff4500; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    /* Tables */
     #vaultTable { width: 100%; border-collapse: collapse; }
     #vaultTable th, #vaultTable td { border: 1px solid #444; padding: 4px; text-align: center; font-size: 10px; }
-    /* White dropdowns */
+    /* Dropdowns (for market & groups) have white background */
     #marketDropdown, .groupDropdown, #groupSearch { background: white; color: black; padding: 10px; border: 1px solid #444; border-radius: 5px; margin-top: 10px; }
-    #topGuildsLeaderboard, #topAssociationsLeaderboard { background: #222; color: white; padding: 5px; font-size: 10px; margin-top: 10px; }
+    /* Tiny Group Leaderboards */
+    #topGuildsLeaderboard, #topAssociationsLeaderboard { background: #222; padding: 5px; font-size: 10px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <header>
-    <h1>🏛️ Vault Street – Final Game v2.6 (Filtered)</h1>
+    <h1>🏛️ Vault Street – Beta Build</h1>
   </header>
   
   <!-- Notifications Bar -->
   <div id="notificationsBox">
     Notifications: <span id="notificationsContent">None</span>
   </div>
-  <!-- Top Tickers -->
+  
+  <!-- Tickers -->
   <div id="recordHighTicker">
     <marquee id="recordHighMarquee" scrollamount="4">Record Highs: Loading...</marquee>
   </div>
@@ -64,25 +66,27 @@
   </div>
   
   <div class="container">
-    <!-- Auth Panel -->
+    <!-- Authentication Panel -->
     <div id="auth-panel" class="section">
       <h2>Login / Register</h2>
       <input type="email" id="email" placeholder="Email"><br>
       <input type="password" id="password" placeholder="Password"><br>
-      <input type="text" id="username" placeholder="Choose Username"><br>
+      <input type="text" id="username" placeholder="Username (optional)"><br>
       <button onclick="login()">Login / Register</button>
+      <div id="loginDebug" style="color:yellow; font-size:10px;"></div>
     </div>
+    
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
       <div style="text-align:right;"><button onclick="logout()">Logout</button></div>
       <h2>Welcome, <span id="displayName"></span></h2>
-      <!-- Admin Controls -->
+      <!-- Admin Panel -->
       <div id="adminPanel" style="display:none; margin-bottom:10px;">
         <button onclick="adminResetMarket()">Reset Market</button>
         <button onclick="adminClearCoinHistory()">Clear Coin History</button>
         <button onclick="adminSwitchVaultType()">Switch Vault Type</button>
       </div>
-      <!-- User Info & Upgrade Options -->
+      <!-- User Info: Vault Type, Cash, Upgrade Options, Clock -->
       <div id="userInfo" class="section">
         <p>Vault Type: <span id="vaultTypeDisplay"></span> <span id="upgradeOptions"></span></p>
         <p>Cash: $<span id="cashDisplay"></span></p>
@@ -104,7 +108,7 @@
         <select id="equipThemeSelect"></select>
         <button onclick="equipTheme()">Equip Theme</button>
       </div>
-      <!-- Minting -->
+      <!-- Minting Section -->
       <div id="mintingSection" class="section">
         <h3>Mint a Coin</h3>
         <button id="mintBtn" onclick="mintNewCoin()" disabled>Mint New Coin</button>
@@ -115,7 +119,7 @@
         <h3>My Vault</h3>
         <div id="vaultCoins"></div>
       </div>
-      <!-- Market -->
+      <!-- Market Interface -->
       <div id="marketInterface" class="section">
         <h3>Market</h3>
         <button onclick="toggleMarket()">Toggle Market Interface</button>
@@ -141,7 +145,7 @@
           <p>Loading market listings...</p>
         </div>
       </div>
-      <!-- Investment -->
+      <!-- Investment Section -->
       <div id="investmentSection" class="section">
         <h3>Invest in Another Vault</h3>
         <p>(Only Investment/Holdings vaults can receive investments)</p>
@@ -149,7 +153,7 @@
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="submitInvestment()">Invest</button>
       </div>
-      <!-- Conversion -->
+      <!-- Conversion Section -->
       <div id="conversionSection" class="section">
         <h3>Convert Coins to Cash</h3>
         <button onclick="convertCoinsToCash()">Convert Coins</button>
@@ -163,7 +167,7 @@
           <button onclick="createGuild()">Create Guild</button>
           <button onclick="leaveGuild()">Leave Guild</button>
           <button onclick="inviteToGuild()">Invite to Guild</button>
-          <button onclick="toggleGroupSearch()">Search &amp; Join Groups</button>
+          <button onclick="toggleGroupSearch()">Search & Join Groups</button>
           <div id="guildInvites"></div>
           <div id="guildInfo"><p>Guild Info: None</p></div>
         </div>
@@ -172,7 +176,7 @@
           <button onclick="createAssociation()">Create Association</button>
           <button onclick="leaveAssociation()">Leave Association</button>
           <button onclick="inviteToAssociation()">Invite to Association</button>
-          <button onclick="toggleGroupSearch()">Search &amp; Join Groups</button>
+          <button onclick="toggleGroupSearch()">Search & Join Groups</button>
           <div id="associationInvites"></div>
           <div id="associationInfo"><p>Association Info: None</p></div>
         </div>
@@ -188,7 +192,7 @@
         <button onclick="searchGroups()">Search</button>
         <div id="groupSearchResults"></div>
       </div>
-      <!-- Persistent Leaderboards for Groups -->
+      <!-- Persistent Group Leaderboards -->
       <div id="topGuildsLeaderboard">
         <h4>Top Guilds Leaderboard</h4>
         <div id="guildLeaderboardContent">Loading...</div>
@@ -224,9 +228,9 @@
   </audio>
   
   <script>
-    // Wrap all code in DOMContentLoaded to ensure all elements are available
+    // Wrap everything inside DOMContentLoaded to ensure elements are ready
     document.addEventListener("DOMContentLoaded", function() {
-      /***** Firebase Initialization (at the top) *****/
+      /***** Firebase Initialization *****/
       const firebaseConfig = {
         apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
         authDomain: "coin-flip-4a693.firebaseapp.com",
@@ -240,7 +244,7 @@
       const auth = firebase.auth();
       const db = firebase.database();
       
-      /***** Global Variables & Constants *****/
+      /***** Global Variables *****/
       let currentUsername = "";
       const defaultVaultType = "Basic";
       let currentCash = 1000;
@@ -249,11 +253,13 @@
       let recordHighs = {};
       const basePrices = { Copper: 1, Silver: 5, Gold: 10, Platinum: 25, Diamond: 50, Iridium: 75, Rhodium: 100 };
       const baselineDropRates = { Copper: 40, Silver: 25, Gold: 15, Platinum: 10, Diamond: 5, Iridium: 3, Rhodium: 1 };
-      const cycleLength = 300; // 5-minute demo cycle
+      const cycleLength = 300; // demo cycle (5 minutes)
       let clockStartTime = Date.now();
       
       /***** Helper Functions *****/
-      function getRatioColor(ratio) { return ratio < 1.0 ? "red" : (ratio > 1.0 ? "green" : "yellow"); }
+      function getRatioColor(ratio) {
+        return ratio < 1.0 ? "red" : (ratio > 1.0 ? "green" : "yellow");
+      }
       function getRarity() {
         const roll = Math.random() * 100;
         if (roll < 50) return "Copper";
@@ -265,12 +271,13 @@
         else return "Rhodium";
       }
       
-      /***** Vault Clock & Reset *****/
+      /***** Vault Clock *****/
       function updateVaultClock() {
         const elapsed = Math.floor((Date.now() - clockStartTime) / 1000);
         let remaining = cycleLength - (elapsed % cycleLength);
-        const minutes = Math.floor(remaining / 60), seconds = remaining % 60;
-        document.getElementById("vaultClockDisplay").textContent =
+        const minutes = Math.floor(remaining / 60),
+              seconds = remaining % 60;
+        document.getElementById("vaultClockDisplay").textContent = 
           "Vault Clock: " + minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
         if (elapsed % cycleLength === 0) { vaultClockReset(); }
       }
@@ -334,7 +341,7 @@
       }
       function equipTheme() {
         const selectedTheme = document.getElementById("equipThemeSelect").value;
-        if (!selectedTheme) { alert("Select a theme from your inventory to equip."); return; }
+        if (!selectedTheme) { alert("Select a theme to equip."); return; }
         const user = auth.currentUser;
         if (!user) return;
         db.ref("users/" + user.uid + "/ownedThemes").orderByValue().equalTo(selectedTheme)
@@ -349,7 +356,7 @@
       function updateVaultTheme() {
         const theme = document.getElementById("vaultTheme").value;
         const panel = document.getElementById("user-panel");
-        panel.style.backgroundColor = (theme==="red" ? "#330000" : theme==="blue" ? "#000033" : theme==="green" ? "#003300" : "#1a1a1a");
+        panel.style.backgroundColor = (theme === "red") ? "#330000" : (theme === "blue") ? "#000033" : (theme === "green") ? "#003300" : "#1a1a1a";
         if (auth.currentUser) { db.ref("users/" + auth.currentUser.uid).update({ theme: theme }); }
       }
       
@@ -360,12 +367,10 @@
         db.ref("users/" + user.uid).once("value").then(snap => {
           const data = snap.val();
           let upgradeHTML = "";
-          if (data.vaultType === "Basic" && data.cash >= 5000) {
+          if (data.vaultType === "Basic" && data.cash >= 5000)
             upgradeHTML += `<button onclick="upgradeVault('Investment',5000)">Upgrade to Investment ($5000)</button>`;
-          }
-          if (data.vaultType === "Investment" && data.cash >= 10000) {
+          if (data.vaultType === "Investment" && data.cash >= 10000)
             upgradeHTML += `<button onclick="upgradeVault('Holdings',10000)">Upgrade to Holdings ($10000)</button>`;
-          }
           document.getElementById("upgradeOptions").innerHTML = upgradeHTML || "";
         });
       }
@@ -374,7 +379,7 @@
         if (!user) return;
         db.ref("users/" + user.uid).once("value").then(snap => {
           const data = snap.val();
-          if (data.cash < cost) { alert("Not enough cash to upgrade."); return; }
+          if (data.cash < cost) { alert("Not enough cash."); return; }
           db.ref("users/" + user.uid).update({ vaultType: newType, cash: Number((data.cash - cost).toFixed(1)) });
           document.getElementById("vaultTypeDisplay").textContent = newType;
           updateUserCash();
@@ -396,9 +401,7 @@
                   document.getElementById("notificationsContent").innerText = notifText || "None";
                 });
             });
-        } else {
-          document.getElementById("notificationsContent").innerText = "None";
-        }
+        } else { document.getElementById("notificationsContent").innerText = "None"; }
       }
       
       /***** Group Search & Join *****/
@@ -411,7 +414,7 @@
         const query = document.getElementById("searchQuery").value.trim().toLowerCase();
         if (!query) { alert("Enter a search term."); return; }
         const dbRef = (groupType === "guilds") ? db.ref("guilds") : db.ref("associations");
-        dbRef.orderByChild("name").startAt(query).endAt(query + "\uf8ff")
+        dbRef.orderByChild("name").startAt(query).endAt(query+"\uf8ff")
           .once("value").then(snap => {
             let html = "";
             snap.forEach(child => {
@@ -434,7 +437,7 @@
           groupRef.update({ [user.uid]: true });
           const updateField = (type==="guilds") ? "guild" : "association";
           db.ref("users/" + user.uid).update({ [updateField]: groupId });
-          alert("You have joined the group!");
+          alert("Joined group successfully!");
           document.getElementById("groupSearch").style.display = "none";
           if (type==="guilds") updateGuildInfo(); else updateAssociationInfo();
         });
@@ -478,7 +481,7 @@
         document.getElementById("mintBtn").disabled = !canMint;
         document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
       }
-      // Minting a coin does NOT set a price; price locks in when listing.
+      // Mint a coin (do not assign a price here)
       function mintNewCoin(callback) {
         const user = auth.currentUser;
         if (!user || !canMint) return;
@@ -560,7 +563,7 @@
       }
       function calculateVaultScore(coins) {
         if (!coins) return 0;
-        const rarityValues = { Copper: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Iridium: 6, Rhodium: 7 };
+        const rarityValues = { Copper:1, Silver:2, Gold:3, Platinum:4, Diamond:5, Iridium:6, Rhodium:7 };
         let score = 0, owned = new Set();
         Object.values(coins).forEach(c => { if (c && c.rarity) { score += rarityValues[c.rarity] || 0; owned.add(c.rarity); } });
         if (owned.size === 7) score += 5;
@@ -579,7 +582,10 @@
       /***** Ticker Functions *****/
       function updateRecordHighs(regData) {
         let highs = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-        Object.values(regData).forEach(coin => { if (coin && coin.rarity && coin.price && coin.price > highs[coin.rarity]) { highs[coin.rarity] = coin.price; } });
+        Object.values(regData).forEach(coin => {
+          if (coin && coin.rarity && coin.price && coin.price > highs[coin.rarity])
+            highs[coin.rarity] = coin.price;
+        });
         recordHighs = highs;
         updateRecordHighTicker();
       }
@@ -597,9 +603,13 @@
           const data = snap.val() || {};
           let counts = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
           const todayStr = new Date().toISOString().split("T")[0];
-          Object.values(data).forEach(coin => { if (coin && coin.date && coin.date.split("T")[0] === todayStr && coin.rarity) counts[coin.rarity]++; });
+          Object.values(data).forEach(coin => {
+            if (coin && coin.date && coin.date.split("T")[0] === todayStr && coin.rarity)
+              counts[coin.rarity]++;
+          });
           let txt = "Minted Today: ";
-          for (const r in counts) { txt += `<span style="color:white;">${r}:</span> <span style="color:yellow;">${counts[r]}</span> | `; }
+          for (const r in counts)
+            txt += `<span style="color:white;">${r}:</span> <span style="color:yellow;">${counts[r]}</span> | `;
           document.getElementById("mintedTodayMarquee").innerHTML = txt;
         });
       }
@@ -608,16 +618,15 @@
       function updateMarketPrices() {
         db.ref("mintRegistry").once("value").then(snap => {
           const regData = snap.val() || {};
-          let mintedTotal = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
-          let mintedToday = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
+          let mintedTotal = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
+          let mintedToday = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
           const todayStr = new Date().toISOString().split("T")[0];
           for (const key in regData) {
             const coin = regData[key];
             if (coin && coin.rarity) {
-              mintedTotal[coin.rarity] = (mintedTotal[coin.rarity] || 0) + 1;
-              if (coin.date && coin.date.split("T")[0] === todayStr) {
-                mintedToday[coin.rarity] = (mintedToday[coin.rarity] || 0) + 1;
-              }
+              mintedTotal[coin.rarity] = (mintedTotal[coin.rarity]||0) + 1;
+              if (coin.date && coin.date.split("T")[0] === todayStr)
+                mintedToday[coin.rarity] = (mintedToday[coin.rarity]||0) + 1;
             }
           }
           let sumToday = 0;
@@ -628,22 +637,23 @@
               let actualDropRate = (sumToday > 0 && mintedToday[rarity])
                 ? (mintedToday[rarity] / sumToday) * 100
                 : baselineDropRates[rarity];
-              db.ref("users").orderByChild("vaultType").equalTo("Holdings").once("value").then(holdSnap => {
-                let holdingsCount = 0;
-                holdSnap.forEach(child => {
-                  let coins = child.val().coins;
-                  if (coins) { Object.values(coins).forEach(c => { if (c.rarity === rarity) holdingsCount++; }); }
+              db.ref("users").orderByChild("vaultType").equalTo("Holdings")
+                .once("value").then(holdSnap => {
+                  let holdingsCount = 0;
+                  holdSnap.forEach(child => {
+                    let coins = child.val().coins;
+                    if (coins) { Object.values(coins).forEach(c => { if (c.rarity === rarity) holdingsCount++; }); }
+                  });
+                  const totalMintedOverall = mintedTotal[rarity] || 0;
+                  let scarcityMultiplier = 1;
+                  if (totalMintedOverall > 0) {
+                    let percentHoldings = (holdingsCount / totalMintedOverall) * 100;
+                    scarcityMultiplier = percentHoldings > 0 ? (100 / percentHoldings) : 1;
+                  }
+                  let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * scarcityMultiplier;
+                  newPrice = Math.round(newPrice * 100) / 100;
+                  resolve({ rarity: rarity, price: newPrice });
                 });
-                const totalMintedOverall = mintedTotal[rarity] || 0;
-                let scarcityMultiplier = 1;
-                if (totalMintedOverall > 0) {
-                  let percentHoldings = (holdingsCount / totalMintedOverall) * 100;
-                  scarcityMultiplier = percentHoldings > 0 ? (100 / percentHoldings) : 1;
-                }
-                let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * scarcityMultiplier;
-                newPrice = Math.round(newPrice * 100) / 100;
-                resolve({ rarity: rarity, price: newPrice });
-              });
             }));
           }
           Promise.all(promises).then(results => {
@@ -667,7 +677,7 @@
       setInterval(updateMarketPrices, 60000);
       updateMarketPrices();
       
-      /***** Marketplace *****/
+      /***** Marketplace Interface *****/
       function toggleMarket() {
         const marketDiv = document.getElementById("marketDropdown");
         marketDiv.style.display = (marketDiv.style.display === "none" || marketDiv.style.display === "") ? "block" : "none";
@@ -699,7 +709,291 @@
           .once("value").then(snap => {
             const coins = snap.val() || {};
             let listed = 0;
-            for (const id in coins) { if (listed >= countToList) break; listCoinForSale(id); listed++; }
+            for (const id in coins) {
+              if (listed >= countToList) break;
+              listCoinForSale(id); 
+              listed++;
+            }
+            if (listed < countToList) { alert(`Only ${listed} ${rarity} coins available.`); }
+          });
+      }
+      function listCoinForSale(coinId) {
+        const user = auth.currentUser;
+        if (!user) return;
+        db.ref("users/" + user.uid + "/coins/" + coinId).once("value").then(snap => {
+          const coinData = snap.val();
+          if (!coinData) return;
+          // Lock in price at time of listing
+          coinData.price = marketPrices[coinData.rarity] || basePrices[coinData.rarity];
+          let listing = { coin: coinData, sellerUid: user.uid, listedAt: Date.now(), fulfilled: false };
+          db.ref("marketListings").push(listing, err => {
+            if (!err) {
+              db.ref("users/" + user.uid + "/coins/" + coinId).remove();
+              loadVault();
+              loadUserCoinsForSale();
+              updateMarketListings();
+            }
+          });
+        });
+      }
+      function buyMarketCoin(listingId, price) {
+        const buyer = auth.currentUser;
+        if (!buyer) return;
+        db.ref("users/" + buyer.uid).once("value").then(snap => {
+          const buyerData = snap.val();
+          if (buyerData.cash < price) { alert("Insufficient cash."); return; }
+          let newCash = buyerData.cash - price;
+          db.ref("users/" + buyer.uid).update({ cash: newCash });
+          db.ref("marketListings/" + listingId).once("value").then(snapListing => {
+            const listing = snapListing.val();
+            if (!listing || listing.fulfilled) return;
+            db.ref("users/" + buyer.uid + "/coins").push(listing.coin);
+            db.ref("marketListings/" + listingId).update({ fulfilled: true });
+            updateUserCash();
+            updateMarketListings();
+            loadVault();
+            recordRecentPurchase(listing.coin, price);
+          });
+        });
+      }
+      function processMarketListingsReturn() {
+        db.ref("marketListings").once("value").then(snap => {
+          const listings = snap.val() || {};
+          for (const key in listings) {
+            const lst = listings[key];
+            if (!lst.fulfilled && Date.now() - lst.listedAt >= cycleLength * 1000) {
+              db.ref("users/" + lst.sellerUid + "/coins").push(lst.coin);
+              db.ref("marketListings/" + key).remove();
+            }
+          }
+          updateMarketListings();
+        });
+      }
+      setInterval(updateMarketListings, 30000);
+      
+      /***** Investment System *****/
+      function submitInvestment() {
+        const investor = auth.currentUser;
+        if (!investor) return;
+        const recipientName = document.getElementById("investRecipient").value.trim();
+        const amount = parseFloat(document.getElementById("investAmount").value);
+        if (!recipientName || isNaN(amount) || amount <= 0) { alert("Enter a valid recipient and amount."); return; }
+        db.ref("users/" + investor.uid).once("value").then(snap => {
+          const invData = snap.val();
+          if (invData.cash < amount) { alert("Insufficient cash."); return; }
+          db.ref("users").orderByChild("username").equalTo(recipientName)
+            .once("value").then(snap2 => {
+              if (!snap2.exists()) { alert("Recipient not found."); return; }
+              let recipientUid = "", recipientData = {};
+              snap2.forEach(childSnap => { recipientUid = childSnap.key; recipientData = childSnap.val(); });
+              if (recipientData.vaultType === "Basic") { alert("Recipient vault is Basic and cannot receive investments."); return; }
+              let newCash = invData.cash - amount;
+              db.ref("users/" + investor.uid).update({ cash: newCash });
+              db.ref("users/" + recipientUid + "/investmentsReceived").push({
+                from: currentUsername,
+                amount: amount,
+                timestamp: Date.now(),
+                processed: false
+              });
+              alert("Invested $" + amount + " in " + recipientName + ".");
+              updateUserCash();
+            });
+        });
+      }
+      
+      /***** Coin-to-Cash Conversion *****/
+      function convertCoinsToCash() {
+        const user = auth.currentUser;
+        if (!user) return;
+        db.ref("users/" + user.uid).once("value").then(snap => {
+          const data = snap.val();
+          let lastConv = data.lastConversion || 0;
+          let currentCycleStart = clockStartTime + Math.floor((Date.now()-clockStartTime)/(cycleLength*1000))*(cycleLength*1000);
+          if (lastConv > currentCycleStart) {
+            document.getElementById("conversionNotice").textContent = "Conversion already done this cycle.";
+            return;
+          }
+          db.ref("users/" + user.uid + "/coins").once("value").then(snapCoins => {
+            let coins = snapCoins.val() || {};
+            let coinIds = Object.keys(coins);
+            let totalCoinValue = 0;
+            Object.values(coins).forEach(coin => { if(coin && coin.rarity && marketPrices[coin.rarity]) totalCoinValue += marketPrices[coin.rarity]; });
+            let cash = data.cash || 0;
+            if (data.vaultType === "Holdings") {
+              if (totalCoinValue <= cash) {
+                document.getElementById("conversionNotice").textContent = "No conversion: Cash exceeds coin value.";
+                return;
+              }
+              conversionProcess(user, coinIds, totalCoinValue);
+            } else {
+              const convCount = Math.floor(coinIds.length * 0.10);
+              if (convCount < 1) {
+                document.getElementById("conversionNotice").textContent = "Not enough coins to convert this cycle.";
+                return;
+              }
+              let selected = coinIds.slice(0, convCount);
+              let convValue = 0;
+              selected.forEach(id => { let coin = coins[id]; if (coin && coin.rarity && marketPrices[coin.rarity]) convValue += marketPrices[coin.rarity]; });
+              conversionProcess(user, selected, convValue);
+            }
+          });
+        });
+      }
+      function conversionProcess(user, coinIdArray, convValue) {
+        coinIdArray.forEach(id => { db.ref("users/" + user.uid + "/coins/" + id).remove(); });
+        let newCash = Number((currentCash + convValue).toFixed(1));
+        db.ref("users/" + user.uid).update({ cash: newCash, lastConversion: Date.now() });
+        currentCash = newCash;
+        document.getElementById("cashDisplay").textContent = newCash.toFixed(1);
+        document.getElementById("conversionNotice").textContent = "Converted $" + convValue.toFixed(1) + " from coins.";
+        loadVault();
+        loadUserCoinsForSale();
+      }
+      
+      /***** Leaderboard & Recent Purchases *****/
+      function updateLeaderboard() {
+        const filter = document.getElementById("leaderboardFilter").value;
+        db.ref("users").once("value").then(snapshot => {
+          let leaderboardArr = [];
+          snapshot.forEach(userSnap => {
+            const uData = userSnap.val();
+            if (filter !== "All" && uData.vaultType !== filter) return;
+            const coinScore = calculateVaultScore(uData.coins);
+            const cashScore = (uData.cash || 0) / 1000;
+            leaderboardArr.push({ username: uData.username || "Unknown", score: coinScore + cashScore });
+          });
+          leaderboardArr.sort((a, b) => b.score - a.score);
+          let html = "";
+          leaderboardArr.slice(0, 10).forEach((entry, index) => {
+            html += `<p>${index + 1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`;
+          });
+          document.getElementById("leaderboardContent").innerHTML = html;
+        });
+      }
+      setInterval(updateLeaderboard, 60000);
+      updateLeaderboard();
+      function calculateVaultScore(coins) {
+        if (!coins) return 0;
+        const rarityValues = { Copper:1, Silver:2, Gold:3, Platinum:4, Diamond:5, Iridium:6, Rhodium:7 };
+        let score = 0, owned = new Set();
+        Object.values(coins).forEach(c => { if (c && c.rarity) { score += rarityValues[c.rarity] || 0; owned.add(c.rarity); } });
+        if (owned.size === 7) score += 5;
+        return score;
+      }
+      function recordRecentPurchase(coin, price) {
+        db.ref("recentPurchases").push({ rarity: coin.rarity, serial: coin.serial, price: price, timestamp: Date.now() });
+        updateRecentPurchasesTicker();
+      }
+      function updateRecentPurchasesTicker() {
+        db.ref("recentPurchases").orderByChild("timestamp").limitToLast(10).once("value").then(snap => {
+          const purchases = snap.val() || {};
+          let txt = "Recent Purchases: ";
+          Object.values(purchases).forEach(item => { txt += `<span class="coin-icon coin-${item.rarity.toLowerCase()}"></span>${item.rarity} @ $${item.price.toFixed(2)} | `; });
+          document.getElementById("recentPurchasesMarquee").innerHTML = txt;
+        });
+      }
+      setInterval(updateRecentPurchasesTicker, 30000);
+      
+      /***** Market Price Calculation *****/
+      function updateMarketPrices() {
+        db.ref("mintRegistry").once("value").then(snap => {
+          const regData = snap.val() || {};
+          let mintedTotal = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
+          let mintedToday = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
+          const todayStr = new Date().toISOString().split("T")[0];
+          for (const key in regData) {
+            const coin = regData[key];
+            if (coin && coin.rarity) {
+              mintedTotal[coin.rarity] = (mintedTotal[coin.rarity] || 0) + 1;
+              if (coin.date && coin.date.split("T")[0] === todayStr)
+                mintedToday[coin.rarity] = (mintedToday[coin.rarity] || 0) + 1;
+            }
+          }
+          let sumToday = 0;
+          for (const r in mintedToday) { sumToday += mintedToday[r]; }
+          let promises = [];
+          for (const rarity in basePrices) {
+            promises.push(new Promise(resolve => {
+              let actualDropRate = (sumToday > 0 && mintedToday[rarity])
+                ? (mintedToday[rarity] / sumToday) * 100
+                : baselineDropRates[rarity];
+              db.ref("users").orderByChild("vaultType").equalTo("Holdings")
+                .once("value").then(holdSnap => {
+                  let holdingsCount = 0;
+                  holdSnap.forEach(child => {
+                    let coins = child.val().coins;
+                    if (coins) { Object.values(coins).forEach(c => { if (c.rarity === rarity) holdingsCount++; }); }
+                  });
+                  const totalMintedOverall = mintedTotal[rarity] || 0;
+                  let scarcityMultiplier = 1;
+                  if (totalMintedOverall > 0) {
+                    let percentHoldings = (holdingsCount / totalMintedOverall) * 100;
+                    scarcityMultiplier = percentHoldings > 0 ? (100 / percentHoldings) : 1;
+                  }
+                  let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * scarcityMultiplier;
+                  newPrice = Math.round(newPrice * 100) / 100;
+                  resolve({ rarity: rarity, price: newPrice });
+                });
+            }));
+          }
+          Promise.all(promises).then(results => {
+            results.forEach(res => { marketPrices[res.rarity] = res.price; });
+            updateMarketTicker();
+            updateRecordHighs(regData);
+          });
+        });
+      }
+      function updateMarketTicker() {
+        let txt = "";
+        for (const r in marketPrices) {
+          let price = marketPrices[r];
+          let indicator = "⚖️", priceColor = "yellow";
+          if (price > basePrices[r]) { indicator = "🔺"; priceColor = "green"; }
+          else if (price < basePrices[r]) { indicator = "🔻"; priceColor = "red"; }
+          txt += `<span style="color:white;">${r}:</span> <span style="color:${priceColor};">$${price.toFixed(2)}</span> ${indicator} | `;
+        }
+        document.getElementById("marketPricesText").innerHTML = txt;
+      }
+      setInterval(updateMarketPrices, 60000);
+      updateMarketPrices();
+      
+      /***** Marketplace Interface *****/
+      function toggleMarket() {
+        const marketDiv = document.getElementById("marketDropdown");
+        marketDiv.style.display = (marketDiv.style.display === "none" || marketDiv.style.display === "") ? "block" : "none";
+      }
+      function updateMarketListings() {
+        const filter = document.getElementById("marketFilter").value;
+        db.ref("marketListings").orderByChild("listedAt").once("value").then(snap => {
+          const listings = snap.val() || {};
+          let html = "";
+          for (const key in listings) {
+            const lst = listings[key];
+            if (lst.fulfilled) continue;
+            if (filter !== "All" && lst.coin.rarity !== filter) continue;
+            html += `<div class="listing">
+                       <p><span class="coin-icon coin-${lst.coin.rarity.toLowerCase()}"></span>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${lst.coin.price.toFixed(2)}</p>
+                       <p>Seller: ${lst.sellerUid}</p>
+                       <button onclick="buyMarketCoin('${key}', ${lst.coin.price})">Buy</button>
+                     </div>`;
+          }
+          document.getElementById("marketListings").innerHTML = html || "<p>No active listings.</p>";
+        });
+      }
+      function listCoins(rarity) {
+        const user = auth.currentUser;
+        if (!user) return;
+        const countToList = Number(document.getElementById("listCount_" + rarity).value);
+        if (countToList < 1) { alert("Enter a positive number."); return; }
+        db.ref("users/" + user.uid + "/coins").orderByChild("rarity").equalTo(rarity)
+          .once("value").then(snap => {
+            const coins = snap.val() || {};
+            let listed = 0;
+            for (const id in coins) {
+              if (listed >= countToList) break;
+              listCoinForSale(id); 
+              listed++;
+            }
             if (listed < countToList) { alert(`Only ${listed} ${rarity} coins available.`); }
           });
       }
@@ -794,31 +1088,31 @@
           const data = snap.val();
           let lastConv = data.lastConversion || 0;
           let currentCycleStart = clockStartTime + Math.floor((Date.now()-clockStartTime)/(cycleLength*1000))*(cycleLength*1000);
-          if(lastConv > currentCycleStart){ 
-            document.getElementById("conversionNotice").textContent = "Conversion already done this cycle."; 
-            return; 
+          if (lastConv > currentCycleStart) {
+            document.getElementById("conversionNotice").textContent = "Conversion already done this cycle.";
+            return;
           }
           db.ref("users/" + user.uid + "/coins").once("value").then(snapCoins => {
             let coins = snapCoins.val() || {};
             let coinIds = Object.keys(coins);
             let totalCoinValue = 0;
-            Object.values(coins).forEach(coin => { if(coin && coin.rarity && marketPrices[coin.rarity]) totalCoinValue += marketPrices[coin.rarity]; });
+            Object.values(coins).forEach(coin => { if (coin && coin.rarity && marketPrices[coin.rarity]) totalCoinValue += marketPrices[coin.rarity]; });
             let cash = data.cash || 0;
-            if(data.vaultType==="Holdings"){
-              if(totalCoinValue<=cash){ 
-                document.getElementById("conversionNotice").textContent = "No conversion: Cash exceeds coin value."; 
-                return; 
+            if (data.vaultType === "Holdings") {
+              if (totalCoinValue <= cash) {
+                document.getElementById("conversionNotice").textContent = "No conversion: Cash exceeds coin value.";
+                return;
               }
               conversionProcess(user, coinIds, totalCoinValue);
             } else {
               const convCount = Math.floor(coinIds.length * 0.10);
-              if(convCount < 1){
+              if (convCount < 1) {
                 document.getElementById("conversionNotice").textContent = "Not enough coins to convert this cycle.";
                 return;
               }
               let selected = coinIds.slice(0, convCount);
               let convValue = 0;
-              selected.forEach(id => { let coin = coins[id]; if(coin && coin.rarity && marketPrices[coin.rarity]) convValue += marketPrices[coin.rarity]; });
+              selected.forEach(id => { let coin = coins[id]; if (coin && coin.rarity && marketPrices[coin.rarity]) convValue += marketPrices[coin.rarity]; });
               conversionProcess(user, selected, convValue);
             }
           });
@@ -842,16 +1136,14 @@
           let leaderboardArr = [];
           snapshot.forEach(userSnap => {
             const uData = userSnap.val();
-            if(filter !== "All" && uData.vaultType !== filter) return;
+            if (filter !== "All" && uData.vaultType !== filter) return;
             const coinScore = calculateVaultScore(uData.coins);
             const cashScore = (uData.cash || 0)/1000;
             leaderboardArr.push({ username: uData.username || "Unknown", score: coinScore+cashScore });
           });
-          leaderboardArr.sort((a,b)=> b.score - a.score);
+          leaderboardArr.sort((a, b) => b.score - a.score);
           let html = "";
-          leaderboardArr.slice(0,10).forEach((entry, index)=> {
-            html += `<p>${index+1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`;
-          });
+          leaderboardArr.slice(0, 10).forEach((entry, index) => { html += `<p>${index+1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`; });
           document.getElementById("leaderboardContent").innerHTML = html;
         });
       }
@@ -862,7 +1154,7 @@
         const rarityValues = { Copper:1, Silver:2, Gold:3, Platinum:4, Diamond:5, Iridium:6, Rhodium:7 };
         let score = 0, owned = new Set();
         Object.values(coins).forEach(c => { if (c && c.rarity) { score += rarityValues[c.rarity] || 0; owned.add(c.rarity); } });
-        if (owned.size===7) score+=5;
+        if (owned.size === 7) score += 5;
         return score;
       }
       function recordRecentPurchase(coin, price) {
@@ -886,44 +1178,42 @@
           let mintedTotal = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
           let mintedToday = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
           const todayStr = new Date().toISOString().split("T")[0];
-          for(const key in regData){
+          for (const key in regData) {
             const coin = regData[key];
-            if(coin && coin.rarity){
-              mintedTotal[coin.rarity] = (mintedTotal[coin.rarity] || 0) + 1;
-              if(coin.date && coin.date.split("T")[0]===todayStr){
-                mintedToday[coin.rarity] = (mintedToday[coin.rarity] || 0) + 1;
-              }
+            if (coin && coin.rarity) {
+              mintedTotal[coin.rarity] = (mintedTotal[coin.rarity]||0) + 1;
+              if (coin.date && coin.date.split("T")[0] === todayStr)
+                mintedToday[coin.rarity] = (mintedToday[coin.rarity]||0) + 1;
             }
           }
           let sumToday = 0;
-          for(const r in mintedToday){ sumToday += mintedToday[r]; }
+          for (const r in mintedToday) { sumToday += mintedToday[r]; }
           let promises = [];
-          for(const rarity in basePrices){
-            promises.push(new Promise(resolve=>{
-              let actualDropRate = (sumToday>0 && mintedToday[rarity])
-                ? (mintedToday[rarity]/sumToday)*100
+          for (const rarity in basePrices) {
+            promises.push(new Promise(resolve => {
+              let actualDropRate = (sumToday > 0 && mintedToday[rarity])
+                ? (mintedToday[rarity] / sumToday) * 100
                 : baselineDropRates[rarity];
-              db.ref("users").orderByChild("vaultType").equalTo("Holdings")
-                .once("value").then(holdSnap=>{
-                  let holdingsCount=0;
-                  holdSnap.forEach(child=>{
-                    let coins = child.val().coins;
-                    if(coins){ Object.values(coins).forEach(c=>{ if(c.rarity===rarity) holdingsCount++; }); }
-                  });
-                  const totalMintedOverall = mintedTotal[rarity] || 0;
-                  let scarcityMultiplier = 1;
-                  if(totalMintedOverall>0){
-                    let percentHoldings = (holdingsCount/totalMintedOverall)*100;
-                    scarcityMultiplier = percentHoldings>0 ? (100/percentHoldings) : 1;
-                  }
-                  let newPrice = basePrices[rarity]*(baselineDropRates[rarity]/actualDropRate)*scarcityMultiplier;
-                  newPrice = Math.round(newPrice*100)/100;
-                  resolve({ rarity: rarity, price: newPrice });
+              db.ref("users").orderByChild("vaultType").equalTo("Holdings").once("value").then(holdSnap => {
+                let holdingsCount = 0;
+                holdSnap.forEach(child => {
+                  let coins = child.val().coins;
+                  if (coins) { Object.values(coins).forEach(c => { if (c.rarity === rarity) holdingsCount++; }); }
                 });
+                const totalMintedOverall = mintedTotal[rarity] || 0;
+                let scarcityMultiplier = 1;
+                if (totalMintedOverall > 0) {
+                  let percentHoldings = (holdingsCount / totalMintedOverall) * 100;
+                  scarcityMultiplier = percentHoldings > 0 ? (100 / percentHoldings) : 1;
+                }
+                let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * scarcityMultiplier;
+                newPrice = Math.round(newPrice * 100) / 100;
+                resolve({ rarity: rarity, price: newPrice });
+              });
             }));
           }
-          Promise.all(promises).then(results=>{
-            results.forEach(res=> { marketPrices[res.rarity]=res.price; });
+          Promise.all(promises).then(results => {
+            results.forEach(res => { marketPrices[res.rarity] = res.price; });
             updateMarketTicker();
             updateRecordHighs(regData);
           });
@@ -931,11 +1221,11 @@
       }
       function updateMarketTicker() {
         let txt = "";
-        for(const r in marketPrices){
+        for (const r in marketPrices) {
           let price = marketPrices[r];
-          let indicator = "⚖️", priceColor="yellow";
-          if(price>basePrices[r]) { indicator="🔺"; priceColor="green"; }
-          else if(price<basePrices[r]) { indicator="🔻"; priceColor="red"; }
+          let indicator = "⚖️", priceColor = "yellow";
+          if (price > basePrices[r]) { indicator = "🔺"; priceColor = "green"; }
+          else if (price < basePrices[r]) { indicator = "🔻"; priceColor = "red"; }
           txt += `<span style="color:white;">${r}:</span> <span style="color:${priceColor};">$${price.toFixed(2)}</span> ${indicator} | `;
         }
         document.getElementById("marketPricesText").innerHTML = txt;
@@ -943,44 +1233,327 @@
       setInterval(updateMarketPrices,60000);
       updateMarketPrices();
       
-      /***** Utility: Update Cash & Play SFX *****/
+      /***** Marketplace Interface *****/
+      function toggleMarket() {
+        const marketDiv = document.getElementById("marketDropdown");
+        marketDiv.style.display = (marketDiv.style.display === "none" || marketDiv.style.display === "") ? "block" : "none";
+      }
+      function updateMarketListings() {
+        const filter = document.getElementById("marketFilter").value;
+        db.ref("marketListings").orderByChild("listedAt").once("value").then(snap => {
+          const listings = snap.val() || {};
+          let html = "";
+          for (const key in listings) {
+            const lst = listings[key];
+            if (lst.fulfilled) continue;
+            if (filter !== "All" && lst.coin.rarity !== filter) continue;
+            html += `<div class="listing">
+                       <p><span class="coin-icon coin-${lst.coin.rarity.toLowerCase()}"></span>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${lst.coin.price.toFixed(2)}</p>
+                       <p>Seller: ${lst.sellerUid}</p>
+                       <button onclick="buyMarketCoin('${key}', ${lst.coin.price})">Buy</button>
+                     </div>`;
+          }
+          document.getElementById("marketListings").innerHTML = html || "<p>No active listings.</p>";
+        });
+      }
+      function listCoins(rarity) {
+        const user = auth.currentUser;
+        if (!user) return;
+        const countToList = Number(document.getElementById("listCount_" + rarity).value);
+        if (countToList < 1) { alert("Enter a positive number."); return; }
+        db.ref("users/" + user.uid + "/coins").orderByChild("rarity").equalTo(rarity)
+          .once("value").then(snap => {
+            const coins = snap.val() || {};
+            let listed = 0;
+            for (const id in coins) {
+              if (listed >= countToList) break;
+              listCoinForSale(id); 
+              listed++;
+            }
+            if (listed < countToList) { alert(`Only ${listed} ${rarity} coins available.`); }
+          });
+      }
+      function listCoinForSale(coinId) {
+        const user = auth.currentUser;
+        if (!user) return;
+        db.ref("users/" + user.uid + "/coins/" + coinId).once("value").then(snap => {
+          const coinData = snap.val();
+          if (!coinData) return;
+          coinData.price = marketPrices[coinData.rarity] || basePrices[coinData.rarity];
+          let listing = { coin: coinData, sellerUid: user.uid, listedAt: Date.now(), fulfilled: false };
+          db.ref("marketListings").push(listing, err => {
+            if (!err) {
+              db.ref("users/" + user.uid + "/coins/" + coinId).remove();
+              loadVault();
+              loadUserCoinsForSale();
+              updateMarketListings();
+            }
+          });
+        });
+      }
+      function buyMarketCoin(listingId, price) {
+        const buyer = auth.currentUser;
+        if (!buyer) return;
+        db.ref("users/" + buyer.uid).once("value").then(snap => {
+          const buyerData = snap.val();
+          if (buyerData.cash < price) { alert("Insufficient cash."); return; }
+          let newCash = buyerData.cash - price;
+          db.ref("users/" + buyer.uid).update({ cash: newCash });
+          db.ref("marketListings/" + listingId).once("value").then(snapListing => {
+            const listing = snapListing.val();
+            if (!listing || listing.fulfilled) return;
+            db.ref("users/" + buyer.uid + "/coins").push(listing.coin);
+            db.ref("marketListings/" + listingId).update({ fulfilled: true });
+            updateUserCash();
+            updateMarketListings();
+            loadVault();
+            recordRecentPurchase(listing.coin, price);
+          });
+        });
+      }
+      function processMarketListingsReturn() {
+        db.ref("marketListings").once("value").then(snap => {
+          const listings = snap.val() || {};
+          for (const key in listings) {
+            const lst = listings[key];
+            if (!lst.fulfilled && Date.now() - lst.listedAt >= cycleLength * 1000) {
+              db.ref("users/" + lst.sellerUid + "/coins").push(lst.coin);
+              db.ref("marketListings/" + key).remove();
+            }
+          }
+          updateMarketListings();
+        });
+      }
+      setInterval(updateMarketListings, 30000);
+      
+      /***** Investment System *****/
+      function submitInvestment() {
+        const investor = auth.currentUser;
+        if (!investor) return;
+        const recipientName = document.getElementById("investRecipient").value.trim();
+        const amount = parseFloat(document.getElementById("investAmount").value);
+        if (!recipientName || isNaN(amount) || amount <= 0) { alert("Enter a valid recipient and amount."); return; }
+        db.ref("users/" + investor.uid).once("value").then(snap => {
+          const invData = snap.val();
+          if (invData.cash < amount) { alert("Insufficient cash."); return; }
+          db.ref("users").orderByChild("username").equalTo(recipientName)
+            .once("value").then(snap2 => {
+              if (!snap2.exists()) { alert("Recipient not found."); return; }
+              let recipientUid = "", recipientData = {};
+              snap2.forEach(childSnap => { recipientUid = childSnap.key; recipientData = childSnap.val(); });
+              if (recipientData.vaultType === "Basic") { alert("Recipient vault is Basic and cannot receive investments."); return; }
+              let newCash = invData.cash - amount;
+              db.ref("users/" + investor.uid).update({ cash: newCash });
+              db.ref("users/" + recipientUid + "/investmentsReceived").push({
+                from: currentUsername,
+                amount: amount,
+                timestamp: Date.now(),
+                processed: false
+              });
+              alert("Invested $" + amount + " in " + recipientName + ".");
+              updateUserCash();
+            });
+        });
+      }
+      
+      /***** Coin-to-Cash Conversion *****/
+      function convertCoinsToCash() {
+        const user = auth.currentUser;
+        if (!user) return;
+        db.ref("users/" + user.uid).once("value").then(snap => {
+          const data = snap.val();
+          let lastConv = data.lastConversion || 0;
+          let currentCycleStart = clockStartTime + Math.floor((Date.now()-clockStartTime)/(cycleLength*1000))*(cycleLength*1000);
+          if (lastConv > currentCycleStart) {
+            document.getElementById("conversionNotice").textContent = "Conversion already done this cycle.";
+            return;
+          }
+          db.ref("users/" + user.uid + "/coins").once("value").then(snapCoins => {
+            let coins = snapCoins.val() || {};
+            let coinIds = Object.keys(coins);
+            let totalCoinValue = 0;
+            Object.values(coins).forEach(coin => { if (coin && coin.rarity && marketPrices[coin.rarity]) totalCoinValue += marketPrices[coin.rarity]; });
+            let cash = data.cash || 0;
+            if (data.vaultType === "Holdings") {
+              if (totalCoinValue <= cash) {
+                document.getElementById("conversionNotice").textContent = "No conversion: Cash exceeds coin value.";
+                return;
+              }
+              conversionProcess(user, coinIds, totalCoinValue);
+            } else {
+              const convCount = Math.floor(coinIds.length * 0.10);
+              if (convCount < 1) {
+                document.getElementById("conversionNotice").textContent = "Not enough coins to convert this cycle.";
+                return;
+              }
+              let selected = coinIds.slice(0, convCount);
+              let convValue = 0;
+              selected.forEach(id => { let coin = coins[id]; if (coin && coin.rarity && marketPrices[coin.rarity]) convValue += marketPrices[coin.rarity]; });
+              conversionProcess(user, selected, convValue);
+            }
+          });
+        });
+      }
+      function conversionProcess(user, coinIdArray, convValue) {
+        coinIdArray.forEach(id => { db.ref("users/" + user.uid + "/coins/" + id).remove(); });
+        let newCash = Number((currentCash + convValue).toFixed(1));
+        db.ref("users/" + user.uid).update({ cash: newCash, lastConversion: Date.now() });
+        currentCash = newCash;
+        document.getElementById("cashDisplay").textContent = newCash.toFixed(1);
+        document.getElementById("conversionNotice").textContent = "Converted $" + convValue.toFixed(1) + " from coins.";
+        loadVault();
+        loadUserCoinsForSale();
+      }
+      
+      /***** Leaderboard & Recent Purchases *****/
+      function updateLeaderboard() {
+        const filter = document.getElementById("leaderboardFilter").value;
+        db.ref("users").once("value").then(snapshot => {
+          let leaderboardArr = [];
+          snapshot.forEach(userSnap => {
+            const uData = userSnap.val();
+            if (filter !== "All" && uData.vaultType !== filter) return;
+            const coinScore = calculateVaultScore(uData.coins);
+            const cashScore = (uData.cash || 0)/1000;
+            leaderboardArr.push({ username: uData.username || "Unknown", score: coinScore+cashScore });
+          });
+          leaderboardArr.sort((a, b) => b.score - a.score);
+          let html = "";
+          leaderboardArr.slice(0, 10).forEach((entry, index) => {
+            html += `<p>${index+1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`;
+          });
+          document.getElementById("leaderboardContent").innerHTML = html;
+        });
+      }
+      setInterval(updateLeaderboard,60000);
+      updateLeaderboard();
+      function calculateVaultScore(coins) {
+        if (!coins) return 0;
+        const rarityValues = { Copper:1, Silver:2, Gold:3, Platinum:4, Diamond:5, Iridium:6, Rhodium:7 };
+        let score = 0, owned = new Set();
+        Object.values(coins).forEach(c => { if (c && c.rarity) { score += rarityValues[c.rarity] || 0; owned.add(c.rarity); } });
+        if (owned.size === 7) score += 5;
+        return score;
+      }
+      function recordRecentPurchase(coin, price) {
+        db.ref("recentPurchases").push({ rarity: coin.rarity, serial: coin.serial, price: price, timestamp: Date.now() });
+        updateRecentPurchasesTicker();
+      }
+      function updateRecentPurchasesTicker() {
+        db.ref("recentPurchases").orderByChild("timestamp").limitToLast(10).once("value").then(snap => {
+          const purchases = snap.val() || {};
+          let txt = "Recent Purchases: ";
+          Object.values(purchases).forEach(item => { txt += `<span class="coin-icon coin-${item.rarity.toLowerCase()}"></span>${item.rarity} @ $${item.price.toFixed(2)} | `; });
+          document.getElementById("recentPurchasesMarquee").innerHTML = txt;
+        });
+      }
+      setInterval(updateRecentPurchasesTicker,30000);
+      
+      /***** Market Price Calculation *****/
+      function updateMarketPrices() {
+        db.ref("mintRegistry").once("value").then(snap => {
+          const regData = snap.val() || {};
+          let mintedTotal = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
+          let mintedToday = { Copper:0, Silver:0, Gold:0, Platinum:0, Diamond:0, Iridium:0, Rhodium:0 };
+          const todayStr = new Date().toISOString().split("T")[0];
+          for (const key in regData) {
+            const coin = regData[key];
+            if (coin && coin.rarity) {
+              mintedTotal[coin.rarity] = (mintedTotal[coin.rarity]||0) + 1;
+              if (coin.date && coin.date.split("T")[0] === todayStr)
+                mintedToday[coin.rarity] = (mintedToday[coin.rarity]||0) + 1;
+            }
+          }
+          let sumToday = 0;
+          for (const r in mintedToday) { sumToday += mintedToday[r]; }
+          let promises = [];
+          for (const rarity in basePrices) {
+            promises.push(new Promise(resolve => {
+              let actualDropRate = (sumToday > 0 && mintedToday[rarity])
+                ? (mintedToday[rarity] / sumToday) * 100
+                : baselineDropRates[rarity];
+              db.ref("users").orderByChild("vaultType").equalTo("Holdings").once("value").then(holdSnap => {
+                let holdingsCount = 0;
+                holdSnap.forEach(child => {
+                  let coins = child.val().coins;
+                  if (coins) { Object.values(coins).forEach(c => { if (c.rarity === rarity) holdingsCount++; }); }
+                });
+                const totalMintedOverall = mintedTotal[rarity] || 0;
+                let scarcityMultiplier = 1;
+                if (totalMintedOverall > 0) {
+                  let percentHoldings = (holdingsCount / totalMintedOverall) * 100;
+                  scarcityMultiplier = percentHoldings > 0 ? (100 / percentHoldings) : 1;
+                }
+                let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * scarcityMultiplier;
+                newPrice = Math.round(newPrice * 100) / 100;
+                resolve({ rarity: rarity, price: newPrice });
+              });
+            }));
+          }
+          Promise.all(promises).then(results => {
+            results.forEach(res => { marketPrices[res.rarity] = res.price; });
+            updateMarketTicker();
+            updateRecordHighs(regData);
+          });
+        });
+      }
+      function updateMarketTicker() {
+        let txt = "";
+        for (const r in marketPrices) {
+          let price = marketPrices[r];
+          let indicator = "⚖️", priceColor = "yellow";
+          if (price > basePrices[r]) { indicator = "🔺"; priceColor = "green"; }
+          else if (price < basePrices[r]) { indicator = "🔻"; priceColor = "red"; }
+          txt += `<span style="color:white;">${r}:</span> <span style="color:${priceColor};">$${price.toFixed(2)}</span> ${indicator} | `;
+        }
+        document.getElementById("marketPricesText").innerHTML = txt;
+      }
+      setInterval(updateMarketPrices,60000);
+      updateMarketPrices();
+      
+      /***** Utility: Update User Cash & Play SFX *****/
       function updateUserCash() {
         const user = auth.currentUser;
-        if(!user)return;
-        db.ref("users/"+user.uid+"/cash").once("value").then(snap=>{
-          currentCash = snap.val()||0;
+        if (!user) return;
+        db.ref("users/" + user.uid + "/cash").once("value").then(snap => {
+          currentCash = snap.val() || 0;
           document.getElementById("cashDisplay").textContent = Number(currentCash).toFixed(1);
         });
       }
-      let muted = localStorage.getItem("vaultAudioMuted")==="true";
+      let muted = localStorage.getItem("vaultAudioMuted") === "true";
       document.getElementById("bgMusic").muted = muted;
-      function toggleAudio(){ muted = !muted; localStorage.setItem("vaultAudioMuted", muted); document.getElementById("bgMusic").muted = muted; }
-      function playSFX(id){ const audio = document.getElementById(id); if(!muted && audio){ audio.pause(); audio.currentTime=0; audio.play().catch(e=>console.warn("Audio error:",e)); } }
+      function toggleAudio() { muted = !muted; localStorage.setItem("vaultAudioMuted", muted); document.getElementById("bgMusic").muted = muted; }
+      function playSFX(id) {
+        const audio = document.getElementById(id);
+        if (!muted && audio) { audio.pause(); audio.currentTime = 0; audio.play().catch(e => console.warn("Audio error:", e)); }
+      }
       
       /***** Authentication & Initialization *****/
-      auth.onAuthStateChanged(user=>{
-        if(user){
-          document.getElementById("auth-panel").style.display="none";
-          document.getElementById("user-panel").style.display="block";
-          db.ref("users/"+user.uid).once("value").then(snap=>{
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          document.getElementById("auth-panel").style.display = "none";
+          document.getElementById("user-panel").style.display = "block";
+          db.ref("users/" + user.uid).once("value").then(snap => {
             let data = snap.val() || {};
-            if(!data.vaultType){ data.vaultType = defaultVaultType; db.ref("users/"+user.uid).update({ vaultType: defaultVaultType }); }
-            if(!data.cash){ data.cash = currentCash; db.ref("users/"+user.uid).update({ cash: currentCash }); }
-            if(!data.theme){ data.theme = "default"; db.ref("users/"+user.uid).update({ theme: "default" }); }
+            if (!data.vaultType) { data.vaultType = defaultVaultType; db.ref("users/" + user.uid).update({ vaultType: defaultVaultType }); }
+            if (!data.cash) { data.cash = currentCash; db.ref("users/" + user.uid).update({ cash: currentCash }); }
+            if (!data.theme) { data.theme = "default"; db.ref("users/" + user.uid).update({ theme: "default" }); }
             document.getElementById("vaultTypeDisplay").textContent = data.vaultType;
             currentCash = data.cash;
             document.getElementById("cashDisplay").textContent = Number(currentCash).toFixed(1);
             currentUsername = data.username || "";
-            if(!currentUsername){ 
+            if (!currentUsername) { 
               currentUsername = document.getElementById("username").value.trim() || user.email.split("@")[0];
-              db.ref("users/"+user.uid).update({ username: currentUsername });
+              db.ref("users/" + user.uid).update({ username: currentUsername });
             }
-            document.getElementById("displayName").textContent = currentUsername;
-            if(user.email==="stewmin20k@gmail.com"){
+            document.getElementById("displayName").innerText = currentUsername;
+            if (user.email === "stewmin20k@gmail.com") {
               currentUsername = "stewmin";
-              db.ref("users/"+user.uid).update({ username:"stewmin" });
-              document.getElementById("adminPanel").style.display="block";
-            } else { document.getElementById("adminPanel").style.display="none"; }
+              db.ref("users/" + user.uid).update({ username: "stewmin" });
+              document.getElementById("adminPanel").style.display = "block";
+            } else {
+              document.getElementById("adminPanel").style.display = "none";
+            }
             updateMintAccess();
             loadVault();
             loadUserCoinsForSale();
@@ -996,21 +1569,28 @@
             updateTopAssociations();
           });
         } else {
-          document.getElementById("auth-panel").style.display="block";
-          document.getElementById("user-panel").style.display="none";
+          document.getElementById("auth-panel").style.display = "block";
+          document.getElementById("user-panel").style.display = "none";
         }
       });
       function login() {
-        const email = document.getElementById("email").value;
-        const pass = document.getElementById("password").value;
+        const email = document.getElementById("email").value.trim();
+        const pass = document.getElementById("password").value.trim();
         const usernameInput = document.getElementById("username").value.trim();
+        document.getElementById("loginDebug").innerText = "";
+        console.log("Attempting login for: " + email);
         auth.signInWithEmailAndPassword(email, pass)
-          .then(cred=>console.log("Logged in successfully:",cred.user))
-          .catch(()=>{
+          .then(cred => {
+            console.log("Logged in as:", cred.user.email);
+          })
+          .catch(error => {
+            console.log("Login error:", error.message);
+            // Attempt account creation if sign in fails
             auth.createUserWithEmailAndPassword(email, pass)
-              .then(cred=>{
+              .then(cred => {
                 currentUsername = usernameInput || email.split("@")[0];
-                db.ref("users/"+cred.user.uid).set({
+                console.log("Account created for:", cred.user.email);
+                db.ref("users/" + cred.user.uid).set({
                   email: cred.user.email,
                   username: currentUsername,
                   vaultType: defaultVaultType,
@@ -1025,7 +1605,11 @@
                   ownedThemes: {}
                 });
               })
-              .catch(err=>alert(err.message));
+              .catch(err => {
+                document.getElementById("loginDebug").innerText = err.message;
+                console.error("Creation error:", err);
+                alert(err.message);
+              });
           });
       }
       function logout() { auth.signOut(); }
@@ -1033,7 +1617,7 @@
       /***** Admin Functions *****/
       function adminResetMarket() {
         const user = auth.currentUser;
-        if(user && user.email==="stewmin20k@gmail.com" && currentUsername==="stewmin") {
+        if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
           db.ref("tradeStats").update({ averageTradeRatio: 1.0 });
           alert("Market reset by admin.");
           updateMintAccess();
@@ -1041,12 +1625,12 @@
       }
       function adminClearCoinHistory() {
         const user = auth.currentUser;
-        if(user && user.email==="stewmin20k@gmail.com" && currentUsername==="stewmin") {
-          if(confirm("Clear all coin history? This action cannot be undone.")){
+        if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
+          if (confirm("Clear all coin history? This action cannot be undone.")) {
             db.ref("mintRegistry").remove();
             db.ref("marketListings").remove();
-            db.ref("users").once("value").then(snapshot=>{
-              snapshot.forEach(userSnap=>{ db.ref("users/"+userSnap.key+"/coins").remove(); });
+            db.ref("users").once("value").then(snapshot => {
+              snapshot.forEach(userSnap => { db.ref("users/" + userSnap.key + "/coins").remove(); });
             });
             alert("Coin history cleared.");
             updateMintedStats();
@@ -1057,22 +1641,23 @@
       }
       function adminSwitchVaultType() {
         const user = auth.currentUser;
-        if(!user || user.email!=="stewmin20k@gmail.com"){ alert("Admin access required."); return; }
+        if (!user || user.email !== "stewmin20k@gmail.com") { alert("Admin access required."); return; }
         let newType = prompt("Enter new vault type (Basic, Investment, Holdings):");
-        if(!newType || !["Basic", "Investment", "Holdings"].includes(newType)){
-          alert("Invalid vault type."); return;
+        if (!newType || !["Basic", "Investment", "Holdings"].includes(newType)) {
+          alert("Invalid vault type.");
+          return;
         }
-        db.ref("users/"+user.uid).update({ vaultType: newType });
+        db.ref("users/" + user.uid).update({ vaultType: newType });
         document.getElementById("vaultTypeDisplay").textContent = newType;
         alert("Vault type switched to " + newType);
       }
       
       /***** Interval Updates *****/
-      setInterval(updateMarketPrices,60000);
-      setInterval(updateMarketListings,30000);
-      setInterval(updateLeaderboard,60000);
-      setInterval(updateRecentPurchasesTicker,30000);
-      setInterval(updateNotifications,30000);
+      setInterval(updateMarketPrices, 60000);
+      setInterval(updateMarketListings, 30000);
+      setInterval(updateLeaderboard, 60000);
+      setInterval(updateRecentPurchasesTicker, 30000);
+      setInterval(updateNotifications, 30000);
     });
   </script>
 </body>
