@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vault Street – Beta Build</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <!-- Load Firebase libraries before any other code -->
+  <!-- Load Firebase libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
@@ -40,6 +40,7 @@
       font-size: 10px;
       padding: 5px;
       margin: 3px;
+      cursor: pointer;
     }
     input, select {
       background: #ddd;
@@ -58,10 +59,28 @@
       background: #333;
       padding: 5px;
       font-size: 10px;
-      text-align: center;
+      text-align: right;
+      position: relative;
     }
-    #recordHighTicker, #mintedTodayTicker, #marketTicker marquee,
-    #leaderboard marquee {
+    #notificationsBox button {
+      margin-left: 5px;
+    }
+    /* Notification dropdown */
+    #notificationDropdown {
+      display: none;
+      background: #222;
+      padding: 10px;
+      position: absolute;
+      right: 0;
+      top: 25px;
+      max-width: 300px;
+      z-index: 10;
+      font-size: 10px;
+      border: 1px solid #444;
+      border-radius: 5px;
+    }
+    /* Ticker area */
+    #recordHighTicker, #mintedTodayTicker, #marketTicker marquee, #leaderboard marquee {
       background: #222;
       padding: 5px;
       font-size: 10px;
@@ -105,9 +124,7 @@
       font-size: 10px;
     }
     /* Dropdowns for market and group search */
-    #marketDropdown,
-    .groupDropdown,
-    #groupSearch {
+    #marketDropdown, .groupDropdown, #groupSearch {
       background: white;
       color: black;
       padding: 10px;
@@ -116,12 +133,33 @@
       margin-top: 10px;
     }
     /* Leaderboards */
-    #topGuildsLeaderboard,
-    #topAssociationsLeaderboard {
+    #topGuildsLeaderboard, #topAssociationsLeaderboard {
       background: #222;
       padding: 5px;
       font-size: 10px;
       margin-top: 10px;
+    }
+    /* Theme Options Grid */
+    #themeOptions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .theme-option {
+      width: 40px;
+      height: 40px;
+      border: 2px solid white;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .theme-red { background: red; }
+    .theme-blue { background: blue; }
+    .theme-green { background: green; }
+    .theme-checkered {
+      background-image: linear-gradient(45deg, #aaa 25%, transparent 25%, transparent 75%, #aaa 75%, #aaa),
+                        linear-gradient(45deg, #aaa 25%, transparent 25%, transparent 75%, #aaa 75%, #aaa);
+      background-size: 10px 10px;
+      background-position: 0 0, 5px 5px;
     }
   </style>
 </head>
@@ -132,10 +170,12 @@
   
   <!-- Notifications & Tickers -->
   <div id="notificationsBox">
-    Notifications: <span id="notificationsContent">None</span>
+    <span onclick="app.toggleNotifications()" style="cursor:pointer;">✉️ notifications (<span id="notifCount">0</span>)</span>
+    <div id="notificationDropdown"></div>
   </div>
+  <!-- Recent Fluctuations Banner -->
   <div id="recordHighTicker">
-    <marquee id="recordHighMarquee" scrollamount="4">Record Highs: Loading...</marquee>
+    <marquee id="recordHighMarquee" scrollamount="4">Recent Fluctuations: Loading...</marquee>
   </div>
   <div id="mintedTodayTicker">
     <marquee id="mintedTodayMarquee" scrollamount="4">Minted Today: Loading...</marquee>
@@ -157,7 +197,10 @@
     
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
-      <div style="text-align:right;"><button onclick="app.logout()">Logout</button></div>
+      <div style="text-align:right;">
+        <span onclick="app.toggleNotifications()" style="cursor:pointer;">✉️ notifications (<span id="notifCountBtn">0</span>)</span>
+        <button onclick="app.logout()">Logout</button>
+      </div>
       <h2>Welcome, <span id="displayName"></span></h2>
       <!-- Admin Panel -->
       <div id="adminPanel" style="display:none; margin-bottom:10px;">
@@ -165,24 +208,30 @@
         <button onclick="app.adminClearCoinHistory()">Clear Coin History</button>
         <button onclick="app.adminSwitchVaultType()">Switch Vault Type</button>
       </div>
-      <!-- User Info -->
+      <!-- User Info (Vault details now include cash) -->
       <div id="userInfo" class="section">
         <p>Vault Type: <span id="vaultTypeDisplay"></span> <span id="upgradeOptions"></span></p>
-        <p>Cash: $<span id="cashDisplay"></span></p>
-        <div id="vaultClockDisplay">Vault Clock: Loading...</div>
+      </div>
+      <!-- Vault Inventory (shows coins and current cash value) -->
+      <div id="vaultSection" class="section">
+        <h3>My Vault</h3>
+        <!-- Cash is now shown as part of the vault inventory table -->
+        <div id="vaultCoins"></div>
       </div>
       <!-- Theme & Collectibles -->
       <div id="themeBannerSection" class="section">
         <h3>Customize Your Vault</h3>
         <p>Owned Themes: <span id="ownedThemes">None</span></p>
         <p>Select a Theme to Purchase:</p>
-        <select id="vaultTheme">
-          <option value="default">Gray Default</option>
-          <option value="red">Red</option>
-          <option value="blue">Blue</option>
-          <option value="green">Green</option>
-        </select>
-        <button onclick="app.purchaseTheme()">Purchase Theme</button>
+        <!-- Instead of a dropdown, a grid of theme options -->
+        <div id="themeOptions">
+          <div class="theme-option" data-theme="red" style="background: red;"></div>
+          <div class="theme-option" data-theme="blue" style="background: blue;"></div>
+          <div class="theme-option" data-theme="green" style="background: green;"></div>
+          <div class="theme-option" data-theme="checkered" class="theme-checkered"></div>
+          <!-- Add more color options or special patterns as desired -->
+        </div>
+        <button onclick="app.purchaseTheme()">Purchase Selected Theme</button>
         <p>Select a Theme from Inventory to Equip:</p>
         <select id="equipThemeSelect"></select>
         <button onclick="app.equipTheme()">Equip Theme</button>
@@ -191,12 +240,8 @@
       <div id="mintingSection" class="section">
         <h3>Mint a Coin</h3>
         <button id="mintBtn" onclick="app.mintNewCoin()" disabled>Mint New Coin</button>
+        <div id="mintedCoinDisplay"></div>
         <p id="mintNotice" style="color:red; font-size:10px;">Minting disabled until market conditions are met.</p>
-      </div>
-      <!-- Vault Inventory -->
-      <div id="vaultSection" class="section">
-        <h3>My Vault</h3>
-        <div id="vaultCoins"></div>
       </div>
       <!-- Market Interface -->
       <div id="marketInterface" class="section">
@@ -227,7 +272,9 @@
       <!-- Investment Section -->
       <div id="investmentSection" class="section">
         <h3>Invest in Another Vault</h3>
-        <p>(Only Investment/Holdings vaults can receive investments)</p>
+        <p>(Only Investment/Holdings vaults can receive investments)<br>
+          Investment returns will appear as notifications.
+        </p>
         <input type="text" id="investRecipient" placeholder="Recipient Username"><br>
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="app.submitInvestment()">Invest</button>
@@ -235,7 +282,19 @@
       <!-- Conversion Section -->
       <div id="conversionSection" class="section">
         <h3>Convert Coins to Cash</h3>
-        <button onclick="app.convertCoinsToCash()">Convert Coins</button>
+        <button onclick="app.convertCoinsToCash()">Convert All Coins</button>
+        <p>Holdings Conversion - Select Coins:</p>
+        <select id="convertRarity">
+          <option value="Copper">Copper</option>
+          <option value="Silver">Silver</option>
+          <option value="Gold">Gold</option>
+          <option value="Platinum">Platinum</option>
+          <option value="Diamond">Diamond</option>
+          <option value="Iridium">Iridium</option>
+          <option value="Rhodium">Rhodium</option>
+        </select>
+        <input type="number" id="convertQuantity" min="1" placeholder="Quantity">
+        <button onclick="app.convertSelectedCoinsToCash()">Convert Selected Coins</button>
         <p id="conversionNotice" style="color:orange; font-size:10px;"></p>
       </div>
       <!-- Guilds & Associations -->
@@ -331,10 +390,12 @@
         canMint: false,
         marketPrices: {},
         recordHighs: {},
+        recordLows: { Copper: Infinity, Silver: Infinity, Gold: Infinity, Platinum: Infinity, Diamond: Infinity, Iridium: Infinity, Rhodium: Infinity },
         basePrices: { Copper: 1, Silver: 5, Gold: 10, Platinum: 25, Diamond: 50, Iridium: 75, Rhodium: 100 },
         baselineDropRates: { Copper: 40, Silver: 25, Gold: 15, Platinum: 10, Diamond: 5, Iridium: 3, Rhodium: 1 },
-        cycleLength: 300,  // in seconds (demo cycle: 5 minutes)
+        cycleLength: 300,  // demo cycle in seconds
         clockStartTime: Date.now(),
+        vaultCycleCounter: 0,  // for fluctuation updates
 
         // --- Utility Functions ---
         getRatioColor: ratio => ratio < 1.0 ? "red" : ratio > 1.0 ? "green" : "yellow",
@@ -380,7 +441,7 @@
           }
         },
 
-        // --- Vault Clock & Resets ---
+        // --- Vault Clock & Real-Time Fluctuations ---
         updateVaultClock: () => {
           const elapsed = Math.floor((Date.now() - app.clockStartTime) / 1000);
           const remaining = app.cycleLength - (elapsed % app.cycleLength);
@@ -388,20 +449,53 @@
                 seconds = remaining % 60;
           document.getElementById("vaultClockDisplay").textContent =
             `Vault Clock: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-          if (elapsed % app.cycleLength === 0) app.vaultClockReset();
+          if (elapsed % app.cycleLength === 0) {
+            app.vaultCycleCounter++;
+            app.vaultClockReset();
+          }
         },
         vaultClockReset: () => {
           console.log("Vault Clock Reset Triggered");
           app.processMarketListingsReturn();
-          // Optionally: app.checkVaultUpgrade();  // if upgrade logic is here
           app.updateMintedStats();
-          app.updateRecordHighTicker();
-          app.updateMintedTodayTicker();
+          // Update the fluctuations banner every 2 cycles continuously:
+          if (app.vaultCycleCounter % 2 === 0) {
+            app.updateRecentFluctuations();
+          }
+        },
+        // Continuously update recent fluctuations (highs & lows) every 10 seconds
+        startFluctuationUpdater: () => {
+          setInterval(app.updateRecentFluctuations, 10000);
+        },
+        updateRecentFluctuations: () => {
+          db.ref("mintRegistry").once("value").then(snap => {
+            const regData = snap.val() || {};
+            const highs = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
+            const lows = { Copper: Infinity, Silver: Infinity, Gold: Infinity, Platinum: Infinity, Diamond: Infinity, Iridium: Infinity, Rhodium: Infinity };
+            Object.values(regData).forEach(coin => {
+              if (coin && coin.rarity) {
+                const price = app.marketPrices[coin.rarity] || app.basePrices[coin.rarity];
+                highs[coin.rarity] = Math.max(highs[coin.rarity], price);
+                lows[coin.rarity] = Math.min(lows[coin.rarity], price);
+              }
+            });
+            app.recordHighs = highs;
+            app.recordLows = lows;
+            let txt = "Recent Fluctuations: ";
+            for (const r in highs) {
+              const colorHigh = highs[r] > app.basePrices[r] ? "green" : "white";
+              const colorLow = lows[r] < app.basePrices[r] ? "red" : "white";
+              txt += `<span style="color:white;">${r}:</span> <span style="color:${colorHigh};">H:$${highs[r].toFixed(2)}</span>/<span style="color:${colorLow};">L:$${(lows[r]===Infinity?app.basePrices[r]:lows[r]).toFixed(2)}</span> | `;
+            }
+            document.getElementById("recordHighMarquee").innerHTML = txt;
+          });
         },
 
-        // --- Theme & Customization ---
+        // --- Theme & Customization with Grid Options ---
         purchaseTheme: () => {
-          const selectedTheme = document.getElementById("vaultTheme").value;
+          // Use a selected theme from the grid (set by a click on a .theme-option element)
+          const selectedTheme = document.querySelector(".theme-option.selected")?.getAttribute("data-theme");
+          if (!selectedTheme) { alert("Select a theme by clicking on a color box."); return; }
           db.ref("themes/" + selectedTheme).once("value").then(snap => {
             const themeData = snap.val() || { owners: 0, purchases: 0 };
             const cost = 250 + (themeData.owners * 25) + (themeData.purchases * 5);
@@ -462,14 +556,19 @@
         },
         updateVaultTheme: theme => {
           const panel = document.getElementById("user-panel");
-          panel.style.backgroundColor =
-            theme === "red" ? "#330000" :
-            theme === "blue" ? "#000033" :
-            theme === "green" ? "#003300" : "#1a1a1a";
+          // Use a variety of colors/patterns here as desired.
+          const themeColors = {
+            red: "#330000",
+            blue: "#000033",
+            green: "#003300",
+            default: "#1a1a1a",
+            checkered: "#666"  // Fallback color if using an image/pattern background
+          };
+          panel.style.backgroundColor = themeColors[theme] || "#1a1a1a";
           if (auth.currentUser)
             db.ref("users/" + auth.currentUser.uid).update({ theme });
         },
-        
+
         // --- Upgrade Options ---
         displayUpgradeOptions: () => {
           const user = auth.currentUser;
@@ -500,30 +599,78 @@
             alert("Vault upgraded to " + newType + ".");
           });
         },
-        
-        // --- Notifications & Group Search ---
-        updateNotifications: () => {
-          let notifText = "";
-          if (auth.currentUser) {
-            db.ref("guilds")
-              .orderByChild("pendingInvites/" + auth.currentUser.uid)
-              .equalTo(true)
-              .once("value")
-              .then(snap => {
-                snap.forEach(child => { notifText += "Guild invite: " + child.val().name + " | "; });
-                db.ref("associations")
-                  .orderByChild("pendingInvites/" + auth.currentUser.uid)
-                  .equalTo(true)
-                  .once("value")
-                  .then(snap2 => {
-                    snap2.forEach(child => { notifText += "Assoc invite: " + child.val().name + " | "; });
-                    document.getElementById("notificationsContent").innerText = notifText || "None";
-                  });
-              });
-          } else {
-            document.getElementById("notificationsContent").innerText = "None";
-          }
+
+        // --- Notifications & Investment Returns ---
+        // Combine guild invites and investment returns in one dropdown.
+        toggleNotifications: () => {
+          const drop = document.getElementById("notificationDropdown");
+          drop.style.display = (drop.style.display === "none" || drop.style.display === "") ? "block" : "none";
+          if (drop.style.display === "block") app.loadNotifications();
         },
+        loadNotifications: () => {
+          let notifHTML = "";
+          let notifCount = 0;
+          // Guild invites:
+          db.ref("guilds").orderByChild("pendingInvites/" + auth.currentUser.uid).equalTo(true)
+            .once("value").then(snap => {
+              snap.forEach(child => {
+                notifHTML += `<p>Guild Invite: ${child.val().name} <button onclick="app.acceptInvite('${child.key}','guilds')">Accept</button></p>`;
+                notifCount++;
+              });
+              // Association invites:
+              db.ref("associations").orderByChild("pendingInvites/" + auth.currentUser.uid).equalTo(true)
+                .once("value").then(snap2 => {
+                  snap2.forEach(child => {
+                    notifHTML += `<p>Assoc Invite: ${child.val().name} <button onclick="app.acceptInvite('${child.key}','associations')">Accept</button></p>`;
+                    notifCount++;
+                  });
+                  // Investment returns notifications:
+                  db.ref("investmentReturns").orderByChild("to").equalTo(auth.currentUser.uid)
+                    .once("value").then(snap3 => {
+                      snap3.forEach(child => {
+                        const ret = child.val();
+                        notifHTML += `<p>Investment Return: $${ret.amount.toFixed(2)} <button onclick="app.acceptInvestmentReturn('${child.key}')">Claim</button></p>`;
+                        notifCount++;
+                      });
+                      // Update badge count.
+                      document.getElementById("notifCount").innerText = notifCount;
+                      document.getElementById("notifCountBtn").innerText = notifCount;
+                      document.getElementById("notificationDropdown").innerHTML = notifHTML || "<p>No new notifications.</p>";
+                    });
+                });
+            });
+        },
+        acceptInvite: (groupKey, type) => {
+          const user = auth.currentUser;
+          if (!user) return;
+          const path = type === "guilds" ? "guilds" : "associations";
+          db.ref(path + "/" + groupKey + "/pendingInvites/" + user.uid).remove();
+          db.ref(path + "/" + groupKey + "/members").update({ [user.uid]: true });
+          const updateField = type === "guilds" ? "guild" : "association";
+          db.ref("users/" + user.uid).update({ [updateField]: groupKey });
+          alert("Invite accepted!");
+          document.getElementById("notificationDropdown").style.display = "none";
+        },
+        acceptInvestmentReturn: returnKey => {
+          const user = auth.currentUser;
+          if (!user) return;
+          db.ref("investmentReturns/" + returnKey).once("value").then(snap => {
+            const ret = snap.val();
+            if (!ret) return;
+            // Add return amount to user's cash.
+            db.ref("users/" + user.uid + "/cash").transaction(currentCash => {
+              return (currentCash || 0) + ret.amount;
+            }, () => {
+              db.ref("investmentReturns/" + returnKey).remove();
+              alert(`Investment return of $${ret.amount.toFixed(2)} claimed.`);
+              app.updateUserCash();
+              app.loadVault();  // update vault to show new cash
+              app.loadNotifications();
+            });
+          });
+        },
+        
+        // --- Group Search & Management ---
         toggleGroupSearch: () => {
           const gs = document.getElementById("groupSearch");
           gs.style.display = (gs.style.display === "none" || gs.style.display === "") ? "block" : "none";
@@ -560,41 +707,178 @@
             db.ref("users/" + user.uid).update({ [updateField]: groupId });
             alert("Joined group successfully!");
             document.getElementById("groupSearch").style.display = "none";
-            // Optionally update group info in UI
           });
         },
-        updateTopGuilds: () => {
-          db.ref("guilds").once("value").then(snap => {
-            let guilds = [];
-            snap.forEach(child => {
-              let g = child.val();
-              let count = g.members ? Object.keys(g.members).length : 0;
-              guilds.push({ name: g.name, members: count });
+        createGuild: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          db.ref("users/" + user.uid).once("value").then(snap => {
+            const data = snap.val();
+            if (data.vaultType !== "Holdings") {
+              alert("Only Holdings Vaults can form a Guild.");
+              return;
+            }
+            const guildName = prompt("Enter Guild Name:");
+            if (!guildName) return;
+            const guildData = {
+              name: guildName,
+              leader: user.uid,
+              members: { [user.uid]: true },
+              pendingInvites: {},
+              createdAt: Date.now()
+            };
+            db.ref("guilds").push(guildData, err => {
+              if (!err) {
+                db.ref("users/" + user.uid).update({ guild: guildName });
+                alert("Guild created successfully.");
+              }
             });
-            guilds.sort((a, b) => b.members - a.members);
-            let html = "";
-            guilds.slice(0, 5).forEach((g, i) => { html += `<p>${i + 1}. ${g.name} (${g.members})</p>`; });
-            document.getElementById("guildLeaderboardContent").innerHTML = html;
           });
         },
-        updateTopAssociations: () => {
-          db.ref("associations").once("value").then(snap => {
-            let assocs = [];
-            snap.forEach(child => {
-              let a = child.val();
-              let count = a.members ? Object.keys(a.members).length : 0;
-              assocs.push({ name: a.name, members: count });
+        leaveGuild: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          db.ref("users/" + user.uid + "/guild").once("value").then(snap => {
+            const guildId = snap.val();
+            if (!guildId) { alert("You are not in a guild."); return; }
+            db.ref("guilds/" + guildId + "/members/" + user.uid).remove().then(() => {
+              db.ref("users/" + user.uid).update({ guild: null });
+              alert("Left guild successfully.");
+              db.ref("guilds/" + guildId + "/members").once("value").then(snapMembers => {
+                if (!snapMembers.exists()) {
+                  db.ref("guilds/" + guildId).remove();
+                  alert("Guild deleted as no members remain.");
+                }
+              });
             });
-            assocs.sort((a, b) => b.members - a.members);
-            let html = "";
-            assocs.slice(0, 5).forEach((a, i) => { html += `<p>${i + 1}. ${a.name} (${a.members})</p>`; });
-            document.getElementById("associationLeaderboardContent").innerHTML = html;
+          });
+        },
+        inviteToGuild: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          const invitee = prompt("Enter username to invite to your Guild:");
+          if (!invitee) return;
+          db.ref("users/" + user.uid + "/guild").once("value").then(snap => {
+            const guildId = snap.val();
+            if (!guildId) {
+              alert("You are not in a guild.");
+              return;
+            }
+            db.ref("guilds").orderByChild("name").equalTo(guildId)
+              .once("value").then(snapGuild => {
+                if (!snapGuild.exists()) { alert("Guild not found."); return; }
+                let actualGuildId;
+                snapGuild.forEach(child => { actualGuildId = child.key; });
+                db.ref("users").orderByChild("username").equalTo(invitee)
+                  .once("value").then(snapUser => {
+                    if (!snapUser.exists()) { alert("User not found."); return; }
+                    let inviteeUid;
+                    snapUser.forEach(child => { inviteeUid = child.key; });
+                    db.ref("guilds/" + actualGuildId + "/pendingInvites").update({ [inviteeUid]: true });
+                    alert(`Invitation sent to ${invitee}.`);
+                  });
+              });
+          });
+        },
+        createAssociation: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          db.ref("users/" + user.uid).once("value").then(snap => {
+            const data = snap.val();
+            if (data.vaultType !== "Basic") {
+              alert("Only Basic Vaults can form an Association.");
+              return;
+            }
+            const assocName = prompt("Enter Association Name:");
+            if (!assocName) return;
+            const assocData = {
+              name: assocName,
+              leader: user.uid,
+              members: { [user.uid]: true },
+              pendingInvites: {},
+              createdAt: Date.now()
+            };
+            db.ref("associations").push(assocData, err => {
+              if (!err) {
+                db.ref("users/" + user.uid).update({ association: assocName });
+                alert("Association created successfully.");
+              }
+            });
+          });
+        },
+        leaveAssociation: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          db.ref("users/" + user.uid + "/association").once("value").then(snap => {
+            const assocId = snap.val();
+            if (!assocId) { alert("You are not in an association."); return; }
+            db.ref("associations/" + assocId + "/members/" + user.uid).remove().then(() => {
+              db.ref("users/" + user.uid).update({ association: null });
+              alert("Left association successfully.");
+              db.ref("associations/" + assocId + "/members").once("value").then(snapMembers => {
+                if (!snapMembers.exists()) {
+                  db.ref("associations/" + assocId).remove();
+                  alert("Association deleted as no members remain.");
+                }
+              });
+            });
+          });
+        },
+        inviteToAssociation: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          const invitee = prompt("Enter username to invite to your Association:");
+          if (!invitee) return;
+          db.ref("users/" + user.uid + "/association").once("value").then(snap => {
+            const assocId = snap.val();
+            if (!assocId) {
+              alert("You are not in an association.");
+              return;
+            }
+            db.ref("associations").orderByChild("name").equalTo(assocId)
+              .once("value").then(snapAssoc => {
+                if (!snapAssoc.exists()) { alert("Association not found."); return; }
+                let actualAssocId;
+                snapAssoc.forEach(child => { actualAssocId = child.key; });
+                db.ref("users").orderByChild("username").equalTo(invitee)
+                  .once("value").then(snapUser => {
+                    if (!snapUser.exists()) { alert("User not found."); return; }
+                    let inviteeUid;
+                    snapUser.forEach(child => { inviteeUid = child.key; });
+                    db.ref("associations/" + actualAssocId + "/pendingInvites").update({ [inviteeUid]: true });
+                    alert(`Invitation sent to ${invitee}.`);
+                  });
+              });
+          });
+        },
+        
+        // --- Holdings Specific: Selective Conversion ---
+        convertSelectedCoinsToCash: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          const rarity = document.getElementById("convertRarity").value;
+          const qty = Number(document.getElementById("convertQuantity").value);
+          if (!qty || qty < 1) { alert("Enter a valid quantity."); return; }
+          db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
+            const coins = snap.val() || {};
+            let selectedIds = [];
+            Object.entries(coins).forEach(([id, coin]) => {
+              if (coin.rarity === rarity && selectedIds.length < qty) {
+                selectedIds.push(id);
+              }
+            });
+            if (selectedIds.length < qty) { 
+              alert(`Not enough ${rarity} coins available.`);
+              return;
+            }
+            let convValue = qty * (app.marketPrices[rarity] || app.basePrices[rarity]);
+            app.conversionProcess(user, selectedIds, convValue);
           });
         },
         
         // --- Minting & Vault Management ---
         updateMintAccess: () => {
-          // For demo purposes, we simply enable minting.
+          // For demo purposes, simply enable minting.
           app.canMint = true;
           document.getElementById("mintBtn").disabled = !app.canMint;
           document.getElementById("mintNotice").style.display = app.canMint ? "none" : "block";
@@ -611,6 +895,14 @@
             db.ref("users/" + user.uid + "/coins").child("coin_" + serial).set(coinData);
             db.ref("mintedCount").set(serial);
             app.playSFX('sfxMint');
+            // Minted Coin Animation
+            const coinIcon = document.createElement("div");
+            coinIcon.className = `coin-icon coin-${rarity.toLowerCase()}`;
+            document.getElementById("mintedCoinDisplay").appendChild(coinIcon);
+            setTimeout(() => {
+              coinIcon.style.opacity = 0;
+              setTimeout(() => coinIcon.remove(), 1000);
+            }, 2000);
             if (callback) callback();
             app.updateMintedStats();
             app.loadVault();
@@ -625,10 +917,21 @@
             const counts = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
             Object.values(data).forEach(coin => { if (coin && coin.rarity) counts[coin.rarity]++; });
             let html = `<table id="vaultTable">
-                          <tr><th>Rarity</th><th>Count</th></tr>`;
+                          <tr>
+                            <th>Rarity</th>
+                            <th>Count</th>
+                            <th>Total Value</th>
+                          </tr>`;
             for (const r in counts) {
-              html += `<tr><td><span class="coin-icon coin-${r.toLowerCase()}"></span>${r}</td><td>${counts[r]}</td></tr>`;
+              const currentPrice = app.marketPrices[r] || app.basePrices[r];
+              const totalValue = counts[r] * currentPrice;
+              html += `<tr>
+                         <td><span class="coin-icon coin-${r.toLowerCase()}"></span>${r}</td>
+                         <td>${counts[r]}</td>
+                         <td>$${totalValue.toFixed(2)}</td>
+                       </tr>`;
             }
+            html += `<tr><td colspan="3">Cash: $${app.currentCash.toFixed(2)}</td></tr>`;
             html += "</table>";
             document.getElementById("vaultCoins").innerHTML = html;
             app.updateVaultRatio();
@@ -642,7 +945,12 @@
             const counts = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
             Object.values(data).forEach(coin => { if (coin && coin.rarity) counts[coin.rarity]++; });
             let html = `<table id="vaultTable">
-                          <tr><th>Rarity</th><th>Available</th><th>List Qty</th><th>Action</th></tr>`;
+                          <tr>
+                            <th>Rarity</th>
+                            <th>Available</th>
+                            <th>List Qty</th>
+                            <th>Action</th>
+                          </tr>`;
             for (const r in counts) {
               if (counts[r] > 0) {
                 html += `<tr>
@@ -701,11 +1009,13 @@
           app.updateRecordHighTicker();
         },
         updateRecordHighTicker: () => {
-          let txt = "Record Highs: ";
+          let txt = "Recent Fluctuations: ";
           for (const r in app.recordHighs) {
             const high = app.recordHighs[r];
-            const color = high > app.basePrices[r] ? "green" : "white";
-            txt += `<span style="color:white;">${r}:</span> <span style="color:${color};">$${high.toFixed(2)}</span> | `;
+            const low = app.recordLows[r] === Infinity ? app.basePrices[r] : app.recordLows[r];
+            const colorHigh = high > app.basePrices[r] ? "green" : "white";
+            const colorLow = low < app.basePrices[r] ? "red" : "white";
+            txt += `<span style="color:white;">${r}:</span> <span style="color:${colorHigh};">H:$${high.toFixed(2)}</span>/<span style="color:${colorLow};">L:$${low.toFixed(2)}</span> | `;
           }
           document.getElementById("recordHighMarquee").innerHTML = txt;
         },
@@ -724,7 +1034,7 @@
             document.getElementById("mintedTodayMarquee").innerHTML = txt;
           });
         },
-        
+
         // --- Market Price Calculation & Listings ---
         updateMarketPrices: () => {
           db.ref("mintRegistry").once("value").then(snap => {
@@ -792,10 +1102,12 @@
               const lst = listings[key];
               if (lst.fulfilled) continue;
               if (filter !== "All" && lst.coin.rarity !== filter) continue;
+              // Use live market price for display
+              const livePrice = app.marketPrices[lst.coin.rarity] || app.basePrices[lst.coin.rarity];
               html += `<div class="listing">
-                        <p><span class="coin-icon coin-${lst.coin.rarity.toLowerCase()}"></span>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${lst.coin.price.toFixed(2)}</p>
-                        <p>Seller: ${lst.sellerUid}</p>
-                        <button onclick="app.buyMarketCoin('${key}', ${lst.coin.price})">Buy</button>
+                        <p style="font-size:8px;"><span class="coin-icon coin-${lst.coin.rarity.toLowerCase()}"></span>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${livePrice.toFixed(2)}</p>
+                        <p style="font-size:8px;">Seller: ${lst.sellerUid}</p>
+                        <button style="font-size:8px;" onclick="app.buyMarketCoin('${key}', ${livePrice})">Buy</button>
                       </div>`;
             }
             document.getElementById("marketListings").innerHTML = html || "<p>No active listings.</p>";
@@ -824,7 +1136,7 @@
           db.ref("users/" + user.uid + "/coins/" + coinId).once("value").then(snap => {
             const coinData = snap.val();
             if (!coinData) return;
-            coinData.price = app.marketPrices[coinData.rarity] || app.basePrices[coinData.rarity];
+            // Do not lock price, use dynamic pricing
             const listing = {
               coin: coinData,
               sellerUid: user.uid,
@@ -874,8 +1186,8 @@
             app.updateMarketListings();
           });
         },
-        
-        // --- Investment ---
+
+        // --- Investment (with Returns as Notifications) ---
         submitInvestment: () => {
           const investor = auth.currentUser;
           if (!investor) return;
@@ -893,18 +1205,20 @@
                 if (recipientData.vaultType === "Basic") { alert("Recipient vault is Basic and cannot receive investments."); return; }
                 const newCash = invData.cash - amount;
                 db.ref("users/" + investor.uid).update({ cash: newCash });
-                db.ref("users/" + recipientUid + "/investmentsReceived").push({
+                // Instead of immediate cash return, create an investment return notification
+                db.ref("investmentReturns").push({
+                  to: recipientUid,
                   from: app.currentUsername,
-                  amount: amount,
+                  amount: amount * 1.1,  // example: 10% profit on return
                   timestamp: Date.now(),
-                  processed: false
+                  accepted: false
                 });
-                alert("Invested $" + amount + " in " + recipientName + ".");
+                alert("Invested $" + amount + " in " + recipientName + ". Your investment return will be notified.");
                 app.updateUserCash();
               });
           });
         },
-        
+
         // --- Conversion ---
         convertCoinsToCash: () => {
           const user = auth.currentUser;
@@ -917,6 +1231,7 @@
               document.getElementById("conversionNotice").textContent = "Conversion already done this cycle.";
               return;
             }
+            // Generic conversion: convert all coins
             db.ref("users/" + user.uid + "/coins").once("value").then(snapCoins => {
               const coins = snapCoins.val() || {};
               const coinIds = Object.keys(coins);
@@ -946,6 +1261,29 @@
             });
           });
         },
+        // Holdings selective conversion
+        convertSelectedCoinsToCash: () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          const rarity = document.getElementById("convertRarity").value;
+          const qty = Number(document.getElementById("convertQuantity").value);
+          if (!qty || qty < 1) { alert("Enter a valid quantity."); return; }
+          db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
+            const coins = snap.val() || {};
+            let selectedIds = [];
+            Object.entries(coins).forEach(([id, coin]) => {
+              if (coin.rarity === rarity && selectedIds.length < qty) {
+                selectedIds.push(id);
+              }
+            });
+            if (selectedIds.length < qty) { 
+              alert(`Not enough ${rarity} coins available.`);
+              return;
+            }
+            let convValue = qty * (app.marketPrices[rarity] || app.basePrices[rarity]);
+            app.conversionProcess(user, selectedIds, convValue);
+          });
+        },
         conversionProcess: (user, coinIdArray, convValue) => {
           coinIdArray.forEach(id => { db.ref("users/" + user.uid + "/coins/" + id).remove(); });
           const newCash = Number((app.currentCash + convValue).toFixed(1));
@@ -956,7 +1294,7 @@
           app.loadVault();
           app.loadUserCoinsForSale();
         },
-        
+
         // --- Leaderboard & Recent Purchases ---
         updateLeaderboard: () => {
           const filter = document.getElementById("leaderboardFilter").value;
@@ -991,7 +1329,7 @@
             document.getElementById("recentPurchasesMarquee").innerHTML = txt;
           });
         },
-        
+
         // --- Admin Functions ---
         adminResetMarket: () => {
           const user = auth.currentUser;
@@ -1029,6 +1367,11 @@
           document.getElementById("vaultTypeDisplay").textContent = newType;
           alert("Vault type switched to " + newType);
         },
+
+        // --- Investment Returns Notification Flow ---
+        // Investment returns are stored in "investmentReturns" in the database.
+        // They will appear in the notifications dropdown with a badge.
+        // The user must click "Claim" to have the funds credited.
         
         // --- Authentication & Initialization ---
         login: () => {
@@ -1041,7 +1384,6 @@
             .then(cred => { console.log("Logged in as:", cred.user.email); })
             .catch(error => {
               console.log("Login error:", error.message);
-              // Create account if sign in fails
               auth.createUserWithEmailAndPassword(email, pass)
                 .then(cred => {
                   app.currentUsername = usernameInput || email.split("@")[0];
@@ -1111,14 +1453,12 @@
             app.loadUserCoinsForSale();
             app.updateMarketListings();
             app.updateLeaderboard();
-            // Group and theme related functions
-            // app.updateGuildInvites(); app.updateAssociationInvites(); 
             app.loadOwnedThemes();
             app.updateEquipThemeSelect();
             app.displayUpgradeOptions();
             app.updateNotifications();
-            app.updateTopGuilds();
-            app.updateTopAssociations();
+            // Start continuous fluctuation updates
+            app.startFluctuationUpdater();
           });
         } else {
           document.getElementById("auth-panel").style.display = "block";
@@ -1129,10 +1469,10 @@
       // --- Audio Control ---
       let muted = localStorage.getItem("vaultAudioMuted") === "true";
       document.getElementById("bgMusic").muted = muted;
-      window.toggleAudio = () => { 
-        muted = !muted; 
-        localStorage.setItem("vaultAudioMuted", muted); 
-        document.getElementById("bgMusic").muted = muted; 
+      window.toggleAudio = () => {
+        muted = !muted;
+        localStorage.setItem("vaultAudioMuted", muted);
+        document.getElementById("bgMusic").muted = muted;
       };
       
       // --- Start Intervals ---
@@ -1147,8 +1487,17 @@
       app.updateVaultClock();
       app.updateMarketPrices();
       
-      // Expose app functions to global scope for inline HTML event handlers
+      // Expose app functions globally for inline event handlers
       window.app = app;
+      
+      // --- Theme Options Click Handler (Grid) ---
+      document.querySelectorAll(".theme-option").forEach(box => {
+        box.addEventListener("click", function() {
+          // Remove any previous selection
+          document.querySelectorAll(".theme-option").forEach(b => b.classList.remove("selected"));
+          this.classList.add("selected");
+        });
+      });
     });
   </script>
 </body>
