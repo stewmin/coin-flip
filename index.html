@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vault Street – Beta Build</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <!-- Load Firebase libraries -->
+  <!-- Firebase Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
@@ -54,7 +54,7 @@
       margin-top: 20px;
       color: gray;
     }
-    /* Notifications, Tickers & Leaderboards */
+    /* Notifications & Tickers */
     #notificationsBox {
       background: #333;
       padding: 5px;
@@ -62,10 +62,9 @@
       text-align: right;
       position: relative;
     }
-    #notificationsBox button {
-      margin-left: 5px;
+    #notificationsBox span {
+      cursor: pointer;
     }
-    /* Notification dropdown */
     #notificationDropdown {
       display: none;
       background: #222;
@@ -79,8 +78,8 @@
       border: 1px solid #444;
       border-radius: 5px;
     }
-    /* Ticker area */
-    #recordHighTicker, #mintedTodayTicker, #marketTicker marquee, #leaderboard marquee {
+    #recordHighTicker, #mintedTodayTicker, #marketTicker marquee,
+    #leaderboard marquee {
       background: #222;
       padding: 5px;
       font-size: 10px;
@@ -93,7 +92,7 @@
       text-align: center;
       margin-top: 10px;
     }
-    /* Spinning coin icons */
+    /* Coin Icons */
     .coin-icon {
       display: inline-block;
       width: 12px;
@@ -111,7 +110,7 @@
     .coin-iridium { background: #6a0dad; }
     .coin-rhodium { background: #ff4500; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    /* Tables */
+    /* Vault Table */
     #vaultTable {
       width: 100%;
       border-collapse: collapse;
@@ -123,8 +122,10 @@
       text-align: center;
       font-size: 10px;
     }
-    /* Dropdowns for market and group search */
-    #marketDropdown, .groupDropdown, #groupSearch {
+    /* Dropdowns */
+    #marketDropdown,
+    .groupDropdown,
+    #groupSearch {
       background: white;
       color: black;
       padding: 10px;
@@ -133,7 +134,8 @@
       margin-top: 10px;
     }
     /* Leaderboards */
-    #topGuildsLeaderboard, #topAssociationsLeaderboard {
+    #topGuildsLeaderboard,
+    #topAssociationsLeaderboard {
       background: #222;
       padding: 5px;
       font-size: 10px;
@@ -161,6 +163,7 @@
       background-size: 10px 10px;
       background-position: 0 0, 5px 5px;
     }
+    .selected { border-color: yellow; }
   </style>
 </head>
 <body>
@@ -170,10 +173,9 @@
   
   <!-- Notifications & Tickers -->
   <div id="notificationsBox">
-    <span onclick="app.toggleNotifications()" style="cursor:pointer;">✉️ notifications (<span id="notifCount">0</span>)</span>
+    <span onclick="app.toggleNotifications()">✉️ notifications (<span id="notifCountBtn">0</span>)</span>
     <div id="notificationDropdown"></div>
   </div>
-  <!-- Recent Fluctuations Banner -->
   <div id="recordHighTicker">
     <marquee id="recordHighMarquee" scrollamount="4">Recent Fluctuations: Loading...</marquee>
   </div>
@@ -198,7 +200,7 @@
     <!-- User Panel -->
     <div id="user-panel" class="section" style="display:none;">
       <div style="text-align:right;">
-        <span onclick="app.toggleNotifications()" style="cursor:pointer;">✉️ notifications (<span id="notifCountBtn">0</span>)</span>
+        <span onclick="app.toggleNotifications()" style="cursor:pointer;">✉️ notifications (<span id="notifCount">0</span>)</span>
         <button onclick="app.logout()">Logout</button>
       </div>
       <h2>Welcome, <span id="displayName"></span></h2>
@@ -208,14 +210,13 @@
         <button onclick="app.adminClearCoinHistory()">Clear Coin History</button>
         <button onclick="app.adminSwitchVaultType()">Switch Vault Type</button>
       </div>
-      <!-- User Info (Vault details now include cash) -->
+      <!-- User Info (Vault details) -->
       <div id="userInfo" class="section">
         <p>Vault Type: <span id="vaultTypeDisplay"></span> <span id="upgradeOptions"></span></p>
       </div>
-      <!-- Vault Inventory (shows coins and current cash value) -->
+      <!-- Vault Inventory (shows coins & cash) -->
       <div id="vaultSection" class="section">
         <h3>My Vault</h3>
-        <!-- Cash is now shown as part of the vault inventory table -->
         <div id="vaultCoins"></div>
       </div>
       <!-- Theme & Collectibles -->
@@ -223,13 +224,12 @@
         <h3>Customize Your Vault</h3>
         <p>Owned Themes: <span id="ownedThemes">None</span></p>
         <p>Select a Theme to Purchase:</p>
-        <!-- Instead of a dropdown, a grid of theme options -->
         <div id="themeOptions">
-          <div class="theme-option" data-theme="red" style="background: red;"></div>
-          <div class="theme-option" data-theme="blue" style="background: blue;"></div>
-          <div class="theme-option" data-theme="green" style="background: green;"></div>
-          <div class="theme-option" data-theme="checkered" class="theme-checkered"></div>
-          <!-- Add more color options or special patterns as desired -->
+          <div class="theme-option theme-red" data-theme="red"></div>
+          <div class="theme-option theme-blue" data-theme="blue"></div>
+          <div class="theme-option theme-green" data-theme="green"></div>
+          <div class="theme-option theme-checkered" data-theme="checkered"></div>
+          <!-- Add additional theme options as desired -->
         </div>
         <button onclick="app.purchaseTheme()">Purchase Selected Theme</button>
         <p>Select a Theme from Inventory to Equip:</p>
@@ -272,9 +272,7 @@
       <!-- Investment Section -->
       <div id="investmentSection" class="section">
         <h3>Invest in Another Vault</h3>
-        <p>(Only Investment/Holdings vaults can receive investments)<br>
-          Investment returns will appear as notifications.
-        </p>
+        <p>(Only Investment/Holdings vaults can receive investments – returns will appear as notifications)</p>
         <input type="text" id="investRecipient" placeholder="Recipient Username"><br>
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="app.submitInvestment()">Invest</button>
@@ -365,7 +363,6 @@
     <source src="sfx-mint.mp3" type="audio/mpeg">
   </audio>
   
-  <!-- Consolidated Script -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       // --- Firebase Configuration ---
@@ -382,7 +379,7 @@
       const auth = firebase.auth();
       const db = firebase.database();
       
-      // --- App State & Config ---
+      // --- App Object (Centralized State & Methods) ---
       const app = {
         currentUsername: "",
         defaultVaultType: "Basic",
@@ -395,7 +392,7 @@
         baselineDropRates: { Copper: 40, Silver: 25, Gold: 15, Platinum: 10, Diamond: 5, Iridium: 3, Rhodium: 1 },
         cycleLength: 300,  // demo cycle in seconds
         clockStartTime: Date.now(),
-        vaultCycleCounter: 0,  // for fluctuation updates
+        vaultCycleCounter: 0,  // to track cycles for fluctuations
 
         // --- Utility Functions ---
         getRatioColor: ratio => ratio < 1.0 ? "red" : ratio > 1.0 ? "green" : "yellow",
@@ -423,7 +420,6 @@
           if (owned.size === 7) score += 5;
           return score;
         },
-        // Update user cash in UI
         updateUserCash: () => {
           const user = auth.currentUser;
           if (!user) return;
@@ -434,14 +430,14 @@
         },
         playSFX: id => {
           const audio = document.getElementById(id);
-          if (!localStorage.getItem("vaultAudioMuted") === "true" && audio) {
+          if (!(localStorage.getItem("vaultAudioMuted") === "true") && audio) {
             audio.pause();
             audio.currentTime = 0;
             audio.play().catch(e => console.warn("Audio error:", e));
           }
         },
 
-        // --- Vault Clock & Real-Time Fluctuations ---
+        // --- Vault Clock & Fluctuation Updating ---
         updateVaultClock: () => {
           const elapsed = Math.floor((Date.now() - app.clockStartTime) / 1000);
           const remaining = app.cycleLength - (elapsed % app.cycleLength);
@@ -458,12 +454,9 @@
           console.log("Vault Clock Reset Triggered");
           app.processMarketListingsReturn();
           app.updateMintedStats();
-          // Update the fluctuations banner every 2 cycles continuously:
-          if (app.vaultCycleCounter % 2 === 0) {
-            app.updateRecentFluctuations();
-          }
+          // Update fluctuations banner every 2 cycles
+          if (app.vaultCycleCounter % 2 === 0) app.updateRecentFluctuations();
         },
-        // Continuously update recent fluctuations (highs & lows) every 10 seconds
         startFluctuationUpdater: () => {
           setInterval(app.updateRecentFluctuations, 10000);
         },
@@ -491,11 +484,11 @@
           });
         },
 
-        // --- Theme & Customization with Grid Options ---
+        // --- Theme & Customization ---
         purchaseTheme: () => {
-          // Use a selected theme from the grid (set by a click on a .theme-option element)
+          // Selected theme from grid (via .theme-option.selected)
           const selectedTheme = document.querySelector(".theme-option.selected")?.getAttribute("data-theme");
-          if (!selectedTheme) { alert("Select a theme by clicking on a color box."); return; }
+          if (!selectedTheme) { alert("Select a theme by clicking a color box."); return; }
           db.ref("themes/" + selectedTheme).once("value").then(snap => {
             const themeData = snap.val() || { owners: 0, purchases: 0 };
             const cost = 250 + (themeData.owners * 25) + (themeData.purchases * 5);
@@ -510,7 +503,8 @@
               db.ref("users/" + user.uid + "/ownedThemes").push(selectedTheme);
               db.ref("themes/" + selectedTheme).transaction(current => {
                 current = current || { owners: 0, purchases: 0 };
-                current.owners++; current.purchases++;
+                current.owners++;
+                current.purchases++;
                 return current;
               });
               alert(`${selectedTheme} theme purchased!`);
@@ -556,13 +550,12 @@
         },
         updateVaultTheme: theme => {
           const panel = document.getElementById("user-panel");
-          // Use a variety of colors/patterns here as desired.
           const themeColors = {
             red: "#330000",
             blue: "#000033",
             green: "#003300",
             default: "#1a1a1a",
-            checkered: "#666"  // Fallback color if using an image/pattern background
+            checkered: "#666"
           };
           panel.style.backgroundColor = themeColors[theme] || "#1a1a1a";
           if (auth.currentUser)
@@ -600,8 +593,7 @@
           });
         },
 
-        // --- Notifications & Investment Returns ---
-        // Combine guild invites and investment returns in one dropdown.
+        // --- Notifications & Investment Return Flow ---
         toggleNotifications: () => {
           const drop = document.getElementById("notificationDropdown");
           drop.style.display = (drop.style.display === "none" || drop.style.display === "") ? "block" : "none";
@@ -610,21 +602,21 @@
         loadNotifications: () => {
           let notifHTML = "";
           let notifCount = 0;
-          // Guild invites:
+          // Guild invites
           db.ref("guilds").orderByChild("pendingInvites/" + auth.currentUser.uid).equalTo(true)
             .once("value").then(snap => {
               snap.forEach(child => {
                 notifHTML += `<p>Guild Invite: ${child.val().name} <button onclick="app.acceptInvite('${child.key}','guilds')">Accept</button></p>`;
                 notifCount++;
               });
-              // Association invites:
+              // Association invites
               db.ref("associations").orderByChild("pendingInvites/" + auth.currentUser.uid).equalTo(true)
                 .once("value").then(snap2 => {
                   snap2.forEach(child => {
                     notifHTML += `<p>Assoc Invite: ${child.val().name} <button onclick="app.acceptInvite('${child.key}','associations')">Accept</button></p>`;
                     notifCount++;
                   });
-                  // Investment returns notifications:
+                  // Investment returns
                   db.ref("investmentReturns").orderByChild("to").equalTo(auth.currentUser.uid)
                     .once("value").then(snap3 => {
                       snap3.forEach(child => {
@@ -632,7 +624,6 @@
                         notifHTML += `<p>Investment Return: $${ret.amount.toFixed(2)} <button onclick="app.acceptInvestmentReturn('${child.key}')">Claim</button></p>`;
                         notifCount++;
                       });
-                      // Update badge count.
                       document.getElementById("notifCount").innerText = notifCount;
                       document.getElementById("notifCountBtn").innerText = notifCount;
                       document.getElementById("notificationDropdown").innerHTML = notifHTML || "<p>No new notifications.</p>";
@@ -657,19 +648,17 @@
           db.ref("investmentReturns/" + returnKey).once("value").then(snap => {
             const ret = snap.val();
             if (!ret) return;
-            // Add return amount to user's cash.
-            db.ref("users/" + user.uid + "/cash").transaction(currentCash => {
-              return (currentCash || 0) + ret.amount;
-            }, () => {
+            // Add return to user's cash using a transaction
+            db.ref("users/" + user.uid + "/cash").transaction(curr => (curr || 0) + ret.amount, () => {
               db.ref("investmentReturns/" + returnKey).remove();
               alert(`Investment return of $${ret.amount.toFixed(2)} claimed.`);
               app.updateUserCash();
-              app.loadVault();  // update vault to show new cash
+              app.loadVault();
               app.loadNotifications();
             });
           });
         },
-        
+
         // --- Group Search & Management ---
         toggleGroupSearch: () => {
           const gs = document.getElementById("groupSearch");
@@ -760,10 +749,7 @@
           if (!invitee) return;
           db.ref("users/" + user.uid + "/guild").once("value").then(snap => {
             const guildId = snap.val();
-            if (!guildId) {
-              alert("You are not in a guild.");
-              return;
-            }
+            if (!guildId) { alert("You are not in a guild."); return; }
             db.ref("guilds").orderByChild("name").equalTo(guildId)
               .once("value").then(snapGuild => {
                 if (!snapGuild.exists()) { alert("Guild not found."); return; }
@@ -831,10 +817,7 @@
           if (!invitee) return;
           db.ref("users/" + user.uid + "/association").once("value").then(snap => {
             const assocId = snap.val();
-            if (!assocId) {
-              alert("You are not in an association.");
-              return;
-            }
+            if (!assocId) { alert("You are not in an association."); return; }
             db.ref("associations").orderByChild("name").equalTo(assocId)
               .once("value").then(snapAssoc => {
                 if (!snapAssoc.exists()) { alert("Association not found."); return; }
@@ -851,8 +834,8 @@
               });
           });
         },
-        
-        // --- Holdings Specific: Selective Conversion ---
+
+        // --- Holdings: Selective Conversion ---
         convertSelectedCoinsToCash: () => {
           const user = auth.currentUser;
           if (!user) return;
@@ -867,7 +850,7 @@
                 selectedIds.push(id);
               }
             });
-            if (selectedIds.length < qty) { 
+            if (selectedIds.length < qty) {
               alert(`Not enough ${rarity} coins available.`);
               return;
             }
@@ -875,10 +858,10 @@
             app.conversionProcess(user, selectedIds, convValue);
           });
         },
-        
+
         // --- Minting & Vault Management ---
         updateMintAccess: () => {
-          // For demo purposes, simply enable minting.
+          // For demo, enable minting.
           app.canMint = true;
           document.getElementById("mintBtn").disabled = !app.canMint;
           document.getElementById("mintNotice").style.display = app.canMint ? "none" : "block";
@@ -1102,11 +1085,11 @@
               const lst = listings[key];
               if (lst.fulfilled) continue;
               if (filter !== "All" && lst.coin.rarity !== filter) continue;
-              // Use live market price for display
+              // Display live price
               const livePrice = app.marketPrices[lst.coin.rarity] || app.basePrices[lst.coin.rarity];
-              html += `<div class="listing">
-                        <p style="font-size:8px;"><span class="coin-icon coin-${lst.coin.rarity.toLowerCase()}"></span>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${livePrice.toFixed(2)}</p>
-                        <p style="font-size:8px;">Seller: ${lst.sellerUid}</p>
+              html += `<div class="listing" style="font-size:8px;">
+                        <p><span class="coin-icon coin-${lst.coin.rarity.toLowerCase()}"></span>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${livePrice.toFixed(2)}</p>
+                        <p>Seller: ${lst.sellerUid}</p>
                         <button style="font-size:8px;" onclick="app.buyMarketCoin('${key}', ${livePrice})">Buy</button>
                       </div>`;
             }
@@ -1136,7 +1119,7 @@
           db.ref("users/" + user.uid + "/coins/" + coinId).once("value").then(snap => {
             const coinData = snap.val();
             if (!coinData) return;
-            // Do not lock price, use dynamic pricing
+            // Do not lock price – use live price on purchase
             const listing = {
               coin: coinData,
               sellerUid: user.uid,
@@ -1187,7 +1170,7 @@
           });
         },
 
-        // --- Investment (with Returns as Notifications) ---
+        // --- Investment with Returns via Notifications ---
         submitInvestment: () => {
           const investor = auth.currentUser;
           if (!investor) return;
@@ -1205,15 +1188,15 @@
                 if (recipientData.vaultType === "Basic") { alert("Recipient vault is Basic and cannot receive investments."); return; }
                 const newCash = invData.cash - amount;
                 db.ref("users/" + investor.uid).update({ cash: newCash });
-                // Instead of immediate cash return, create an investment return notification
+                // Create an investment return notification (simulate 10% profit)
                 db.ref("investmentReturns").push({
-                  to: recipientUid,
-                  from: app.currentUsername,
-                  amount: amount * 1.1,  // example: 10% profit on return
+                  to: investor.uid,
+                  from: recipientData.username,
+                  amount: amount * 1.1,
                   timestamp: Date.now(),
                   accepted: false
                 });
-                alert("Invested $" + amount + " in " + recipientName + ". Your investment return will be notified.");
+                alert("Invested $" + amount + " in " + recipientName + ". Return notification will appear.");
                 app.updateUserCash();
               });
           });
@@ -1231,7 +1214,7 @@
               document.getElementById("conversionNotice").textContent = "Conversion already done this cycle.";
               return;
             }
-            // Generic conversion: convert all coins
+            // Convert all coins
             db.ref("users/" + user.uid + "/coins").once("value").then(snapCoins => {
               const coins = snapCoins.val() || {};
               const coinIds = Object.keys(coins);
@@ -1261,7 +1244,6 @@
             });
           });
         },
-        // Holdings selective conversion
         convertSelectedCoinsToCash: () => {
           const user = auth.currentUser;
           if (!user) return;
@@ -1276,7 +1258,7 @@
                 selectedIds.push(id);
               }
             });
-            if (selectedIds.length < qty) { 
+            if (selectedIds.length < qty) {
               alert(`Not enough ${rarity} coins available.`);
               return;
             }
@@ -1368,11 +1350,38 @@
           alert("Vault type switched to " + newType);
         },
 
-        // --- Investment Returns Notification Flow ---
-        // Investment returns are stored in "investmentReturns" in the database.
-        // They will appear in the notifications dropdown with a badge.
-        // The user must click "Claim" to have the funds credited.
-        
+        // --- Investment Returns (Notifications) ---
+        submitInvestment: () => {
+          const investor = auth.currentUser;
+          if (!investor) return;
+          const recipientName = document.getElementById("investRecipient").value.trim();
+          const amount = parseFloat(document.getElementById("investAmount").value);
+          if (!recipientName || isNaN(amount) || amount <= 0) { alert("Enter a valid recipient and amount."); return; }
+          db.ref("users/" + investor.uid).once("value").then(snap => {
+            const invData = snap.val();
+            if (invData.cash < amount) { alert("Insufficient cash."); return; }
+            db.ref("users").orderByChild("username").equalTo(recipientName)
+              .once("value").then(snap2 => {
+                if (!snap2.exists()) { alert("Recipient not found."); return; }
+                let recipientUid = "", recipientData = {};
+                snap2.forEach(childSnap => { recipientUid = childSnap.key; recipientData = childSnap.val(); });
+                if (recipientData.vaultType === "Basic") { alert("Recipient vault is Basic and cannot receive investments."); return; }
+                const newCash = invData.cash - amount;
+                db.ref("users/" + investor.uid).update({ cash: newCash });
+                // Create an investment return notification entry (simulate 10% profit)
+                db.ref("investmentReturns").push({
+                  to: investor.uid,
+                  from: recipientData.username,
+                  amount: amount * 1.1,
+                  timestamp: Date.now(),
+                  accepted: false
+                });
+                alert("Invested $" + amount + " in " + recipientName + ". Return notification will appear.");
+                app.updateUserCash();
+              });
+          });
+        },
+
         // --- Authentication & Initialization ---
         login: () => {
           const email = document.getElementById("email").value.trim();
@@ -1413,7 +1422,7 @@
         logout: () => { auth.signOut(); }
       };
       
-      // --- Firebase Auth Listener ---
+      // --- Firebase Authentication Listener ---
       auth.onAuthStateChanged(user => {
         if (user) {
           document.getElementById("auth-panel").style.display = "none";
@@ -1457,7 +1466,6 @@
             app.updateEquipThemeSelect();
             app.displayUpgradeOptions();
             app.updateNotifications();
-            // Start continuous fluctuation updates
             app.startFluctuationUpdater();
           });
         } else {
@@ -1469,12 +1477,12 @@
       // --- Audio Control ---
       let muted = localStorage.getItem("vaultAudioMuted") === "true";
       document.getElementById("bgMusic").muted = muted;
-      window.toggleAudio = () => {
+      window.toggleAudio = () => { 
         muted = !muted;
         localStorage.setItem("vaultAudioMuted", muted);
         document.getElementById("bgMusic").muted = muted;
       };
-      
+
       // --- Start Intervals ---
       setInterval(app.updateVaultClock, 1000);
       setInterval(app.updateMarketPrices, 60000);
@@ -1487,13 +1495,12 @@
       app.updateVaultClock();
       app.updateMarketPrices();
       
-      // Expose app functions globally for inline event handlers
+      // Expose app globally for inline event handlers
       window.app = app;
       
-      // --- Theme Options Click Handler (Grid) ---
+      // --- Theme Options Grid Click Handler ---
       document.querySelectorAll(".theme-option").forEach(box => {
         box.addEventListener("click", function() {
-          // Remove any previous selection
           document.querySelectorAll(".theme-option").forEach(b => b.classList.remove("selected"));
           this.classList.add("selected");
         });
