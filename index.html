@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vault Street Full Game v1.0</title>
+  <title>Vault Street – Final Game v2</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <!-- Firebase Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -54,47 +54,47 @@
       margin-top: 40px;
       color: gray;
     }
-    /* Minted Stats */
-    #mintedStats {
+    /* Minted Stats & Market Ticker */
+    #mintedStats, #marketTicker {
       text-align: center;
       background: #222;
       padding: 5px;
       font-size: 10px;
+      margin-bottom: 5px;
     }
-    /* Market Ticker */
-    #marketTicker {
-      background: black;
-      color: gold;
-      padding: 5px;
-      font-size: 10px;
-      text-align: center;
-    }
-    /* Vault Clock */
+    /* Vault Clock & Leaderboard */
     #vaultClockDisplay {
       font-size: 12px;
       color: cyan;
       text-align: center;
       margin-top: 10px;
     }
-    /* Leaderboard */
     #leaderboard {
       font-size: 10px;
       margin-top: 10px;
+    }
+    /* Market Listings */
+    #marketListings {
+      margin-top: 10px;
+    }
+    .listing {
+      border: 1px solid #444;
+      padding: 5px;
+      margin-bottom: 5px;
+      font-size: 10px;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>🏛️ Vault Street Full Game v1.0</h1>
+    <h1>🏛️ Vault Street – Final Game v2</h1>
   </header>
   
-  <!-- Minted Stats Display -->
+  <!-- Minted Stats & Market Prices -->
   <div id="mintedStats">
     <p id="totalMinted">Total Minted: Loading...</p>
     <p id="todayMinted">Minted Today: Loading...</p>
   </div>
-  
-  <!-- Market Ticker for Coin Prices -->
   <div id="marketTicker">
     <p id="marketPricesText">Market Prices: Loading...</p>
   </div>
@@ -106,7 +106,7 @@
       <input type="email" id="email" placeholder="Email" /><br/>
       <input type="password" id="password" placeholder="Password" /><br/>
       <input type="text" id="username" placeholder="Choose Username" /><br/>
-      <!-- Vault Type selection removed per new design -->
+      <!-- No vault type selection now (always default Basic) -->
       <button onclick="login()">Login / Register</button>
     </div>
     
@@ -115,22 +115,23 @@
       <div style="text-align: right;"><button onclick="logout()">Logout</button></div>
       <h2>Welcome, <span id="displayName"></span></h2>
       
-      <!-- Admin Panel (visible for admin login) -->
+      <!-- Admin Controls -->
       <div id="adminPanel" style="display: none; margin-bottom: 10px;">
         <button onclick="adminResetMarket()">Admin: Reset Market</button>
         <button onclick="adminClearCoinHistory()">Admin: Clear Coin History</button>
       </div>
       
-      <!-- User Basic Info -->
+      <!-- User Info & Vault Clock -->
       <div id="userInfo" class="section">
         <p>Vault Type: <span id="vaultTypeDisplay"></span></p>
         <p>Cash: $<span id="cashDisplay"></span></p>
         <div id="vaultClockDisplay">Vault Clock: Loading...</div>
       </div>
       
-      <!-- Vault Theme Customization -->
-      <div id="vaultThemeSection" class="section">
-        <h3>Customize Vault Theme</h3>
+      <!-- Theme & Banner Section -->
+      <div id="themeBannerSection" class="section">
+        <h3>Customize Your Vault</h3>
+        <p>Theme (UI always shows $250)</p>
         <select id="vaultTheme">
           <option value="default">Gray Default</option>
           <option value="red">Red</option>
@@ -138,50 +139,77 @@
           <option value="green">Green</option>
         </select>
         <button onclick="updateVaultTheme()">Apply Theme</button>
-        <!-- PLACE BLOCK HERE: Future dynamic pricing/bidding for themes -->
+        <!-- Placeholder for Banner Purchase -->
+        <p>Banner: (Coming Soon)</p>
       </div>
       
-      <!-- Coin Minting Section -->
+      <!-- Minting Section -->
       <div id="mintingSection" class="section">
         <h3>Mint a Coin</h3>
         <button id="mintBtn" onclick="mintNewCoin()" disabled>Mint New Coin</button>
-        <p id="mintNotice" style="color: red; font-size: 10px;">Minting is disabled until market criteria are met.</p>
+        <p id="mintNotice" style="color: red; font-size:10px;">Minting disabled until market conditions are met.</p>
       </div>
       
-      <!-- Vault Summary & Conversion Section -->
-      <div id="vaultSummary" class="section">
-        <h3>My Vault</h3>
-        <div id="vaultCoins">
-          <!-- Coin counts will be shown here -->
+      <!-- Market Section -->
+      <div id="marketSection" class="section">
+        <h3>Market</h3>
+        <p>List a coin for sale from your vault below:</p>
+        <div id="userCoinsForSale">
+          <!-- User coins with "List for Sale" buttons will appear here -->
         </div>
-        <p id="vaultRatio"></p>
-        <button onclick="convertCoinsToCash()">Convert Coins to Cash</button>
-        <p id="conversionNotice" style="color: orange; font-size: 10px;"></p>
+        <p>Available Listings:</p>
+        <div id="marketListings">
+          <!-- Market listings (from other users) will appear here -->
+        </div>
       </div>
       
       <!-- Investment Section -->
       <div id="investmentSection" class="section">
         <h3>Invest in Another Vault</h3>
-        <p>Note: Only Investment and Holdings vaults can receive investments.</p>
+        <p>(Only Investment and Holdings Vaults can receive investments)</p>
         <input type="text" id="investRecipient" placeholder="Recipient Username" /><br/>
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1" /><br/>
         <button onclick="submitInvestment()">Invest</button>
       </div>
       
-      <!-- Leaderboard Section -->
-      <div id="leaderboard" class="section">
-        <h3>Leaderboard</h3>
-        <div id="leaderboardContent">
-          <!-- Top vaults will be listed here -->
+      <!-- Conversion Section -->
+      <div id="conversionSection" class="section">
+        <h3>Convert Coins to Cash</h3>
+        <button onclick="convertCoinsToCash()">Convert Coins</button>
+        <p id="conversionNotice" style="color: orange; font-size:10px;"></p>
+      </div>
+      
+      <!-- Guilds & Associations Section -->
+      <div id="groupSection" class="section">
+        <h3>Guilds & Associations</h3>
+        <div id="guildControls">
+          <!-- If user is Holdings Vault, allow creating or managing a Guild -->
+          <button onclick="createGuild()">Create Guild</button>
+          <button onclick="leaveGuild()">Leave Guild</button>
+          <!-- Display current guild info -->
+          <div id="guildInfo"></div>
+        </div>
+        <div id="associationControls">
+          <!-- For Basic Vaults: Associations -->
+          <button onclick="createAssociation()">Create Association</button>
+          <button onclick="leaveAssociation()">Leave Association</button>
+          <div id="associationInfo"></div>
         </div>
       </div>
       
-      <!-- Placeholder for Guilds/Associations -->
-      <div id="guildSection" class="section">
-        <h3>Vault Guilds & Associations</h3>
-        <p>Coming Soon: Create and join guilds/associations to unlock extra benefits.</p>
+      <!-- Leaderboards Section -->
+      <div id="leaderboardSection" class="section">
+        <h3>Leaderboards</h3>
+        <select id="leaderboardFilter" onchange="updateLeaderboard()">
+          <option value="All">Global</option>
+          <option value="Basic">Basic Vaults</option>
+          <option value="Investment">Investment Vaults</option>
+          <option value="Holdings">Holdings Vaults</option>
+        </select>
+        <div id="leaderboardContent">
+          <!-- Leaderboard rankings will be shown here -->
+        </div>
       </div>
-      
     </div>
   </div>
   
@@ -198,7 +226,9 @@
   </audio>
   
   <script>
-    // === Firebase Initialization ===
+    /***************************************
+     * Firebase Initialization
+     ***************************************/
     const firebaseConfig = {
       apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
       authDomain: "coin-flip-4a693.firebaseapp.com",
@@ -212,14 +242,16 @@
     const auth = firebase.auth();
     const db = firebase.database();
     
-    // === Global Variables & Constants ===
+    /***************************************
+     * Global Variables & Constants
+     ***************************************/
     let currentUsername = "";
-    const defaultVaultType = "Basic"; // All new users start as Basic.
-    let currentCash = 1000; // Default starting cash.
+    const defaultVaultType = "Basic";  // Default for new users.
+    let currentCash = 1000;            // Starting cash.
     let canMint = false;
-    let marketPrices = {}; // To be calculated dynamically.
+    let marketPrices = {};             // Computed dynamically.
     
-    // Base prices & baseline drop rates per coin type.
+    // Coin base values and baseline drop rates:
     const basePrices = {
       Copper: 1,
       Silver: 5,
@@ -239,14 +271,20 @@
       Rhodium: 1
     };
     
-    // ---- Helper Functions ----
+    // Investment parameters:
+    const returnRate = 0.10;      // 10% bonus.
+    const commissionRate = 0.05;  // 5% commission.
+    
+    /***************************************
+     * Helper Functions
+     ***************************************/
     function getRatioColor(ratio) {
       if (ratio < 1.0) return "red";
-      else if (ratio <= 1.5) return "yellow";
-      else return "green";
+      else if (ratio > 1.0) return "green";
+      else return "yellow";
     }
     
-    // Returns a rarity based on chance.
+    // Rarity selection (same as before).
     function getRarity() {
       const roll = Math.random() * 100;
       if (roll < 50) return "Copper";
@@ -258,8 +296,10 @@
       else return "Rhodium";
     }
     
-    // ---- Vault Clock System ----
-    // Demo cycle: 5 minutes (300 seconds)
+    /***************************************
+     * Vault Clock System
+     * (Demo cycle: 5 minutes = 300 sec)
+     ***************************************/
     const cycleLength = 300; // seconds
     let clockStartTime = Date.now();
     function updateVaultClock() {
@@ -275,15 +315,23 @@
     }
     function vaultClockReset() {
       console.log("Vault Clock Reset Triggered");
-      // PLACE BLOCK HERE: Process daily resets (e.g., return unsold coins, reset theme prices, process investment returns).
+      // Process end-of-cycle tasks:
+      // 1. Return unsold market listings.
+      processMarketListingsReturn();
+      // 2. Process investments.
+      updateAllInvestments();
+      // 3. Reset cash conversion flags (not fully implemented - placeholder).
+      // 4. Reset dynamic theme pricing (placeholder).
+      // 5. Check for vault progression upgrades.
+      checkVaultUpgrade();
       updateMintedStats();
-      updateAllInvestments(); // Placeholder function.
-      // Reset conversion flag in user records could also be added here.
     }
     setInterval(updateVaultClock, 1000);
     updateVaultClock();
     
-    // ---- Vault Theme Customization ----
+    /***************************************
+     * Vault Theme Customization
+     ***************************************/
     function updateVaultTheme() {
       const theme = document.getElementById("vaultTheme").value;
       const userPanel = document.getElementById("user-panel");
@@ -296,9 +344,12 @@
       if (auth.currentUser) {
         db.ref("users/" + auth.currentUser.uid).update({ theme: theme });
       }
+      // PLACE BLOCK HERE: Update dynamic theme pricing if needed.
     }
     
-    // ---- Authentication & User Initialization ----
+    /***************************************
+     * Authentication & User Initialization
+     ***************************************/
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById("auth-panel").style.display = "none";
@@ -326,7 +377,7 @@
             db.ref("users/" + user.uid).update({ username: currentUsername });
           }
           document.getElementById("displayName").textContent = currentUsername;
-          // Admin check.
+          // Admin check:
           if (user.email === "stewmin20k@gmail.com") {
             currentUsername = "stewmin";
             db.ref("users/" + user.uid).update({ username: "stewmin" });
@@ -336,6 +387,8 @@
           }
           updateMintAccess();
           loadVault();
+          loadUserCoinsForSale();
+          updateMarketplace();
           updateLeaderboard();
         });
       } else {
@@ -358,7 +411,9 @@
               cash: currentCash,
               theme: "default",
               coins: {},
-              investments: {}
+              investmentsReceived: {},
+              investmentsSent: {},
+              lastConversion: 0
             });
           })
           .catch(err => alert(err.message));
@@ -368,12 +423,14 @@
       auth.signOut();
     }
     
-    // ---- Admin Functions ----
+    /***************************************
+     * Admin Functions
+     ***************************************/
     function adminResetMarket() {
       const user = auth.currentUser;
       if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
         db.ref("tradeStats").update({ averageTradeRatio: 1.0 });
-        alert("Market has been reset by admin.");
+        alert("Market reset by admin.");
         updateMintAccess();
       } else {
         alert("Admin access required.");
@@ -382,8 +439,9 @@
     function adminClearCoinHistory() {
       const user = auth.currentUser;
       if (user && user.email === "stewmin20k@gmail.com" && currentUsername === "stewmin") {
-        if (confirm("Clear all coin history? This action cannot be undone.")) {
+        if (confirm("Clear all coin history? This cannot be undone.")) {
           db.ref("mintRegistry").remove();
+          db.ref("marketListings").remove();
           db.ref("users").once("value").then(snapshot => {
             snapshot.forEach(userSnap => {
               db.ref("users/" + userSnap.key + "/coins").remove();
@@ -392,17 +450,20 @@
           alert("Coin history cleared.");
           updateMintedStats();
           loadVault();
+          updateMarketplace();
         }
       } else {
         alert("Admin access required.");
       }
     }
     
-    // ---- Coin Minting & Vault Functions ----
+    /***************************************
+     * Coin Minting & Vault Functions
+     ***************************************/
     const registryRef = db.ref("mintRegistry");
     const mintedRef = db.ref("mintedCount");
     function updateMintAccess() {
-      // For demo purposes, minting is always enabled.
+      // For demo, minting is enabled.
       canMint = true;
       document.getElementById("mintBtn").disabled = !canMint;
       document.getElementById("mintNotice").style.display = canMint ? "none" : "block";
@@ -414,7 +475,7 @@
         const serial = (snap.val() || 0) + 1;
         const rarity = getRarity();
         const now = new Date().toISOString();
-        // Lock in current market price for this coin.
+        // Lock the coin at current market price.
         const lockedPrice = marketPrices[rarity] || basePrices[rarity];
         const coinData = { serial, rarity, date: now, price: lockedPrice };
         registryRef.child("coin_" + serial).set(coinData);
@@ -424,6 +485,7 @@
         if (callback) callback();
         updateMintedStats();
         loadVault();
+        loadUserCoinsForSale();
       });
     }
     function loadVault() {
@@ -449,9 +511,9 @@
       db.ref("users").once("value").then(snapshot => {
         let totalScore = 0, countUsers = 0;
         snapshot.forEach(userSnap => {
-          const userData = userSnap.val();
-          const coinScore = calculateVaultScore(userData.coins);
-          const cashScore = (userData.cash || 0) / 1000;
+          const uData = userSnap.val();
+          const coinScore = calculateVaultScore(uData.coins);
+          const cashScore = (uData.cash || 0) / 1000;
           totalScore += (coinScore + cashScore);
           countUsers++;
         });
@@ -475,11 +537,9 @@
           owned.add(c.rarity);
         }
       });
-      if (owned.size === 7) score += 5; // Full set bonus.
+      if (owned.size === 7) score += 5; // Bonus for full set.
       return score;
     }
-    
-    // ---- Minted Stats Update ----
     function updateMintedStats() {
       db.ref("mintRegistry").once("value").then(snap => {
         const data = snap.val() || {};
@@ -496,79 +556,186 @@
     setInterval(updateMintedStats, 60000);
     updateMintedStats();
     
-    // ---- Market Price System ----
-    // Calculate coin market values using:
-    // Coin Value = Base Value × (Baseline Drop Rate / Actual Drop Rate) × Holdings Scarcity Multiplier
+    /***************************************
+     * Market Price System – Coin Value Calculation
+     ***************************************/
     function updateMarketPrices() {
+      // Calculate drop rates based on mintRegistry data.
       db.ref("mintRegistry").once("value").then(snap => {
-        const registryData = snap.val() || {};
-        let totalMinted = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
+        const regData = snap.val() || {};
+        let mintedTotal = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
         let mintedToday = { Copper: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Iridium: 0, Rhodium: 0 };
         const todayStr = new Date().toISOString().split("T")[0];
-        for (const key in registryData) {
-          const coin = registryData[key];
+        for (const key in regData) {
+          const coin = regData[key];
           if (coin && coin.rarity) {
-            totalMinted[coin.rarity] = (totalMinted[coin.rarity] || 0) + 1;
+            mintedTotal[coin.rarity] = (mintedTotal[coin.rarity] || 0) + 1;
             if (coin.date && coin.date.split("T")[0] === todayStr) {
               mintedToday[coin.rarity] = (mintedToday[coin.rarity] || 0) + 1;
             }
           }
         }
-        let sumMintedToday = 0;
+        let sumToday = 0;
         for (const r in mintedToday) {
-          sumMintedToday += mintedToday[r];
+          sumToday += mintedToday[r];
         }
-        // Use Promise.all to compute new prices per rarity.
-        const promises = Object.keys(basePrices).map(rarity => {
-          return new Promise((resolve) => {
-            let actualDropRate = (sumMintedToday > 0 && mintedToday[rarity])
-              ? (mintedToday[rarity] / sumMintedToday) * 100
+        let promises = [];
+        for (const rarity in basePrices) {
+          promises.push(new Promise(resolve => {
+            let actualDropRate = sumToday > 0 && mintedToday[rarity] 
+              ? (mintedToday[rarity] / sumToday) * 100 
               : baselineDropRates[rarity];
-            db.ref("users").orderByChild("vaultType").equalTo("Holdings").once("value").then(snapHoldings => {
+            // Holdings scarcity: Percentage of this coin held in Holdings vaults.
+            db.ref("users").orderByChild("vaultType").equalTo("Holdings").once("value").then(holdSnap => {
               let holdingsCount = 0;
-              snapHoldings.forEach(childSnap => {
-                const coins = childSnap.val().coins;
+              holdSnap.forEach(child => {
+                let coins = child.val().coins;
                 if (coins) {
                   Object.values(coins).forEach(c => {
                     if (c.rarity === rarity) holdingsCount++;
                   });
                 }
               });
-              const totalMintedOverall = totalMinted[rarity] || 0;
-              let multiplier = 1;
+              const totalMintedOverall = mintedTotal[rarity] || 0;
+              let scarcityMultiplier = 1;
               if (totalMintedOverall > 0) {
-                const percentage = (holdingsCount / totalMintedOverall) * 100;
-                multiplier = percentage > 0 ? (100 / percentage) : 1;
+                let percentHoldings = (holdingsCount / totalMintedOverall) * 100;
+                scarcityMultiplier = percentHoldings > 0 ? (100 / percentHoldings) : 1;
               }
-              let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * multiplier;
+              let newPrice = basePrices[rarity] * (baselineDropRates[rarity] / actualDropRate) * scarcityMultiplier;
               newPrice = Math.round(newPrice * 100) / 100;
-              resolve({ rarity: rarity, price: newPrice, actualDropRate: actualDropRate });
+              resolve({ rarity: rarity, price: newPrice, actualDrop: actualDropRate });
             });
-          });
-        });
+          }));
+        }
         Promise.all(promises).then(results => {
-          results.forEach(result => {
-            marketPrices[result.rarity] = result.price;
+          results.forEach(res => {
+            marketPrices[res.rarity] = res.price;
+            // Optionally: update record highs/lows in db (PLACE BLOCK HERE)
           });
           updateMarketTicker();
         });
       });
     }
     function updateMarketTicker() {
-      let text = "Market Prices: ";
-      for (let rarity in marketPrices) {
+      let txt = "Market Prices: ";
+      for (const r in marketPrices) {
         let indicator = "⚖️";
-        // Compare actual market price with base value as a rough indicator.
-        if (marketPrices[rarity] < basePrices[rarity]) indicator = "🔻";
-        else if (marketPrices[rarity] > basePrices[rarity]) indicator = "🔺";
-        text += `${rarity}: $${marketPrices[rarity].toFixed(2)} ${indicator} | `;
+        if (marketPrices[r] < basePrices[r]) indicator = "🔻";
+        else if (marketPrices[r] > basePrices[r]) indicator = "🔺";
+        txt += `${r}: $${marketPrices[r].toFixed(2)} ${indicator} | `;
       }
-      document.getElementById("marketPricesText").textContent = text;
+      document.getElementById("marketPricesText").textContent = txt;
     }
     setInterval(updateMarketPrices, 60000);
     updateMarketPrices();
     
-    // ---- Investment System ----
+    /***************************************
+     * Market Listings (Sell/Buy)
+     ***************************************/
+    // List a coin for sale.
+    function listCoinForSale(coinId) {
+      const user = auth.currentUser;
+      if (!user) return;
+      // Remove coin from user's vault and add listing.
+      db.ref("users/" + user.uid + "/coins/" + coinId).once("value").then(snap => {
+        const coinData = snap.val();
+        if (!coinData) return;
+        // Create market listing record.
+        const listing = {
+          coin: coinData,
+          sellerUid: user.uid,
+          listedAt: Date.now(),
+          fulfilled: false
+        };
+        db.ref("marketListings").push(listing, err => {
+          if (!err) {
+            // Remove coin from user vault.
+            db.ref("users/" + user.uid + "/coins/" + coinId).remove();
+            loadVault();
+            loadUserCoinsForSale();
+            updateMarketListings();
+          }
+        });
+      });
+    }
+    // Update UI: Show user's coins with a "List for Sale" button.
+    function loadUserCoinsForSale() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
+        const data = snap.val() || {};
+        let html = "";
+        for (const id in data) {
+          const coin = data[id];
+          html += `<p>${coin.rarity} (Coin #${coin.serial}) <button onclick="listCoinForSale('${id}')">List for Sale</button></p>`;
+        }
+        document.getElementById("userCoinsForSale").innerHTML = html || "<p>No coins available for sale.</p>";
+      });
+    }
+    // Update market listings UI.
+    function updateMarketListings() {
+      db.ref("marketListings").orderByChild("listedAt").once("value").then(snap => {
+        const listings = snap.val() || {};
+        let html = "";
+        for (const key in listings) {
+          const lst = listings[key];
+          if (lst.fulfilled) continue;
+          html += `<div class="listing">
+                    <p>${lst.coin.rarity} (Coin #${lst.coin.serial}) – Price: $${lst.coin.price.toFixed(2)}</p>
+                    <p>Seller: ${lst.sellerUid}</p>
+                    <button onclick="buyMarketCoin('${key}', ${lst.coin.price})">Buy</button>
+                  </div>`;
+        }
+        document.getElementById("marketListings").innerHTML = html || "<p>No active listings.</p>";
+      });
+    }
+    // Buyer purchases coin from market.
+    function buyMarketCoin(listingId, price) {
+      const buyer = auth.currentUser;
+      if (!buyer) return;
+      db.ref("users/" + buyer.uid).once("value").then(snap => {
+        const buyerData = snap.val();
+        if (buyerData.cash < price) {
+          alert("Insufficient cash to purchase coin.");
+          return;
+        }
+        // Deduct cash from buyer.
+        let newBuyerCash = buyerData.cash - price;
+        db.ref("users/" + buyer.uid).update({ cash: newBuyerCash });
+        // Transfer coin to buyer's vault.
+        db.ref("marketListings/" + listingId).once("value").then(snapListing => {
+          const listing = snapListing.val();
+          if (!listing || listing.fulfilled) return;
+          db.ref("users/" + buyer.uid + "/coins").push(listing.coin);
+          // Mark listing as fulfilled.
+          db.ref("marketListings/" + listingId).update({ fulfilled: true });
+          updateUserCash();
+          updateMarketListings();
+          loadVault();
+        });
+      });
+    }
+    // At vault clock reset, return unsold listings.
+    function processMarketListingsReturn() {
+      db.ref("marketListings").once("value").then(snap => {
+        const listings = snap.val() || {};
+        for (const key in listings) {
+          const lst = listings[key];
+          if (!lst.fulfilled && Date.now() - lst.listedAt >= cycleLength * 1000) {
+            // Return coin to seller's vault.
+            db.ref("users/" + lst.sellerUid + "/coins").push(lst.coin);
+            db.ref("marketListings/" + key).remove();
+          }
+        }
+        updateMarketListings();
+      });
+    }
+    setInterval(updateMarketListings, 30000);
+    
+    /***************************************
+     * Investment System
+     ***************************************/
     function submitInvestment() {
       const investor = auth.currentUser;
       if (!investor) return;
@@ -579,9 +746,9 @@
         return;
       }
       db.ref("users/" + investor.uid).once("value").then(snap => {
-        const investorData = snap.val();
-        if (investorData.cash < amount) {
-          alert("Insufficient cash for this investment.");
+        const invData = snap.val();
+        if (invData.cash < amount) {
+          alert("Insufficient cash for investment.");
           return;
         }
         // Find recipient by username.
@@ -597,20 +764,21 @@
             recipientData = childSnap.val();
           });
           if (recipientData.vaultType === "Basic") {
-            alert("Recipient vault type is Basic and cannot receive investments.");
+            alert("Recipient vault is Basic and cannot receive investments.");
             return;
           }
-          // Process investment: deduct investor's cash and record investment for recipient.
-          let newInvestorCash = investorData.cash - amount;
-          db.ref("users/" + investor.uid).update({ cash: newInvestorCash });
+          // Deduct investment amount from investor.
+          let newCash = invData.cash - amount;
+          db.ref("users/" + investor.uid).update({ cash: newCash });
+          // Record investment for recipient.
           db.ref("users/" + recipientUid + "/investmentsReceived").push({
             from: currentUsername,
             amount: amount,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            processed: false
           });
-          alert("Invested $" + amount + " in " + recipientName + ".");
+          alert("Investment of $" + amount + " sent to " + recipientName + ".");
           updateUserCash();
-          updateLeaderboard();
         });
       });
     }
@@ -622,24 +790,46 @@
         document.getElementById("cashDisplay").textContent = currentCash;
       });
     }
-    // Placeholder: Process investments at Vault Clock reset.
+    // At clock reset, process unprocessed investments.
     function updateAllInvestments() {
-      console.log("Processing investments... (placeholder)");
+      db.ref("users").once("value").then(snapshot => {
+        snapshot.forEach(userSnap => {
+          const uid = userSnap.key;
+          const userData = userSnap.val();
+          if (userData.investmentsReceived) {
+            for (let inv in userData.investmentsReceived) {
+              let investment = userData.investmentsReceived[inv];
+              if (!investment.processed) {
+                // For demo, assume market activity ratio = 1.0.
+                let bonus = investment.amount * returnRate;
+                let commission = bonus * commissionRate;
+                // Update recipient's cash.
+                let newCash = (userData.cash || 0) + bonus + commission;
+                db.ref("users/" + uid).update({ cash: newCash });
+                // Mark investment as processed.
+                db.ref("users/" + uid + "/investmentsReceived/" + inv).update({ processed: true });
+              }
+            }
+          }
+        });
+      });
     }
     
-    // ---- Coin-to-Cash Conversion ----
+    /***************************************
+     * Cash Conversion (Coins to Cash)
+     ***************************************/
     function convertCoinsToCash() {
       const user = auth.currentUser;
       if (!user) return;
       db.ref("users/" + user.uid).once("value").then(snap => {
         const data = snap.val();
-        const lastConv = data.lastConversion || 0;
+        let lastConv = data.lastConversion || 0;
         let currentCycleStart = clockStartTime + Math.floor((Date.now() - clockStartTime) / (cycleLength * 1000)) * (cycleLength * 1000);
         if (lastConv > currentCycleStart) {
           document.getElementById("conversionNotice").textContent = "Conversion already done this cycle.";
           return;
         }
-        // Calculate total coin value using current market prices.
+        // Calculate total coin value.
         db.ref("users/" + user.uid + "/coins").once("value").then(snapCoins => {
           let coins = snapCoins.val() || {};
           let totalCoinValue = 0;
@@ -649,47 +839,52 @@
               totalCoinValue += marketPrices[coin.rarity];
             }
           }
-          let currentCashValue = data.cash || 0;
-          let netWorth = currentCashValue + totalCoinValue;
+          let cash = data.cash || 0;
+          let netWorth = cash + totalCoinValue;
           let conversionAmount = 0;
           if (data.vaultType === "Holdings") {
-            if (totalCoinValue <= currentCashValue) {
+            if (totalCoinValue <= cash) {
               document.getElementById("conversionNotice").textContent = "No conversion needed: Cash exceeds coin value.";
               return;
             }
             conversionAmount = totalCoinValue;
           } else {
-            let conversionLimit = netWorth / 10;
-            conversionAmount = Math.min(totalCoinValue, conversionLimit);
+            let limit = netWorth / 10;
+            conversionAmount = Math.min(totalCoinValue, limit);
           }
-          let newCash = currentCashValue + conversionAmount;
-          // For demo, convert all coins. (Future: implement partial conversion.)
+          let newCash = cash + conversionAmount;
+          // Remove all coins as demo conversion.
           db.ref("users/" + user.uid + "/coins").remove().then(() => {
             db.ref("users/" + user.uid).update({ cash: newCash, lastConversion: Date.now() });
             currentCash = newCash;
             document.getElementById("cashDisplay").textContent = newCash;
             document.getElementById("conversionNotice").textContent = "Converted $" + conversionAmount.toFixed(2) + " from coins.";
             loadVault();
+            loadUserCoinsForSale();
           });
         });
       });
     }
     
-    // ---- Leaderboard System ----
+    /***************************************
+     * Leaderboard System
+     ***************************************/
     function updateLeaderboard() {
+      const filter = document.getElementById("leaderboardFilter").value;
       db.ref("users").once("value").then(snapshot => {
         let leaderboardArr = [];
         snapshot.forEach(userSnap => {
-          const userData = userSnap.val();
-          const coinScore = calculateVaultScore(userData.coins);
-          const cashScore = (userData.cash || 0) / 1000;
-          const totalScore = coinScore + cashScore;
-          leaderboardArr.push({ username: userData.username || "Unknown", score: totalScore });
+          const uData = userSnap.val();
+          if (filter !== "All" && uData.vaultType !== filter) return;
+          const coinScore = calculateVaultScore(uData.coins);
+          const cashScore = (uData.cash || 0) / 1000;
+          let totalScore = coinScore + cashScore;
+          leaderboardArr.push({ username: uData.username || "Unknown", score: totalScore });
         });
         leaderboardArr.sort((a, b) => b.score - a.score);
         let html = "";
-        leaderboardArr.slice(0, 5).forEach((entry, index) => {
-          html += `<p>${index + 1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`;
+        leaderboardArr.slice(0, 10).forEach((entry, index) => {
+          html += `<p>${index+1}. ${entry.username}: ${entry.score.toFixed(2)}</p>`;
         });
         document.getElementById("leaderboardContent").innerHTML = html;
       });
@@ -697,7 +892,90 @@
     setInterval(updateLeaderboard, 60000);
     updateLeaderboard();
     
-    // ---- Audio Controls ----
+    /***************************************
+     * Guilds & Associations (Basic Skeleton)
+     ***************************************/
+    // For Holdings Vaults: Create/Leave Guild.
+    function createGuild() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid).once("value").then(snap => {
+        const uData = snap.val();
+        if (uData.vaultType !== "Holdings") {
+          alert("Only Holdings Vaults can form a Guild.");
+          return;
+        }
+        let guildName = prompt("Enter Guild Name:");
+        if (!guildName) return;
+        let guildData = {
+          name: guildName,
+          leader: user.uid,
+          coLeaders: [],
+          members: [],
+          associates: [],
+          createdAt: Date.now(),
+          lastGrowthCheck: Date.now()
+        };
+        db.ref("guilds").push(guildData, err => {
+          if (!err) {
+            db.ref("users/" + user.uid).update({ guild: guildName });
+            document.getElementById("guildInfo").innerHTML = `<p>Guild: ${guildName}</p>`;
+          }
+        });
+      });
+    }
+    function leaveGuild() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid).update({ guild: null });
+      document.getElementById("guildInfo").innerHTML = "<p>Not in a Guild</p>";
+    }
+    // For Basic Vaults: Create/Leave Association.
+    function createAssociation() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid).once("value").then(snap => {
+        const uData = snap.val();
+        if (uData.vaultType !== "Basic") {
+          alert("Only Basic Vaults can form an Association.");
+          return;
+        }
+        let assocName = prompt("Enter Association Name:");
+        if (!assocName) return;
+        let assocData = {
+          name: assocName,
+          leader: user.uid,
+          members: [],
+          createdAt: Date.now()
+        };
+        db.ref("associations").push(assocData, err => {
+          if (!err) {
+            db.ref("users/" + user.uid).update({ association: assocName });
+            document.getElementById("associationInfo").innerHTML = `<p>Association: ${assocName}</p>`;
+          }
+        });
+      });
+    }
+    function leaveAssociation() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid).update({ association: null });
+      document.getElementById("associationInfo").innerHTML = "<p>Not in an Association</p>";
+    }
+    
+    /***************************************
+     * Dynamic Theme Pricing (Placeholder)
+     ***************************************/
+    // PLACE BLOCK HERE: Implement theme pricing updates based on number of owners/purchases.
+    
+    /***************************************
+     * Guild/Association & Bidding Future Features (Placeholder)
+     ***************************************/
+    // PLACE BLOCK HERE: Add guild chat, association chat, and theme/banner bidding system.
+    
+    /***************************************
+     * Audio Controls
+     ***************************************/
     let muted = localStorage.getItem("vaultAudioMuted") === "true";
     document.getElementById("bgMusic").muted = muted;
     function toggleAudio() {
@@ -714,9 +992,29 @@
       }
     }
     
-    // ---- Removed: Old Trading Portal (no longer used in the new system) ----
+    /***************************************
+     * Marketplace Refresh
+     ***************************************/
+    setInterval(updateMarketListings, 30000);
     
-    // PLACE BLOCK HERE: Additional future systems such as Guilds/Associations and Bidding for Themes can be integrated here.
+    /***************************************
+     * Vault Upgrade Check (Placeholder)
+     ***************************************/
+    function checkVaultUpgrade() {
+      // Check if user's net worth meets criteria for upgrade.
+      // For demo: if cash >= 5000 and at least 3 investments received, upgrade vaultType.
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref("users/" + user.uid).once("value").then(snap => {
+        const uData = snap.val();
+        if (uData.vaultType === "Basic" && uData.cash >= 5000 && uData.investmentsReceived && Object.keys(uData.investmentsReceived).length >= 3) {
+          db.ref("users/" + user.uid).update({ vaultType: "Investment" });
+          document.getElementById("vaultTypeDisplay").textContent = "Investment";
+          alert("Congratulations! Your vault has been upgraded to Investment Vault.");
+        }
+        // For further upgrade to Holdings, criteria can be added here.
+      });
+    }
     
   </script>
 </body>
