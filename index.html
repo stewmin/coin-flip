@@ -157,14 +157,14 @@
     <h1>🏛️ Vault Street – Beta Build</h1>
   </header>
   
-  <!-- Notifications & Tickers -->
+  <!-- Notifications -->
   <div id="notificationsBox">
     <button onclick="app.toggleNotifications()">✉️</button>
     Notifications: <span id="notificationsContent">None</span>
     <div id="notificationDropdown"></div>
   </div>
   
-  <!-- Top Market Ticker (Scrolling) -->
+  <!-- Scrolling Market Ticker (values will update with up/down arrow colors) -->
   <div id="marketTicker">
     <marquee id="marketPricesText" scrollamount="6">Market Prices: Loading...</marquee>
   </div>
@@ -222,7 +222,7 @@
         <div id="mintedCoinDisplay"></div>
         <p id="mintNotice" style="color:red; font-size:10px;">Minting disabled until market conditions are met.</p>
       </div>
-      <!-- Static Value Ticker Banner -->
+      <!-- Static Value Ticker Banner (always visible above vault) -->
       <div id="staticValueTicker">Market Prices: Loading...</div>
       <!-- Vault Inventory -->
       <div id="vaultSection" class="section">
@@ -268,10 +268,10 @@
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="app.submitInvestment()">Invest</button>
       </div>
-      <!-- Conversion Section -->
+      <!-- Conversion Section (only selected conversion for Holdings Vaults) -->
       <div id="conversionSection" class="section">
         <h3>Convert Coins to Cash</h3>
-        <button onclick="app.convertCoinsToCash()">Convert All Coins</button>
+        <!-- "Convert All" button removed -->
         <p>Holdings Conversion - Select Coins:</p>
         <select id="convertRarity">
           <option value="Copper">Copper</option>
@@ -286,7 +286,7 @@
         <button onclick="app.convertSelectedCoinsToCash()">Convert Selected Coins</button>
         <p id="conversionNotice" style="color:orange; font-size:10px;"></p>
       </div>
-      <!-- Groups Section (Guilds & Associations) -->
+      <!-- Groups Section -->
       <div id="groupSection" class="section">
         <h3>Guilds & Associations</h3>
         <div id="guildControls" class="groupDropdown">
@@ -355,7 +355,7 @@
   <!-- Consolidated Script -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Firebase Configuration and initialization
+      // Firebase initialization
       const firebaseConfig = {
         apiKey: "AIzaSyDfZZUf2pY9ueCx6Q7m86dnitU_voims-8",
         authDomain: "coin-flip-4a693.firebaseapp.com",
@@ -369,11 +369,12 @@
       const auth = firebase.auth();
       const db = firebase.database();
       
-      // Main app object with organized sections and no redundant functions
+      // Main app object
       const app = {
         currentUsername: "",
         defaultVaultType: "Basic",
         currentCash: 1000,
+        currentVaultType: "", // to store vault type for conversion checks
         canMint: false,
         marketPrices: {},
         recordHighs: {},
@@ -383,9 +384,7 @@
         cycleLength: 300,  // in seconds
         clockStartTime: Date.now(),
         vaultCycleCounter: 0,
-        
-        // For grouping coin listings
-        groupedListings: {},
+        groupedListings: {},  // For grouping coin purse listings
         
         // Utility Functions
         getRatioColor: ratio => ratio < 1.0 ? "red" : ratio > 1.0 ? "green" : "yellow",
@@ -469,7 +468,10 @@
               const colorLow = lows[r] < app.basePrices[r] ? "red" : "white";
               txt += `<span style="color:white;">${r}:</span> <span style="color:${colorHigh};">H:$${highs[r].toFixed(2)}</span>/<span style="color:${colorLow};">L:$${lows[r] === Infinity ? app.basePrices[r].toFixed(2) : lows[r].toFixed(2)}</span> | `;
             }
-            document.getElementById("recordHighMarquee").innerHTML = txt;
+            // Update both scrolling and static banner
+            document.getElementById("marketPricesText").innerHTML = txt;
+            if(document.getElementById("staticValueTicker"))
+              document.getElementById("staticValueTicker").innerHTML = txt;
           });
         },
         
@@ -569,6 +571,7 @@
               cash: Number((data.cash - cost).toFixed(1))
             });
             document.getElementById("vaultTypeDisplay").textContent = newType;
+            app.currentVaultType = newType;  // update vault type in app state
             app.updateUserCash();
             app.displayUpgradeOptions();
             alert("Vault upgraded to " + newType + ".");
@@ -609,7 +612,7 @@
           document.getElementById("notificationDropdown").style.display = "none";
         },
         
-        // Group Functions (Guilds & Associations)
+        // Group Functions
         toggleGroupSearch: () => {
           const gs = document.getElementById("groupSearch");
           gs.style.display = (!gs.style.display || gs.style.display === "none") ? "block" : "none";
@@ -771,15 +774,28 @@
           });
         },
         
-        // Holdings Conversion
+        // Holdings Conversion (only for Holdings vaults and only if cash is below total coin value)
         convertSelectedCoinsToCash: () => {
           const user = auth.currentUser;
           if (!user) return;
-          const rarity = document.getElementById("convertRarity").value;
-          const qty = Number(document.getElementById("convertQuantity").value);
-          if (!qty || qty < 1) { alert("Enter a valid quantity."); return; }
+          if(app.currentVaultType !== "Holdings"){
+            alert("Only Holdings Vaults can convert coins to cash.");
+            return;
+          }
           db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
             const coins = snap.val() || {};
+            let totalCoinValue = 0;
+            Object.values(coins).forEach(coin => {
+              if (coin && coin.rarity)
+                totalCoinValue += (app.marketPrices[coin.rarity] || app.basePrices[coin.rarity]);
+            });
+            if(app.currentCash > totalCoinValue){
+              alert("Conversion not allowed: Your cash already exceeds your total coin value.");
+              return;
+            }
+            const rarity = document.getElementById("convertRarity").value;
+            const qty = Number(document.getElementById("convertQuantity").value);
+            if (!qty || qty < 1) { alert("Enter a valid quantity."); return; }
             let selectedIds = [];
             Object.entries(coins).forEach(([id, coin]) => {
               if (coin.rarity === rarity && selectedIds.length < qty) selectedIds.push(id);
@@ -858,7 +874,6 @@
             }
             html += "</table>";
             document.getElementById("vaultCoins").innerHTML = html;
-            // Optionally, update a vault ratio display if desired.
           });
         },
         loadUserCoinsForSale: () => {
@@ -912,7 +927,8 @@
           db.ref("users/" + user.uid + "/coins/" + coinId).once("value").then(snap => {
             const coinData = snap.val();
             if (!coinData) return;
-            const listing = { coin: coinData, sellerUid: user.uid, listedAt: Date.now(), fulfilled: false };
+            // Include sellerUsername in the listing (for display)
+            const listing = { coin: coinData, sellerUid: user.uid, sellerUsername: app.currentUsername, listedAt: Date.now(), fulfilled: false };
             db.ref("marketListings").push(listing, err => {
               if (!err) {
                 db.ref("users/" + user.uid + "/coins/" + coinId).remove();
@@ -923,7 +939,7 @@
           });
         },
         
-        // Market Functions: Grouping coin listings and handling theme listings
+        // Market Functions: Group coin listings and theme listings
         toggleMarket: () => {
           const marketDropdown = document.getElementById("marketDropdown");
           marketDropdown.style.display = (!marketDropdown.style.display || marketDropdown.style.display === "none") ? "block" : "none";
@@ -936,45 +952,67 @@
           const filter = document.getElementById("marketFilter").value;
           db.ref("marketListings").orderByChild("listedAt").once("value").then(snap => {
             const listings = snap.val() || {};
-            let grouped = {}; // For coin listings grouped as "coin purse"
+            let grouped = {}; // Group coin listings into "coin purse"
             let themeHTML = "";
-            // Iterate over listings and group coins if not fulfilled.
             for (const key in listings) {
               const lst = listings[key];
               if (lst.fulfilled) continue;
               if (lst.itemType && lst.itemType === "theme") {
-                // Only include if filter allows themes.
                 if (filter !== "All" && filter !== "Theme") continue;
+                // Use sellerUsername instead of sellerUid
                 themeHTML += `<div class="listing">
                               <p>Theme: ${lst.theme} – Price: $${lst.price.toFixed(2)}</p>
-                              <p>Seller: ${lst.sellerUid}</p>
+                              <p>Seller: ${lst.sellerUsername}</p>
                               <button onclick="app.buyMarketTheme('${key}')">Buy Theme</button>
                               </div>`;
               } else if (lst.coin) {
-                // For coin listings, group by sellerUid and coin.rarity.
                 if (filter !== "All" && lst.coin.rarity !== filter) continue;
+                // Group listings by sellerUid and rarity
                 const groupKey = lst.sellerUid + "||" + lst.coin.rarity;
                 if (!grouped[groupKey]) {
-                  grouped[groupKey] = { sellerUid: lst.sellerUid, rarity: lst.coin.rarity, count: 0, listingKeys: [] };
+                  grouped[groupKey] = { sellerUid: lst.sellerUid, sellerUsername: lst.sellerUsername, rarity: lst.coin.rarity, count: 0, listingKeys: [] };
                 }
                 grouped[groupKey].count++;
                 grouped[groupKey].listingKeys.push(key);
               }
             }
-            // Build grouped coin listing HTML.
             let coinHTML = "";
             for (const groupKey in grouped) {
               const group = grouped[groupKey];
               const livePrice = app.marketPrices[group.rarity] || app.basePrices[group.rarity];
               coinHTML += `<div class="listing">
-                           <p><span class="coin-icon coin-${group.rarity.toLowerCase()}"></span>${group.rarity} Purse (Seller: ${group.sellerUid}) – Quantity: ${group.count} - Price Each: $${livePrice.toFixed(2)} (Total: $${(livePrice * group.count).toFixed(2)})</p>
+                           <p><span class="coin-icon coin-${group.rarity.toLowerCase()}"></span>${group.rarity} Purse (Seller: ${group.sellerUsername}) – Quantity: ${group.count} - Price Each: $${livePrice.toFixed(2)} (Total: $${(livePrice * group.count).toFixed(2)})</p>
                            <button onclick="app.buyGroupedMarketCoins('${groupKey}')">Buy Purse</button>
                            </div>`;
             }
             app.groupedListings = grouped;
-            // Combine coin and theme HTML
-            const finalHTML = coinHTML + themeHTML;
-            document.getElementById("marketListings").innerHTML = finalHTML || "<p>No active listings.</p>";
+            document.getElementById("marketListings").innerHTML = (coinHTML + themeHTML) || "<p>No active listings.</p>";
+          });
+        },
+        buyMarketCoin: (listingId, price) => {
+          // Single coin purchase function
+          const buyer = auth.currentUser;
+          if (!buyer) return;
+          db.ref("users/" + buyer.uid).once("value").then(snap => {
+            const buyerData = snap.val();
+            if (buyerData.cash < price) { alert("Insufficient cash."); return; }
+            const newBuyerCash = buyerData.cash - price;
+            db.ref("users/" + buyer.uid).update({ cash: newBuyerCash });
+            db.ref("marketListings/" + listingId).once("value").then(snapListing => {
+              const listing = snapListing.val();
+              if (!listing || listing.fulfilled) return;
+              db.ref("users/" + buyer.uid + "/coins").push(listing.coin);
+              db.ref("marketListings/" + listingId).update({ fulfilled: true });
+              // Update seller's cash using sellerUsername from the listing
+              db.ref("users/" + listing.sellerUid + "/cash").once("value").then(snapSeller => {
+                const sellerCash = snapSeller.val() || 0;
+                db.ref("users/" + listing.sellerUid).update({ cash: Number((sellerCash + price).toFixed(1)) });
+              });
+              alert(`Purchased 1 ${listing.coin.rarity} coin for $${price.toFixed(2)}.`);
+              app.updateUserCash();
+              app.updateMarketListings();
+              app.loadVault();
+            });
           });
         },
         buyGroupedMarketCoins: groupKey => {
@@ -989,8 +1027,13 @@
           db.ref("users/" + buyer.uid).once("value").then(snap => {
             const buyerData = snap.val();
             if (buyerData.cash < totalCost) { alert("Insufficient cash."); return; }
-            const newCash = buyerData.cash - totalCost;
-            db.ref("users/" + buyer.uid).update({ cash: newCash });
+            const newBuyerCash = buyerData.cash - totalCost;
+            db.ref("users/" + buyer.uid).update({ cash: newBuyerCash });
+            // Update seller's cash for the grouped purchase
+            db.ref("users/" + group.sellerUid + "/cash").once("value").then(snapSeller => {
+              const sellerCash = snapSeller.val() || 0;
+              db.ref("users/" + group.sellerUid).update({ cash: Number((sellerCash + totalCost).toFixed(1)) });
+            });
             // Purchase the specified number of coins from the grouped listings
             const keysToBuy = group.listingKeys.slice(0, qty);
             keysToBuy.forEach(key => {
@@ -1025,7 +1068,8 @@
           if (!selectedTheme) { alert("Select a theme to list for sale."); return; }
           const price = parseFloat(prompt("Enter sale price for the theme:"));
           if (!price || price <= 0) { alert("Invalid price."); return; }
-          const listing = { itemType: "theme", theme: selectedTheme, sellerUid: user.uid, price, listedAt: Date.now(), fulfilled: false };
+          // Include sellerUsername in the theme listing
+          const listing = { itemType: "theme", theme: selectedTheme, sellerUid: user.uid, sellerUsername: app.currentUsername, price, listedAt: Date.now(), fulfilled: false };
           db.ref("marketListings").push(listing, err => {
             if (!err) {
               db.ref("users/" + user.uid + "/ownedThemes").orderByValue().equalTo(selectedTheme)
@@ -1049,10 +1093,15 @@
               const listing = snapListing.val();
               if (!listing || listing.fulfilled) return;
               if (buyerData.cash < listing.price) { alert("Insufficient cash."); return; }
-              const newCash = buyerData.cash - listing.price;
-              db.ref("users/" + buyer.uid).update({ cash: newCash });
+              const newBuyerCash = buyerData.cash - listing.price;
+              db.ref("users/" + buyer.uid).update({ cash: newBuyerCash });
               db.ref("users/" + buyer.uid + "/ownedThemes").push(listing.theme);
               db.ref("marketListings/" + listingId).update({ fulfilled: true });
+              // Update seller's cash for theme purchase
+              db.ref("users/" + listing.sellerUid + "/cash").once("value").then(snapSeller => {
+                const sellerCash = snapSeller.val() || 0;
+                db.ref("users/" + listing.sellerUid).update({ cash: Number((sellerCash + listing.price).toFixed(1)) });
+              });
               alert("Theme purchased!");
               app.updateUserCash();
               app.loadOwnedThemes();
@@ -1084,7 +1133,6 @@
           db.ref("mintRegistry").once("value").then(snap => {
             const data = snap.val() || {};
             app.updateRecordHighs(data);
-            // Removed recent purchases update as per request
           });
         },
         updateRecordHighs: regData => {
@@ -1105,11 +1153,9 @@
             const colorLow = low < app.basePrices[r] ? "red" : "white";
             txt += `<span style="color:white;">${r}:</span> <span style="color:${colorHigh};">H:$${high.toFixed(2)}</span>/<span style="color:${colorLow};">L:$${low.toFixed(2)}</span> | `;
           }
-          // Update both the scrolling ticker and the new static banner.
           document.getElementById("marketPricesText").innerHTML = txt;
-          if(document.getElementById("staticValueTicker")) {
+          if(document.getElementById("staticValueTicker"))
             document.getElementById("staticValueTicker").innerHTML = txt;
-          }
         },
         updateMarketPrices: () => {
           db.ref("mintRegistry").once("value").then(snap => {
@@ -1177,7 +1223,7 @@
           });
         },
         
-        // Investment Function
+        // Investment Function: Now transfers cash from investor to recipient and updates recipient’s cash
         submitInvestment: () => {
           const investor = auth.currentUser;
           if (!investor) return;
@@ -1193,8 +1239,15 @@
                 let recipientUid = "", recipientData = {};
                 snap2.forEach(childSnap => { recipientUid = childSnap.key; recipientData = childSnap.val(); });
                 if (recipientData.vaultType === "Basic") { alert("Recipient vault is Basic and cannot receive investments."); return; }
-                const newCash = invData.cash - amount;
-                db.ref("users/" + investor.uid).update({ cash: newCash });
+                // Deduct investment amount from investor and add to recipient's cash
+                const newInvestorCash = invData.cash - amount;
+                db.ref("users/" + investor.uid).update({ cash: newInvestorCash });
+                db.ref("users/" + recipientUid).once("value").then(snapRecip => {
+                  const recipData = snapRecip.val();
+                  const newRecipientCash = (recipData.cash || 0) + amount;
+                  db.ref("users/" + recipientUid).update({ cash: newRecipientCash });
+                });
+                // Record the investment
                 db.ref("users/" + recipientUid + "/investmentsReceived").push({
                   from: app.currentUsername,
                   amount,
@@ -1245,7 +1298,7 @@
           alert("Vault type switched to " + newType);
         },
         
-        // Authentication
+        // Authentication Functions
         login: () => {
           const email = document.getElementById("email").value.trim();
           const pass = document.getElementById("password").value.trim();
@@ -1305,6 +1358,7 @@
               db.ref("users/" + user.uid).update({ theme: "default" });
             }
             document.getElementById("vaultTypeDisplay").textContent = data.vaultType;
+            app.currentVaultType = data.vaultType; // store vault type for conversion checks
             app.currentCash = data.cash;
             document.getElementById("cashDisplay").textContent = Number(app.currentCash).toFixed(1);
             app.currentUsername = data.username || "";
@@ -1349,7 +1403,6 @@
       setInterval(app.updateMarketPrices, 60000);
       setInterval(app.updateMarketListings, 30000);
       setInterval(app.updateLeaderboard, 60000);
-      // Removed recent purchases update interval per request
       setInterval(app.processMarketListingsReturn, app.cycleLength * 1000);
       
       // Initial calls
