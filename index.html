@@ -2,52 +2,114 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Ensure the viewport fits the iPhone screen without scrolling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Castle Vault – Vault Street</title>
-  <!-- Google Fonts: Using a retro, medieval font pairing -->
+  <!-- Google Fonts: Medieval and retro styles -->
   <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <!-- Firebase libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* --- Base Styles: Castle Vault Theme --- */
-    body {
+    /* --- Overall Mobile & Castle Vault Aesthetic --- */
+    html, body {
       margin: 0;
-      /* Use a stone texture background – replace with a real image URL if available */
+      padding: 0;
+      height: 100%;
+      overflow: hidden;  /* Prevent scrolling */
+    }
+    body {
+      /* Stone textured background with subtle gradient */
       background: url('stone-wall.jpg') repeat, linear-gradient(135deg, #444, #222);
       background-size: cover;
       font-family: 'Press Start 2P', 'MedievalSharp', sans-serif;
       color: #fdf6e3;
+      display: flex;
+      flex-direction: column;
     }
     header {
       text-align: center;
       background: #333;
-      padding: 20px;
-      border-bottom: 4px solid #d4af37; /* gold accent */
-      font-size: 1.5em;
-      letter-spacing: 2px;
-    }
-    .container {
-      max-width: 1080px;
-      margin: 20px auto;
       padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+      border-bottom: 4px solid #d4af37;
+      font-size: 1.2em;
+      letter-spacing: 1px;
     }
+    /* Main container fills remaining viewport */
+    #gameScreen {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Each module (screen) – only one visible at a time */
+    .module {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: rgba(60,60,60,0.95);
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    /* Hide modules by default */
+    .module:not(.activeModule) {
+      display: none;
+    }
+    /* Bottom Navigation Bar */
+    #navBar {
+      height: 50px;
+      background: #333;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 2px solid #d4af37;
+    }
+    #navBar button {
+      background: none;
+      border: none;
+      color: #fdf6e3;
+      font-size: 12px;
+      font-family: 'MedievalSharp', sans-serif;
+      padding: 5px;
+    }
+    /* Footer remains minimal */
+    footer {
+      text-align: center;
+      background: #333;
+      padding: 5px;
+      font-size: 10px;
+      color: #ccc;
+    }
+    /* --- Decorative Ticker Banners at Top --- */
+    .ticker {
+      background: #555;
+      padding: 3px;
+      font-size: 10px;
+      text-align: center;
+      border: 1px solid #777;
+      border-radius: 4px;
+      margin-bottom: 2px;
+    }
+    marquee {
+      font-family: 'MedievalSharp', sans-serif;
+    }
+    /* --- Common Section Styling for content within modules --- */
     .section {
-      padding: 15px;
-      background: rgba(60, 60, 60, 0.9);
+      padding: 10px;
+      background: rgba(60,60,60,0.9);
       border: 2px solid #777;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      margin-bottom: 10px;
     }
     input, button, select {
       font-family: 'Press Start 2P', 'MedievalSharp', sans-serif;
-      font-size: 12px;
-      padding: 6px 8px;
-      margin: 5px 0;
+      font-size: 10px;
+      padding: 4px 6px;
+      margin: 4px 0;
       border: 1px solid #777;
       border-radius: 4px;
       outline: none;
@@ -62,50 +124,53 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    button:hover {
-      background: #7a6900;
+    button:hover { background: #7a6900; }
+    /* --- Tables for Vault/Market --- */
+    #vaultTable {
+      width: 100%;
+      border-collapse: collapse;
     }
-    footer {
+    #vaultTable th, #vaultTable td {
+      border: 1px solid #777;
+      padding: 4px;
       text-align: center;
-      background: #333;
-      padding: 20px;
       font-size: 10px;
-      margin-top: 20px;
-      color: #ccc;
     }
-    /* --- Ticker Bars --- */
-    .ticker {
-      background: #555;
-      padding: 5px;
-      font-size: 11px;
-      text-align: center;
+    /* --- Dropdowns for Market & Group Search --- */
+    #marketDropdown, .groupDropdown, #groupSearch, #activeListingsDropdown {
+      background: #e8e0d8;
+      color: #222;
+      padding: 6px;
       border: 1px solid #777;
       border-radius: 4px;
-      margin-bottom: 5px;
+      margin-top: 4px;
     }
-    marquee {
-      font-family: 'MedievalSharp', sans-serif;
+    /* --- Minimal Modular Market Panel --- */
+    #marketInterface {
+      max-width: 400px;
+      align-self: center;
     }
-    /* --- Vault Clock --- */
-    #vaultClockDisplay {
-      font-size: 14px;
-      color: #66d9ef;
-      text-align: center;
-      margin-top: 10px;
+    /* --- Persistent Group Interface --- */
+    #guildManagement, #associationInfo {
+      background: #333;
+      padding: 6px;
+      border: 1px solid #777;
+      border-radius: 4px;
+      margin-top: 4px;
     }
-    /* --- Decorative Elements --- */
+    /* --- Torch and Flag decorative elements --- */
     .torch {
       position: absolute;
       width: 20px;
       height: 40px;
-      background: url('torch.png') no-repeat center center; /* replace with your torch image URL */
+      background: url('torch.png') no-repeat center center;
       background-size: contain;
       animation: flicker 1.5s infinite alternate;
     }
     .flag {
-      width: 30px;
-      height: 20px;
-      background: url('flag.png') no-repeat center center; /* replace with your flag image URL */
+      width: 20px;
+      height: 15px;
+      background: url('flag.png') no-repeat center center;
       background-size: contain;
       display: inline-block;
       vertical-align: middle;
@@ -116,7 +181,7 @@
       50% { opacity: 1; }
       100% { opacity: 0.7; }
     }
-    /* --- Coin Icons --- */
+    /* --- Coin Icon Styles (as before) --- */
     .coin-icon {
       display: inline-block;
       width: 16px;
@@ -137,51 +202,6 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    /* --- Tables --- */
-    #vaultTable {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    #vaultTable th,
-    #vaultTable td {
-      border: 1px solid #777;
-      padding: 6px;
-      text-align: center;
-      font-size: 12px;
-    }
-    /* --- Dropdowns for Market & Groups --- */
-    #marketDropdown, .groupDropdown, #groupSearch {
-      background: #e8e0d8;
-      color: #222;
-      padding: 10px;
-      border: 1px solid #777;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    /* --- Modular Market Panel --- */
-    #marketInterface {
-      max-width: 400px;
-      align-self: flex-end;
-      font-size: 12px;
-    }
-    #activeListingsDropdown {
-      margin-top: 10px;
-      background: #e8e0d8;
-      color: #222;
-      padding: 5px;
-      border: 1px solid #777;
-      border-radius: 4px;
-      display: none;
-    }
-    /* --- Persistent Group Interface --- */
-    #guildManagement, #associationInfo {
-      background: #333;
-      padding: 10px;
-      border: 1px solid #777;
-      border-radius: 4px;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
@@ -189,62 +209,31 @@
     🏰 Castle Vault – Vault Street
   </header>
   
-  <!-- Ticker Banners -->
-  <div class="ticker">
-    <marquee id="coinValueTicker" scrollamount="4">Coin Values: Loading...</marquee>
-  </div>
-  <div class="ticker">
-    <marquee id="circulationTicker" scrollamount="4">Circulation: Loading...</marquee>
-  </div>
-  <div class="ticker">
-    <marquee id="investmentTicker" scrollamount="4">Investments: Loading...</marquee>
-  </div>
-  <div class="ticker">
-    <marquee id="recentPurchasesMarquee" scrollamount="4">Recent Purchases: Loading...</marquee>
-  </div>
-  
+  <!-- Top Ticker Banners -->
+  <div class="ticker"><marquee id="coinValueTicker" scrollamount="4">Coin Values: Loading...</marquee></div>
+  <div class="ticker"><marquee id="circulationTicker" scrollamount="4">Circulation: Loading...</marquee></div>
+  <div class="ticker"><marquee id="investmentTicker" scrollamount="4">Investments: Loading...</marquee></div>
+  <div class="ticker"><marquee id="recentPurchasesMarquee" scrollamount="4">Recent Purchases: Loading...</marquee></div>
+
   <!-- Notifications -->
   <div id="notificationsBox" class="section">
     <button onclick="app.toggleNotifications()">✉️</button>
     Notifications: <span id="notificationsContent">None</span>
     <div id="notificationDropdown"></div>
   </div>
-
-  <div class="container">
-    <!-- Authentication Panel -->
-    <div id="auth-panel" class="section">
-      <h2>Login / Register</h2>
-      <input type="email" id="email" placeholder="Email"><br>
-      <input type="password" id="password" placeholder="Password"><br>
-      <input type="text" id="username" placeholder="Username (optional)"><br>
-      <button onclick="app.login()">Login / Register</button>
-      <div id="loginDebug" style="color:#ffcc00; font-size:10px;"></div>
-    </div>
-
-    <!-- User Panel -->
-    <div id="user-panel" class="section" style="display:none;">
-      <div style="text-align:right;">
-        <button onclick="app.toggleNotifications()">✉️</button>
-        <button onclick="app.logout()">Logout</button>
-      </div>
-      <h2>Welcome, <span id="displayName"></span><span class="flag"></span></h2>
-      <!-- Admin Panel -->
-      <div id="adminPanel" style="display:none; margin-bottom:10px;">
-        <button onclick="app.adminResetMarket()">Reset Market</button>
-        <button onclick="app.adminClearCoinHistory()">Clear Coin History</button>
-        <button onclick="app.adminSwitchVaultType()">Switch Vault Type</button>
-      </div>
-      <!-- User Info: Net Worth Display -->
-      <div id="userInfo" class="section">
+  
+  <!-- Game Screen: All modules are contained here; only one is visible -->
+  <div id="gameScreen">
+    <!-- Vault Module -->
+    <div id="VaultModule" class="module activeModule">
+      <div class="section" id="userInfo">
         <p>Vault Type: <span id="vaultTypeDisplay"></span> <span id="upgradeOptions"></span></p>
         <p>Cash: $<span id="cashDisplay"></span></p>
         <p id="netWorthDisplay">Net Worth: Calculating...</p>
-        <!-- Investment Box for Holdings vaults -->
         <p id="investmentBoxDisplay" style="display:none;">Investment Box: $<span id="investmentBox"></span></p>
         <div id="vaultClockDisplay">Vault Clock: Loading...</div>
       </div>
-      <!-- Theme & Customization (Persistent) -->
-      <div id="themeBannerSection" class="section">
+      <div class="section" id="themeBannerSection">
         <h3>Customize Your Castle</h3>
         <p>Owned Themes: <span id="ownedThemes">None</span></p>
         <p>Select a Theme to Purchase:</p>
@@ -255,24 +244,25 @@
           <option value="green">Emerald Courtyard</option>
         </select>
         <button onclick="app.purchaseTheme()">Purchase Theme</button>
-        <p>Select from your Inventory to Equip:</p>
+        <p>Select from your Inventory:</p>
         <select id="equipThemeSelect"></select>
         <button onclick="app.equipTheme()">Equip Theme</button>
       </div>
-      <!-- Minting Section -->
-      <div id="mintingSection" class="section">
+      <div class="section" id="mintingSection">
         <h3>Mint a Coin</h3>
         <button id="mintBtn" onclick="app.mintNewCoin()" disabled>Mint New Coin</button>
         <div id="mintedCoinDisplay"></div>
         <p id="mintNotice" style="color:#ff3333; font-size:10px;">Minting disabled until market conditions are met.</p>
       </div>
-      <!-- Vault Inventory -->
-      <div id="vaultSection" class="section">
+      <div class="section" id="vaultSection">
         <h3>My Vault</h3>
         <div id="vaultCoins"></div>
       </div>
-      <!-- Market Interface: Modular & Compact -->
-      <div id="marketInterface" class="section">
+    </div>
+
+    <!-- Market Module -->
+    <div id="MarketModule" class="module" style="display:none;">
+      <div class="section" id="marketInterface">
         <h3>Market</h3>
         <button onclick="app.toggleMarket()">Toggle Market</button>
         <div id="marketDropdown" style="display:none;">
@@ -294,16 +284,18 @@
           <p><button onclick="app.buyGroupedMarketCoins()">Buy Selected Purse</button></p>
         </div>
       </div>
-      <!-- Investment Section -->
-      <div id="investmentSection" class="section">
+    </div>
+
+    <!-- Investment Module -->
+    <div id="InvestmentModule" class="module" style="display:none;">
+      <div class="section" id="investmentSection">
         <h3>Invest in Another Vault</h3>
         <p>(All vaults invest; only Holdings receive investments)</p>
         <input type="text" id="investRecipient" placeholder="Recipient Username"><br>
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="app.submitInvestment()">Invest</button>
       </div>
-      <!-- Conversion Section -->
-      <div id="conversionSection" class="section">
+      <div class="section" id="conversionSection">
         <h3>Convert Coins to Cash</h3>
         <button onclick="app.convertCoinsToCash()">Convert All Coins</button>
         <p>Selective Conversion:</p>
@@ -320,8 +312,11 @@
         <button onclick="app.convertSelectedCoinsToCash()">Convert Selected Coins</button>
         <p id="conversionNotice" style="color:#ffa500; font-size:10px;"></p>
       </div>
-      <!-- Guilds & Associations -->
-      <div id="groupSection" class="section">
+    </div>
+
+    <!-- Groups Module -->
+    <div id="GroupModule" class="module" style="display:none;">
+      <div class="section" id="groupSection">
         <h3>Guilds & Associations</h3>
         <div id="guildControls" class="groupDropdown">
           <h4>Guild (Holdings Vaults only)</h4>
@@ -340,8 +335,7 @@
           <div id="associationInfo"><p>Association Info: None</p></div>
         </div>
       </div>
-      <!-- Group Search -->
-      <div id="groupSearch" class="groupDropdown" style="display:none;">
+      <div class="section" id="groupSearch" style="display:none;">
         <h4>Search Groups</h4>
         <select id="groupTypeSearch">
           <option value="guilds">Guilds</option>
@@ -351,20 +345,17 @@
         <button onclick="app.searchGroups()">Search</button>
         <div id="groupSearchResults"></div>
       </div>
-      <!-- Global Leaderboard -->
-      <div id="leaderboardSection" class="section">
-        <h3>Leaderboards</h3>
-        <select id="leaderboardFilter" onchange="app.updateLeaderboard()">
-          <option value="All">Global</option>
-          <option value="Basic">Basic Vaults</option>
-          <option value="Investment">Investment Vaults</option>
-          <option value="Holdings">Holdings Vaults</option>
-        </select>
-        <marquee id="leaderboardContent" scrollamount="4">Loading leaderboard...</marquee>
-      </div>
     </div>
   </div>
-
+  
+  <!-- Bottom Navigation Bar -->
+  <nav id="navBar">
+    <button onclick="switchModule('VaultModule')">Vault</button>
+    <button onclick="switchModule('MarketModule')">Market</button>
+    <button onclick="switchModule('InvestmentModule')">Invest</button>
+    <button onclick="switchModule('GroupModule')">Groups</button>
+  </nav>
+  
   <footer>
     <p>&copy; 2025 Castle Vault – Vault Street</p>
   </footer>
@@ -379,6 +370,17 @@
 
   <!-- Consolidated Script -->
   <script>
+    // Module Switch Function for Bottom Nav
+    function switchModule(moduleId) {
+      // Hide all modules
+      const modules = document.getElementsByClassName('module');
+      for(let i = 0; i < modules.length; i++){
+        modules[i].style.display = "none";
+      }
+      // Show selected module
+      document.getElementById(moduleId).style.display = "block";
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       // Firebase configuration
       const firebaseConfig = {
@@ -404,7 +406,7 @@
         recordLows: { Copper: Infinity, Silver: Infinity, Gold: Infinity, Platinum: Infinity, Diamond: Infinity, Iridium: Infinity, Rhodium: Infinity },
         basePrices: { Copper: 1, Silver: 5, Gold: 10, Platinum: 25, Diamond: 50, Iridium: 75, Rhodium: 100 },
         baselineDropRates: { Copper: 40, Silver: 25, Gold: 15, Platinum: 10, Diamond: 5, Iridium: 3, Rhodium: 1 },
-        cycleLength: 300, // seconds for demo
+        cycleLength: 300,
         clockStartTime: Date.now(),
         vaultCycleCounter: 0,
         
@@ -489,7 +491,7 @@
         updateRecentFluctuations: () => {
           db.ref("mintRegistry").once("value").then(snap => {
             const regData = snap.val() || {};
-            // Optional further processing...
+            // Optional additional processing can go here.
           });
         },
 
@@ -816,9 +818,6 @@
             document.getElementById("userCoinsForSale").innerHTML = html || "<p>No coins available for sale.</p>";
           });
         },
-        updateVaultRatio: () => {
-          // Deprecated – net worth displayed instead.
-        },
 
         // --- Market Pricing & Grouped Listings (Coin Purse) ---
         updateMarketPrices: () => {
@@ -896,7 +895,7 @@
           });
         },
 
-        // --- Market Portal: Group Listings as a Coin Purse ---
+        // --- Market Portal: Grouped Listings as "Coin Purse" ---
         toggleMarket: () => {
           const dropdown = document.getElementById("marketDropdown");
           dropdown.style.display = (dropdown.style.display === "none" || dropdown.style.display === "") ? "block" : "none";
@@ -1336,7 +1335,7 @@
       app.updateVaultClock();
       app.updateMarketPrices();
 
-      // Expose global app
+      // Expose app globally
       window.app = app;
     });
   </script>
