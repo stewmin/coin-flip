@@ -3,28 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vault Street – Ultimate Retro-Future Build</title>
-  <!-- Google Fonts: Using a mix of pixelated retro (Press Start 2P) and a medieval–styled font (MedievalSharp) for accents -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=MedievalSharp&display=swap" rel="stylesheet" />
+  <title>Castle Vault – Vault Street</title>
+  <!-- Google Fonts: Using a retro, medieval font pairing -->
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <!-- Firebase libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* --- Base Styles: Medieval Futurism meets N64 Zelda --- */
+    /* --- Base Styles: Castle Vault Theme --- */
     body {
       margin: 0;
-      /* A background evoking a futuristic castle interior */
-      background: url('castle-interior-placeholder.jpg'), linear-gradient(135deg, #0a0a0a, #232323);
+      /* Use a stone texture background – replace with a real image URL if available */
+      background: url('stone-wall.jpg') repeat, linear-gradient(135deg, #444, #222);
       background-size: cover;
       font-family: 'Press Start 2P', 'MedievalSharp', sans-serif;
-      color: #f0f0f0;
+      color: #fdf6e3;
     }
     header {
       text-align: center;
-      background: #000;
+      background: #333;
       padding: 20px;
-      border-bottom: 3px solid #ff00ff;
+      border-bottom: 4px solid #d4af37; /* gold accent */
       font-size: 1.5em;
       letter-spacing: 2px;
     }
@@ -38,48 +38,48 @@
     }
     .section {
       padding: 15px;
-      background: rgba(20,20,20,0.9);
-      border: 1px solid #ff00ff;
+      background: rgba(60, 60, 60, 0.9);
+      border: 2px solid #777;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(255,0,255,0.5);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
     }
     input, button, select {
       font-family: 'Press Start 2P', 'MedievalSharp', sans-serif;
       font-size: 12px;
       padding: 6px 8px;
       margin: 5px 0;
-      border: 1px solid #ff00ff;
+      border: 1px solid #777;
       border-radius: 4px;
       outline: none;
     }
     input, select {
-      background: #f0f0f0;
-      color: #000;
+      background: #e8e0d8;
+      color: #222;
     }
     button {
-      background: linear-gradient(45deg, #ff00ff, #330033);
-      color: #fff;
+      background: linear-gradient(45deg, #8b8000, #555);
+      color: #fdf6e3;
       cursor: pointer;
       transition: background 0.3s;
     }
     button:hover {
-      background: #990099;
+      background: #7a6900;
     }
     footer {
       text-align: center;
-      background: #000;
+      background: #333;
       padding: 20px;
       font-size: 10px;
       margin-top: 20px;
-      color: #aaa;
+      color: #ccc;
     }
-    /* --- Ticker Bars (multiple scroll banners) --- */
+    /* --- Ticker Bars --- */
     .ticker {
-      background: #222;
+      background: #555;
       padding: 5px;
       font-size: 11px;
       text-align: center;
-      border: 1px solid #ff00ff;
+      border: 1px solid #777;
       border-radius: 4px;
       margin-bottom: 5px;
     }
@@ -89,11 +89,34 @@
     /* --- Vault Clock --- */
     #vaultClockDisplay {
       font-size: 14px;
-      color: cyan;
+      color: #66d9ef;
       text-align: center;
       margin-top: 10px;
     }
-    /* --- Spinning coin icons --- */
+    /* --- Decorative Elements --- */
+    .torch {
+      position: absolute;
+      width: 20px;
+      height: 40px;
+      background: url('torch.png') no-repeat center center; /* replace with your torch image URL */
+      background-size: contain;
+      animation: flicker 1.5s infinite alternate;
+    }
+    .flag {
+      width: 30px;
+      height: 20px;
+      background: url('flag.png') no-repeat center center; /* replace with your flag image URL */
+      background-size: contain;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    @keyframes flicker {
+      0% { opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+    /* --- Coin Icons --- */
     .coin-icon {
       display: inline-block;
       width: 16px;
@@ -122,65 +145,50 @@
     }
     #vaultTable th,
     #vaultTable td {
-      border: 1px solid #ff00ff;
+      border: 1px solid #777;
       padding: 6px;
       text-align: center;
       font-size: 12px;
     }
     /* --- Dropdowns for Market & Groups --- */
     #marketDropdown, .groupDropdown, #groupSearch {
-      background: #f0f0f0;
-      color: #000;
+      background: #e8e0d8;
+      color: #222;
       padding: 10px;
-      border: 1px solid #ff00ff;
+      border: 1px solid #777;
       border-radius: 5px;
       margin-top: 10px;
     }
-    /* --- Smaller Modular Market Panel --- */
+    /* --- Modular Market Panel --- */
     #marketInterface {
       max-width: 400px;
       align-self: flex-end;
       font-size: 12px;
     }
-    /* --- Active Listings Dropdown --- */
     #activeListingsDropdown {
       margin-top: 10px;
-      background: #e0e0e0;
-      color: #000;
+      background: #e8e0d8;
+      color: #222;
       padding: 5px;
-      border: 1px solid #ff00ff;
+      border: 1px solid #777;
       border-radius: 4px;
       display: none;
     }
-    /* --- Guild/Association persistent interface --- */
+    /* --- Persistent Group Interface --- */
     #guildManagement, #associationInfo {
-      background: #222;
+      background: #333;
       padding: 10px;
-      border: 1px solid #ff00ff;
+      border: 1px solid #777;
       border-radius: 4px;
       margin-top: 10px;
-    }
-    /* --- Optional Torch Animation for Mysticism --- */
-    .torch {
-      position: absolute;
-      width: 20px;
-      height: 40px;
-      background: url('torch-placeholder.png') no-repeat center center;
-      background-size: contain;
-      animation: flicker 1.5s infinite alternate;
-    }
-    @keyframes flicker {
-      0% { opacity: 0.8; }
-      50% { opacity: 1; }
-      100% { opacity: 0.7; }
     }
   </style>
 </head>
 <body>
   <header>
-    🏰 Vault Street – Ultimate Retro-Future Build
+    🏰 Castle Vault – Vault Street
   </header>
-
+  
   <!-- Ticker Banners -->
   <div class="ticker">
     <marquee id="coinValueTicker" scrollamount="4">Coin Values: Loading...</marquee>
@@ -194,7 +202,7 @@
   <div class="ticker">
     <marquee id="recentPurchasesMarquee" scrollamount="4">Recent Purchases: Loading...</marquee>
   </div>
-
+  
   <!-- Notifications -->
   <div id="notificationsBox" class="section">
     <button onclick="app.toggleNotifications()">✉️</button>
@@ -210,7 +218,7 @@
       <input type="password" id="password" placeholder="Password"><br>
       <input type="text" id="username" placeholder="Username (optional)"><br>
       <button onclick="app.login()">Login / Register</button>
-      <div id="loginDebug" style="color:yellow; font-size:10px;"></div>
+      <div id="loginDebug" style="color:#ffcc00; font-size:10px;"></div>
     </div>
 
     <!-- User Panel -->
@@ -219,35 +227,35 @@
         <button onclick="app.toggleNotifications()">✉️</button>
         <button onclick="app.logout()">Logout</button>
       </div>
-      <h2>Welcome, <span id="displayName"></span></h2>
+      <h2>Welcome, <span id="displayName"></span><span class="flag"></span></h2>
       <!-- Admin Panel -->
       <div id="adminPanel" style="display:none; margin-bottom:10px;">
         <button onclick="app.adminResetMarket()">Reset Market</button>
         <button onclick="app.adminClearCoinHistory()">Clear Coin History</button>
         <button onclick="app.adminSwitchVaultType()">Switch Vault Type</button>
       </div>
-      <!-- User Info: Display Net Worth Instead of Ratio -->
+      <!-- User Info: Net Worth Display -->
       <div id="userInfo" class="section">
         <p>Vault Type: <span id="vaultTypeDisplay"></span> <span id="upgradeOptions"></span></p>
         <p>Cash: $<span id="cashDisplay"></span></p>
         <p id="netWorthDisplay">Net Worth: Calculating...</p>
-        <!-- Holdings Vault Investment Box -->
+        <!-- Investment Box for Holdings vaults -->
         <p id="investmentBoxDisplay" style="display:none;">Investment Box: $<span id="investmentBox"></span></p>
         <div id="vaultClockDisplay">Vault Clock: Loading...</div>
       </div>
       <!-- Theme & Customization (Persistent) -->
       <div id="themeBannerSection" class="section">
-        <h3>Customize Your Vault</h3>
+        <h3>Customize Your Castle</h3>
         <p>Owned Themes: <span id="ownedThemes">None</span></p>
         <p>Select a Theme to Purchase:</p>
         <select id="vaultTheme">
-          <option value="default">Gray Default</option>
-          <option value="red">Red</option>
-          <option value="blue">Blue</option>
-          <option value="green">Green</option>
+          <option value="default">Stone Wall</option>
+          <option value="red">Crimson Banner</option>
+          <option value="blue">Azure Keep</option>
+          <option value="green">Emerald Courtyard</option>
         </select>
         <button onclick="app.purchaseTheme()">Purchase Theme</button>
-        <p>Select a Theme from Inventory to Equip:</p>
+        <p>Select from your Inventory to Equip:</p>
         <select id="equipThemeSelect"></select>
         <button onclick="app.equipTheme()">Equip Theme</button>
       </div>
@@ -256,18 +264,17 @@
         <h3>Mint a Coin</h3>
         <button id="mintBtn" onclick="app.mintNewCoin()" disabled>Mint New Coin</button>
         <div id="mintedCoinDisplay"></div>
-        <p id="mintNotice" style="color:red; font-size:10px;">Minting disabled until market conditions are met.</p>
+        <p id="mintNotice" style="color:#ff3333; font-size:10px;">Minting disabled until market conditions are met.</p>
       </div>
       <!-- Vault Inventory -->
       <div id="vaultSection" class="section">
         <h3>My Vault</h3>
         <div id="vaultCoins"></div>
       </div>
-      <!-- Modular Market Portal -->
+      <!-- Market Interface: Modular & Compact -->
       <div id="marketInterface" class="section">
         <h3>Market</h3>
         <button onclick="app.toggleMarket()">Toggle Market</button>
-        <!-- Small modular drop box for market actions -->
         <div id="marketDropdown" style="display:none;">
           <p>List coins for sale:</p>
           <div id="userCoinsForSale"></div>
@@ -282,14 +289,15 @@
             <option value="Iridium">Iridium</option>
             <option value="Rhodium">Rhodium</option>
           </select>
-          <!-- Active Listings drop box -->
+          <!-- Active Listings Drop Box -->
           <div id="activeListingsDropdown"></div>
+          <p><button onclick="app.buyGroupedMarketCoins()">Buy Selected Purse</button></p>
         </div>
       </div>
       <!-- Investment Section -->
       <div id="investmentSection" class="section">
         <h3>Invest in Another Vault</h3>
-        <p>(All vaults can invest; only Holdings receive investments)</p>
+        <p>(All vaults invest; only Holdings receive investments)</p>
         <input type="text" id="investRecipient" placeholder="Recipient Username"><br>
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="app.submitInvestment()">Invest</button>
@@ -297,7 +305,6 @@
       <!-- Conversion Section -->
       <div id="conversionSection" class="section">
         <h3>Convert Coins to Cash</h3>
-        <!-- Holdings vaults convert all coins; others convert a percentage -->
         <button onclick="app.convertCoinsToCash()">Convert All Coins</button>
         <p>Selective Conversion:</p>
         <select id="convertRarity">
@@ -311,7 +318,7 @@
         </select>
         <input type="number" id="convertQuantity" min="1" placeholder="Quantity">
         <button onclick="app.convertSelectedCoinsToCash()">Convert Selected Coins</button>
-        <p id="conversionNotice" style="color:orange; font-size:10px;"></p>
+        <p id="conversionNotice" style="color:#ffa500; font-size:10px;"></p>
       </div>
       <!-- Guilds & Associations -->
       <div id="groupSection" class="section">
@@ -359,7 +366,7 @@
   </div>
 
   <footer>
-    <p>&copy; 2025 Vault Street – Ultimate Retro-Future Build</p>
+    <p>&copy; 2025 Castle Vault – Vault Street</p>
   </footer>
 
   <!-- Audio Elements -->
@@ -442,7 +449,7 @@
             audio.play().catch(e => console.warn("Audio error:", e));
           }
         },
-        
+
         // --- Vault Clock & Net Worth ---
         updateVaultClock: () => {
           const elapsed = Math.floor((Date.now() - app.clockStartTime) / 1000);
@@ -450,7 +457,6 @@
           const minutes = Math.floor(remaining / 60), seconds = remaining % 60;
           document.getElementById("vaultClockDisplay").textContent =
             `Vault Clock: ${minutes.toString().padStart(2,"0")}:${seconds.toString().padStart(2,"0")}`;
-          // Update coin value and other tickers every second
           app.updateCoinValueTicker();
           app.updateCirculationTicker();
           app.updateInvestmentTicker();
@@ -461,7 +467,6 @@
           }
         },
         updateNetWorth: () => {
-          // Net worth = current cash + sum of market values of all coins in user's vault
           const user = auth.currentUser;
           if(!user) return;
           db.ref("users/" + user.uid + "/coins").once("value").then(snap => {
@@ -484,11 +489,11 @@
         updateRecentFluctuations: () => {
           db.ref("mintRegistry").once("value").then(snap => {
             const regData = snap.val() || {};
-            // (Optional: further processing if desired)
+            // Optional further processing...
           });
         },
 
-        // --- Themes & Customization (Persistent) ---
+        // --- Themes & Customization ---
         purchaseTheme: () => {
           const selectedTheme = document.getElementById("vaultTheme").value;
           db.ref("themes/" + selectedTheme).once("value").then(snap => {
@@ -552,16 +557,15 @@
         },
         updateVaultTheme: theme => {
           const panel = document.getElementById("user-panel");
-          // Apply a medieval–futuristic color based on theme
           panel.style.backgroundColor =
-            theme === "red" ? "#550000" :
-            theme === "blue" ? "#000055" :
-            theme === "green" ? "#005500" : "#1f1f1f";
+            theme === "red" ? "#5a0000" :
+            theme === "blue" ? "#00005a" :
+            theme === "green" ? "#005a00" : "#444";
           if(auth.currentUser)
             db.ref("users/" + auth.currentUser.uid).update({ theme });
         },
 
-        // --- Upgrade Options & Vault Type Changes ---
+        // --- Upgrade Options ---
         displayUpgradeOptions: () => {
           const user = auth.currentUser;
           if(!user) return;
@@ -593,7 +597,6 @@
         },
 
         // --- Investment System ---
-        // Only Holdings vaults can receive investments; funds go to an investment box.
         submitInvestment: () => {
           const investor = auth.currentUser;
           if(!investor) return;
@@ -612,7 +615,6 @@
                   alert("Investments can only be received by Holdings vaults.");
                   return;
                 }
-                // Deduct investment from investor and add record to recipient's investmentBox
                 const newCash = invData.cash - amount;
                 db.ref("users/" + investor.uid).update({ cash: newCash });
                 db.ref("users/" + recipientUid + "/investmentBox").push({
@@ -637,7 +639,6 @@
           return (vaultData.cash || 0) + coinValue;
         },
         processInvestments: () => {
-          // For every Holdings vault, process its investmentBox at the end of the cycle.
           db.ref("users").once("value").then(snapshot => {
             snapshot.forEach(userSnap => {
               const userData = userSnap.val();
@@ -648,7 +649,7 @@
                 if(inv.processed) continue;
                 const percentChange = (currentNetWorth - inv.netWorthAtInvestment) / inv.netWorthAtInvestment;
                 const investorReturn = inv.amount * (1 + percentChange);
-                const recipientBonus = inv.amount * percentChange * 0.10; // 10% bonus to recipient
+                const recipientBonus = inv.amount * percentChange * 0.10;
                 alert(`Investment from ${inv.from} returns $${investorReturn.toFixed(2)} (Recipient bonus: $${recipientBonus.toFixed(2)})`);
                 db.ref("users/" + userSnap.key + "/investmentBox/" + invKey).remove();
               }
@@ -784,7 +785,7 @@
             }
             html += "</table>";
             document.getElementById("vaultCoins").innerHTML = html;
-            app.updateVaultRatio();
+            app.updateNetWorth();
           });
         },
         loadUserCoinsForSale: () => {
@@ -816,10 +817,10 @@
           });
         },
         updateVaultRatio: () => {
-          // Instead of vault ratio, display net worth (handled in updateNetWorth)
+          // Deprecated – net worth displayed instead.
         },
 
-        // --- Upgraded Market Pricing & Grouped Listings as "Coin Purse" ---
+        // --- Market Pricing & Grouped Listings (Coin Purse) ---
         updateMarketPrices: () => {
           db.ref("mintRegistry").once("value").then(snap => {
             const regData = snap.val() || {};
@@ -895,7 +896,7 @@
           });
         },
 
-        // --- Market Portal – Grouped Listings as "Coin Purse" ---
+        // --- Market Portal: Group Listings as a Coin Purse ---
         toggleMarket: () => {
           const dropdown = document.getElementById("marketDropdown");
           dropdown.style.display = (dropdown.style.display === "none" || dropdown.style.display === "") ? "block" : "none";
@@ -907,7 +908,6 @@
           const filter = document.getElementById("marketFilter").value;
           db.ref("marketListings").orderByChild("listedAt").once("value").then(snap => {
             const listings = snap.val() || {};
-            // Group listings by seller UID and rarity into a "coin purse"
             const grouped = {};
             for(const key in listings){
               const lst = listings[key];
@@ -920,12 +920,11 @@
               grouped[groupKey].count++;
               grouped[groupKey].listingKeys.push(key);
             }
-            // Display grouped listings in a dropdown inside the market portal
             let options = `<option value="">-- Select a Coin Purse to Buy --</option>`;
             for(const groupKey in grouped){
               const group = grouped[groupKey];
               const livePrice = app.marketPrices[group.rarity] || app.basePrices[group.rarity];
-              options += `<option value="${groupKey}">${group.rarity} Purse from ${group.sellerUid} — ${group.count} coin(s) @ $${livePrice.toFixed(2)} each ($${(livePrice * group.count).toFixed(2)} total)</option>`;
+              options += `<option value="${groupKey}">${group.rarity} Purse (Seller: ${group.sellerUid}) — ${group.count} coin(s) @ $${livePrice.toFixed(2)} each ($${(livePrice * group.count).toFixed(2)} total)</option>`;
             }
             document.getElementById("activeListingsDropdown").innerHTML = options;
             document.getElementById("activeListingsDropdown").style.display = "block";
@@ -936,7 +935,6 @@
           if(!purseKey){ alert("Select a coin purse to buy."); return; }
           const group = purseKey.split("||");
           const sellerUid = group[0], rarity = group[1];
-          // Retrieve grouped listing details
           db.ref("marketListings").orderByChild("sellerUid").equalTo(sellerUid).once("value").then(snap => {
             const listings = snap.val() || {};
             let groupListings = [];
@@ -946,7 +944,6 @@
                 groupListings.push({ key, listing: lst });
             }
             if(groupListings.length === 0){ alert("No listings available in this coin purse."); return; }
-            // Purchase all coins in the purse
             const livePrice = app.marketPrices[rarity] || app.basePrices[rarity];
             const totalCost = livePrice * groupListings.length;
             const buyer = auth.currentUser;
@@ -974,7 +971,31 @@
             });
           });
         },
-        
+        processMarketListingsReturn: () => {
+          db.ref("marketListings").once("value").then(snap => {
+            const listings = snap.val() || {};
+            for(const key in listings){
+              const lst = listings[key];
+              if(!lst.fulfilled && (Date.now() - lst.listedAt) >= app.cycleLength * 1000){
+                db.ref("users/" + lst.sellerUid + "/coins").push(lst.coin);
+                db.ref("marketListings/" + key).remove();
+              }
+            }
+            app.updateMarketListings();
+          });
+        },
+        recordRecentPurchase: (coin, price) => {
+          db.ref("recentPurchases").push({ rarity: coin.rarity, serial: coin.serial, price: price, timestamp: Date.now() });
+          db.ref("recentPurchases").orderByChild("timestamp").limitToLast(10).once("value").then(snap => {
+            const purchases = snap.val() || {};
+            let txt = "Recent Purchases: ";
+            Object.values(purchases).forEach(item => {
+              txt += `<span class="coin-icon coin-${item.rarity.toLowerCase()}"></span>${item.rarity} @ $${item.price.toFixed(2)} | `;
+            });
+            document.getElementById("recentPurchasesMarquee").innerHTML = txt;
+          });
+        },
+
         // --- Guild / Association Persistent Interface ---
         toggleGroupSearch: () => {
           const gs = document.getElementById("groupSearch");
@@ -1143,12 +1164,10 @@
           });
         },
         updateGuildUI: guildId => {
-          // Fetch guild data and display persistent guild management interface.
           db.ref("guilds/" + guildId).once("value").then(snap => {
             const guild = snap.val();
             let membersHTML = "<ul>";
             for(const memberId in guild.members){
-              // For simplicity, fetch username from local copy (in production, query user record)
               membersHTML += `<li>${memberId} ${guild.leader === memberId ? "(Leader)" : ""} 
               ${guild.leader === auth.currentUser.uid && memberId !== auth.currentUser.uid ? 
                 `<button onclick="app.promoteMember('${guildId}','${memberId}')">Promote</button>
@@ -1159,7 +1178,6 @@
           });
         },
         updateAssociationUI: assocId => {
-          // Similar to updateGuildUI but for associations
           db.ref("associations/" + assocId).once("value").then(snap => {
             const assoc = snap.val();
             let membersHTML = "<ul>";
@@ -1171,13 +1189,11 @@
           });
         },
         promoteMember: (guildId, memberId) => {
-          // Dummy function: In a real system, update the guild rank in the database.
-          alert(`Promoted member ${memberId} in Guild ${guildId}.`);
+          alert(`Promoted ${memberId} in Guild ${guildId}.`);
         },
         kickMember: (guildId, memberId) => {
-          // Dummy function: Remove member from guild and update UI.
           db.ref("guilds/" + guildId + "/members/" + memberId).remove();
-          alert(`Kicked member ${memberId} from Guild ${guildId}.`);
+          alert(`Kicked ${memberId} from Guild ${guildId}.`);
           app.updateGuildUI(guildId);
         },
 
@@ -1195,7 +1211,7 @@
           });
         },
 
-        // --- Authentication ---
+        // --- Authentication Functions ---
         login: () => {
           const email = document.getElementById("email").value.trim();
           const pass = document.getElementById("password").value.trim();
@@ -1235,7 +1251,7 @@
         logout: () => { auth.signOut(); }
       };
 
-      // --- Firebase Auth Listener ---
+      // Firebase Auth Listener
       auth.onAuthStateChanged(user => {
         if(user){
           document.getElementById("auth-panel").style.display = "none";
@@ -1300,7 +1316,7 @@
         }
       });
 
-      // --- Audio Setup ---
+      // Audio Setup
       let muted = localStorage.getItem("vaultAudioMuted") === "true";
       document.getElementById("bgMusic").muted = muted;
       window.toggleAudio = () => {
@@ -1309,7 +1325,7 @@
         document.getElementById("bgMusic").muted = muted;
       };
 
-      // --- Start Intervals ---
+      // Start Intervals
       setInterval(app.updateVaultClock, 1000);
       setInterval(app.updateMarketPrices, 60000);
       setInterval(app.updateMarketListings, 30000);
@@ -1320,7 +1336,7 @@
       app.updateVaultClock();
       app.updateMarketPrices();
 
-      // Expose app globally
+      // Expose global app
       window.app = app;
     });
   </script>
