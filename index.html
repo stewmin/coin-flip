@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Ensure the viewport fits the iPhone screen without scrolling -->
+  <!-- Fixed viewport so the entire game fits an iPhone screen without scrolling -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Castle Vault – Vault Street</title>
-  <!-- Google Fonts: Medieval and retro styles -->
+  <!-- Google Fonts: MedievalSharp for headers and Press Start 2P for retro elements -->
   <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <!-- Firebase libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <style>
-    /* --- Overall Mobile & Castle Vault Aesthetic --- */
+    /* --- Overall Mobile & Castle Vault Theme --- */
     html, body {
       margin: 0;
       padding: 0;
@@ -20,7 +20,7 @@
       overflow: hidden;  /* Prevent scrolling */
     }
     body {
-      /* Stone textured background with subtle gradient */
+      /* Background evokes a stone castle wall – replace 'stone-wall.jpg' as needed */
       background: url('stone-wall.jpg') repeat, linear-gradient(135deg, #444, #222);
       background-size: cover;
       font-family: 'Press Start 2P', 'MedievalSharp', sans-serif;
@@ -36,13 +36,13 @@
       font-size: 1.2em;
       letter-spacing: 1px;
     }
-    /* Main container fills remaining viewport */
+    /* Main game screen fills remaining viewport */
     #gameScreen {
       flex: 1;
       position: relative;
       overflow: hidden;
     }
-    /* Each module (screen) – only one visible at a time */
+    /* Each module (screen) – only one is visible at a time */
     .module {
       position: absolute;
       top: 0;
@@ -55,11 +55,11 @@
       padding: 10px;
       box-sizing: border-box;
     }
-    /* Hide modules by default */
+    /* Hide inactive modules */
     .module:not(.activeModule) {
       display: none;
     }
-    /* Bottom Navigation Bar */
+    /* Bottom Navigation Bar for module switching */
     #navBar {
       height: 50px;
       background: #333;
@@ -72,11 +72,10 @@
       background: none;
       border: none;
       color: #fdf6e3;
-      font-size: 12px;
       font-family: 'MedievalSharp', sans-serif;
+      font-size: 12px;
       padding: 5px;
     }
-    /* Footer remains minimal */
     footer {
       text-align: center;
       background: #333;
@@ -84,7 +83,7 @@
       font-size: 10px;
       color: #ccc;
     }
-    /* --- Decorative Ticker Banners at Top --- */
+    /* --- Ticker Banners at Top --- */
     .ticker {
       background: #555;
       padding: 3px;
@@ -97,13 +96,13 @@
     marquee {
       font-family: 'MedievalSharp', sans-serif;
     }
-    /* --- Common Section Styling for content within modules --- */
+    /* --- Section Styling for Content --- */
     .section {
       padding: 10px;
       background: rgba(60,60,60,0.9);
       border: 2px solid #777;
       border-radius: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     input, button, select {
       font-family: 'Press Start 2P', 'MedievalSharp', sans-serif;
@@ -125,7 +124,7 @@
       transition: background 0.3s;
     }
     button:hover { background: #7a6900; }
-    /* --- Tables for Vault/Market --- */
+    /* --- Tables for Vault/Market Info --- */
     #vaultTable {
       width: 100%;
       border-collapse: collapse;
@@ -145,7 +144,7 @@
       border-radius: 4px;
       margin-top: 4px;
     }
-    /* --- Minimal Modular Market Panel --- */
+    /* --- Modular Market Panel --- */
     #marketInterface {
       max-width: 400px;
       align-self: center;
@@ -158,19 +157,19 @@
       border-radius: 4px;
       margin-top: 4px;
     }
-    /* --- Torch and Flag decorative elements --- */
+    /* --- Decorative Elements: Torches and Flags --- */
     .torch {
       position: absolute;
       width: 20px;
       height: 40px;
-      background: url('torch.png') no-repeat center center;
+      background: url('torch.png') no-repeat center center; /* replace with actual torch image */
       background-size: contain;
       animation: flicker 1.5s infinite alternate;
     }
     .flag {
       width: 20px;
       height: 15px;
-      background: url('flag.png') no-repeat center center;
+      background: url('flag.png') no-repeat center center; /* replace with actual flag image */
       background-size: contain;
       display: inline-block;
       vertical-align: middle;
@@ -181,7 +180,7 @@
       50% { opacity: 1; }
       100% { opacity: 0.7; }
     }
-    /* --- Coin Icon Styles (as before) --- */
+    /* --- Coin Icon Styling --- */
     .coin-icon {
       display: inline-block;
       width: 16px;
@@ -214,7 +213,7 @@
   <div class="ticker"><marquee id="circulationTicker" scrollamount="4">Circulation: Loading...</marquee></div>
   <div class="ticker"><marquee id="investmentTicker" scrollamount="4">Investments: Loading...</marquee></div>
   <div class="ticker"><marquee id="recentPurchasesMarquee" scrollamount="4">Recent Purchases: Loading...</marquee></div>
-
+  
   <!-- Notifications -->
   <div id="notificationsBox" class="section">
     <button onclick="app.toggleNotifications()">✉️</button>
@@ -222,7 +221,7 @@
     <div id="notificationDropdown"></div>
   </div>
   
-  <!-- Game Screen: All modules are contained here; only one is visible -->
+  <!-- Main Game Screen: Modules -->
   <div id="gameScreen">
     <!-- Vault Module -->
     <div id="VaultModule" class="module activeModule">
@@ -244,7 +243,7 @@
           <option value="green">Emerald Courtyard</option>
         </select>
         <button onclick="app.purchaseTheme()">Purchase Theme</button>
-        <p>Select from your Inventory:</p>
+        <p>Select from Inventory to Equip:</p>
         <select id="equipThemeSelect"></select>
         <button onclick="app.equipTheme()">Equip Theme</button>
       </div>
@@ -259,7 +258,7 @@
         <div id="vaultCoins"></div>
       </div>
     </div>
-
+    
     <!-- Market Module -->
     <div id="MarketModule" class="module" style="display:none;">
       <div class="section" id="marketInterface">
@@ -285,12 +284,12 @@
         </div>
       </div>
     </div>
-
+    
     <!-- Investment Module -->
     <div id="InvestmentModule" class="module" style="display:none;">
       <div class="section" id="investmentSection">
         <h3>Invest in Another Vault</h3>
-        <p>(All vaults invest; only Holdings receive investments)</p>
+        <p>(All vaults can invest; only Holdings receive investments)</p>
         <input type="text" id="investRecipient" placeholder="Recipient Username"><br>
         <input type="number" id="investAmount" placeholder="Amount ($)" min="1"><br>
         <button onclick="app.submitInvestment()">Invest</button>
@@ -313,7 +312,7 @@
         <p id="conversionNotice" style="color:#ffa500; font-size:10px;"></p>
       </div>
     </div>
-
+    
     <!-- Groups Module -->
     <div id="GroupModule" class="module" style="display:none;">
       <div class="section" id="groupSection">
@@ -359,7 +358,7 @@
   <footer>
     <p>&copy; 2025 Castle Vault – Vault Street</p>
   </footer>
-
+  
   <!-- Audio Elements -->
   <audio id="bgMusic" loop>
     <source src="bg-music.mp3" type="audio/mpeg">
@@ -367,17 +366,17 @@
   <audio id="sfxMint">
     <source src="sfx-mint.mp3" type="audio/mpeg">
   </audio>
-
+  
   <!-- Consolidated Script -->
   <script>
-    // Module Switch Function for Bottom Nav
+    // Module Switch Function for Bottom Navigation
     function switchModule(moduleId) {
-      // Hide all modules
       const modules = document.getElementsByClassName('module');
       for(let i = 0; i < modules.length; i++){
+        modules[i].classList.remove('activeModule');
         modules[i].style.display = "none";
       }
-      // Show selected module
+      document.getElementById(moduleId).classList.add('activeModule');
       document.getElementById(moduleId).style.display = "block";
     }
 
@@ -406,7 +405,7 @@
         recordLows: { Copper: Infinity, Silver: Infinity, Gold: Infinity, Platinum: Infinity, Diamond: Infinity, Iridium: Infinity, Rhodium: Infinity },
         basePrices: { Copper: 1, Silver: 5, Gold: 10, Platinum: 25, Diamond: 50, Iridium: 75, Rhodium: 100 },
         baselineDropRates: { Copper: 40, Silver: 25, Gold: 15, Platinum: 10, Diamond: 5, Iridium: 3, Rhodium: 1 },
-        cycleLength: 300,
+        cycleLength: 300, // seconds
         clockStartTime: Date.now(),
         vaultCycleCounter: 0,
         
@@ -491,7 +490,7 @@
         updateRecentFluctuations: () => {
           db.ref("mintRegistry").once("value").then(snap => {
             const regData = snap.val() || {};
-            // Optional additional processing can go here.
+            // (Optional additional processing.)
           });
         },
 
@@ -895,7 +894,7 @@
           });
         },
 
-        // --- Market Portal: Grouped Listings as "Coin Purse" ---
+        // --- Market Module: Grouped "Coin Purse" Listings ---
         toggleMarket: () => {
           const dropdown = document.getElementById("marketDropdown");
           dropdown.style.display = (dropdown.style.display === "none" || dropdown.style.display === "") ? "block" : "none";
@@ -995,7 +994,7 @@
           });
         },
 
-        // --- Guild / Association Persistent Interface ---
+        // --- Guild / Association Interface ---
         toggleGroupSearch: () => {
           const gs = document.getElementById("groupSearch");
           gs.style.display = (gs.style.display === "none" || gs.style.display === "") ? "block" : "none";
